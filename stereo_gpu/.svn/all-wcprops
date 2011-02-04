@@ -1,0 +1,53 @@
+K 25
+svn:wc:ra_dav:version-url
+V 72
+/svn/wg-ros-pkg/!svn/ver/46197/branches/trunk_cturtle/sandbox/stereo_gpu
+END
+aloe_R.png
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/svn/wg-ros-pkg/!svn/ver/45485/branches/trunk_cturtle/sandbox/stereo_gpu/aloe_R.png
+END
+manifest.xml
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svn/wg-ros-pkg/!svn/ver/45695/branches/trunk_cturtle/sandbox/stereo_gpu/manifest.xml
+END
+ROS_BUILD_BLACKLIST
+K 25
+svn:wc:ra_dav:version-url
+V 92
+/svn/wg-ros-pkg/!svn/ver/45500/branches/trunk_cturtle/sandbox/stereo_gpu/ROS_BUILD_BLACKLIST
+END
+mainpage.dox
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svn/wg-ros-pkg/!svn/ver/45485/branches/trunk_cturtle/sandbox/stereo_gpu/mainpage.dox
+END
+ReadMe.txt
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/svn/wg-ros-pkg/!svn/ver/45485/branches/trunk_cturtle/sandbox/stereo_gpu/ReadMe.txt
+END
+CMakeLists.txt
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/svn/wg-ros-pkg/!svn/ver/45695/branches/trunk_cturtle/sandbox/stereo_gpu/CMakeLists.txt
+END
+Makefile
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/svn/wg-ros-pkg/!svn/ver/45485/branches/trunk_cturtle/sandbox/stereo_gpu/Makefile
+END
+aloe_L.png
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/svn/wg-ros-pkg/!svn/ver/45485/branches/trunk_cturtle/sandbox/stereo_gpu/aloe_L.png
+END

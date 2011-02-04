@@ -1,0 +1,23 @@
+K 25
+svn:wc:ra_dav:version-url
+V 91
+/svn/wg-ros-pkg/!svn/ver/45485/branches/trunk_cturtle/sandbox/stereo_gpu/include/stereo_gpu
+END
+stereo_gpu.hpp
+K 25
+svn:wc:ra_dav:version-url
+V 106
+/svn/wg-ros-pkg/!svn/ver/45485/branches/trunk_cturtle/sandbox/stereo_gpu/include/stereo_gpu/stereo_gpu.hpp
+END
+devmem2d.hpp
+K 25
+svn:wc:ra_dav:version-url
+V 104
+/svn/wg-ros-pkg/!svn/ver/45485/branches/trunk_cturtle/sandbox/stereo_gpu/include/stereo_gpu/devmem2d.hpp
+END
+exports.hpp
+K 25
+svn:wc:ra_dav:version-url
+V 103
+/svn/wg-ros-pkg/!svn/ver/45485/branches/trunk_cturtle/sandbox/stereo_gpu/include/stereo_gpu/exports.hpp
+END

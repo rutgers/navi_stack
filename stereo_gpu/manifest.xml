@@ -1,0 +1,23 @@
+<package>
+  <description brief="stereo_gpu">
+
+     stereo_gpu
+
+  </description>
+  <author>andrey</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/stereo_gpu</url>
+  <depend package="opencv2"/>
+  
+  <export>
+    <cpp cflags="-I${prefix}/include" lflags="-Wl,-rpath,${prefix}/lib -L${prefix}/lib -lstereo_gpu" />
+  </export>
+
+  <platform os="ubuntu" version="9.04"/>
+  <platform os="ubuntu" version="9.10"/>
+  <platform os="ubuntu" version="10.04"/>
+
+</package>
+
+
