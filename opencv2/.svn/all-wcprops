@@ -1,0 +1,65 @@
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/svn/ros-pkg/!svn/ver/33645/stacks/vision_opencv/tags/vision_opencv-1.3.3/opencv2
+END
+pythontest.patch
+K 25
+svn:wc:ra_dav:version-url
+V 98
+/svn/ros-pkg/!svn/ver/33645/stacks/vision_opencv/tags/vision_opencv-1.3.3/opencv2/pythontest.patch
+END
+opencv2-python-link.patch
+K 25
+svn:wc:ra_dav:version-url
+V 107
+/svn/ros-pkg/!svn/ver/33645/stacks/vision_opencv/tags/vision_opencv-1.3.3/opencv2/opencv2-python-link.patch
+END
+manifest.xml
+K 25
+svn:wc:ra_dav:version-url
+V 94
+/svn/ros-pkg/!svn/ver/33645/stacks/vision_opencv/tags/vision_opencv-1.3.3/opencv2/manifest.xml
+END
+mainpage.dox
+K 25
+svn:wc:ra_dav:version-url
+V 94
+/svn/ros-pkg/!svn/ver/33645/stacks/vision_opencv/tags/vision_opencv-1.3.3/opencv2/mainpage.dox
+END
+rosdoc.yaml
+K 25
+svn:wc:ra_dav:version-url
+V 93
+/svn/ros-pkg/!svn/ver/33645/stacks/vision_opencv/tags/vision_opencv-1.3.3/opencv2/rosdoc.yaml
+END
+conf.py
+K 25
+svn:wc:ra_dav:version-url
+V 89
+/svn/ros-pkg/!svn/ver/33645/stacks/vision_opencv/tags/vision_opencv-1.3.3/opencv2/conf.py
+END
+flann.patch
+K 25
+svn:wc:ra_dav:version-url
+V 93
+/svn/ros-pkg/!svn/ver/33645/stacks/vision_opencv/tags/vision_opencv-1.3.3/opencv2/flann.patch
+END
+Makefile
+K 25
+svn:wc:ra_dav:version-url
+V 90
+/svn/ros-pkg/!svn/ver/33645/stacks/vision_opencv/tags/vision_opencv-1.3.3/opencv2/Makefile
+END
+cvbridge_python.rst
+K 25
+svn:wc:ra_dav:version-url
+V 101
+/svn/ros-pkg/!svn/ver/33645/stacks/vision_opencv/tags/vision_opencv-1.3.3/opencv2/cvbridge_python.rst
+END
+index.rst
+K 25
+svn:wc:ra_dav:version-url
+V 91
+/svn/ros-pkg/!svn/ver/33645/stacks/vision_opencv/tags/vision_opencv-1.3.3/opencv2/index.rst
+END
