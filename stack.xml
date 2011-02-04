@@ -1,0 +1,9 @@
+<stack>
+  <description brief="navi_stack">navi_stack</description>
+  <author>Maintained by asher</author>
+  <license>BSD</license>  
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/navi_stack</url>
+  <depend stack="ros" />
+
+</stack>
