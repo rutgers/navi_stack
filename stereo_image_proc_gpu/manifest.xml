@@ -1,0 +1,11 @@
+<package>
+	<description>
+		Hardware accelerated stereo reconstruction using OpenCV 2.2's GPU API.
+	</description>
+	<author>Michael Koval/koval.michael@gmail.com</author>
+	<license>BSD</license>
+	<review status="unreviewed" notes=""/>
+	<depend package="image_transport"/>
+	<depend package="opencv2"/>
+	<depend package="sensor_msgs"/>
+</package>
