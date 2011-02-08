@@ -14,9 +14,6 @@ using sensor_msgs::CameraInfo;
 using sensor_msgs::Image;
 
 static cv::gpu::StereoBeliefPropagation stereo;
-static cv::gpu::GpuMat img_left;
-static cv::gpu::GpuMat img_right;
-static cv::gpu::GpuMat img_disparity;
 static int prev_width  = -1;
 static int prev_height = -1;
 
@@ -40,31 +37,26 @@ void callback(ImageConstPtr const& img_left, ImageConstPtr const& img_right,
 		int ndisp, iters, levels;
 		StereoBeliefPropagation::estimateRecommendedParams(width, height, ndisp, iters, levels);
 		stereo = StereoBeliefPropagation(ndisp, iters, levels, CV_8UC3);
-
-		img_left.create(height, width, CV_8UC3);
-		img_right.create(height, width, CV_8UC3);
-
 		prev_width  = width;
 		prev_height = height;
 	}
 
-	// TODO: Convert the Image messages into GpuMat objects.
+	// Move the image message onto the GPU for finding point correspondances.
+	cv::Mat const cpu_left(height, width, CV_8UC3, img_left.data, img_left.step);
+	cv::Mat const cpu_right(height, width, CV_8UC3, img_right.data, img_right.step);
+	cv::gpu::GpuMat gpu_left(cpu_left);
+	cv::gpu::GpuMat gpu_right(cpu_right);
+
 	// TODO: Rectify images as preparation for using StereoBeliefPropagation.
 
-	stereo(img_left, img_right, img_disparity);
+	cv::gpu::GpuMat gpu_disp;
+	stereo(img_left, img_right, gpu_disp);
 }
 
 int main(int argc, char **argv)
 {
 	ros::init(argc, argv, "stereo_image_proc_gpu");
 	ros::NodeHandle nh;
-
-	// TODO: Use estimateRecommendedParams() to estimate the parameters for the
-	//       StereoBeliefPropagation class.
-#if 0
-	int ndisp, iters, levels;
-	StereoBeliefPropagation::estimateRecommendedParams(width, height, ndisp, iters, levels);
-#endif
 
 	// Synchronize the two webcams' images and calibration parameters.
 	// TODO: Attempt to synchronize two image_transport::CameraSubscribers.
@@ -76,7 +68,6 @@ int main(int argc, char **argv)
 	TimeSynchronizer<Image, Image, CameraInfo, CameraInfo> sub_sync(sub_cam_left, sub_cam_right,
 	                                                                sub_info_left, sub_info_right);
 	sub_sync.registerCallback(boost::bind(&callback, _1, _2, _3, _4));
-
 
 	ros::spin();
 	return 0;
