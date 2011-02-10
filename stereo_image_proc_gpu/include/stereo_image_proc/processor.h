@@ -44,7 +44,7 @@ public:
                           cv::gpu::Stream const &stream) {
     m_left  = left;
     m_right = right;
-    m_obj(m_left, m_right, disparity, stream);
+    m_obj(m_left, m_right, m_disparity, stream);
     disparity = m_disparity;
   }
 
@@ -87,42 +87,6 @@ public:
     STEREO_ALL = DISPARITY | POINT_CLOUD | POINT_CLOUD2,
     ALL = LEFT_ALL | RIGHT_ALL | STEREO_ALL
   };
-
-  int getInterpolation() const;
-  void setInterpolation(int interp);
-
-  // Disparity pre-filtering parameters
-
-  int getPreFilterSize() const;
-  void setPreFilterSize(int size);
-
-  int getPreFilterCap() const;
-  void setPreFilterCap(int cap);
-
-  // Disparity correlation parameters
-  
-  int getCorrelationWindowSize() const;
-  void setCorrelationWindowSize(int size);
-
-  int getMinDisparity() const;
-  void setMinDisparity(int min_d);
-
-  int getDisparityRange() const;
-  void setDisparityRange(int range); // Number of pixels to search
-
-  // Disparity post-filtering parameters
-  
-  int getTextureThreshold() const;
-  void setTextureThreshold(int threshold);
-
-  float getUniquenessRatio() const;
-  void setUniquenessRatio(float ratio);
-
-  int getSpeckleSize() const;
-  void setSpeckleSize(int size);
-
-  int getSpeckleRange() const;
-  void setSpeckleRange(int range);
 
   // Do all the work!
   bool process(const sensor_msgs::ImageConstPtr& left_raw,

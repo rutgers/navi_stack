@@ -78,8 +78,10 @@ void StereoProcessor::processDisparity(const cv::Mat& left_rect, const cv::Mat& 
   /// @todo Window of (potentially) valid disparities
 
   // Disparity search range
-  disparity.min_disparity = getMinDisparity();
-  disparity.max_disparity = getMinDisparity() + getDisparityRange() - 1;
+  //disparity.min_disparity = getMinDisparity();
+  //disparity.max_disparity = getMinDisparity() + getDisparityRange() - 1;
+  disparity.min_disparity = 0;
+  disparity.max_disparity = 255;
   disparity.delta_d = inv_dpp;
 }
 

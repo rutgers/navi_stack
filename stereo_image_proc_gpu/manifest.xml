@@ -7,7 +7,7 @@
   <license>BSD</license>
   <review status="unreviewed"/>
   <export>
-    <cpp cflags="-I${prefix}/include" lflags="-Wl,-rpath,${prefix}/lib -L${prefix}/lib -lstereo_image_proc_gpu" />
+    <cpp cflags="-I${prefix}/include" lflags="-Wl,-rpath,${prefix}/lib -L${prefix}/lib -lstereo_image_proc" />
   </export>
   <depend package="roscpp"/>
   <depend package="message_filters"/>
