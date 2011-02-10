@@ -1,6 +1,8 @@
 #ifndef STEREO_IMAGE_PROC_PROCESSOR_H
 #define STEREO_IMAGE_PROC_PROCESSOR_H
 
+#include <opencv2/opencv.hpp>
+#include <opencv2/gpu/gpu.hpp>
 #include <image_proc/processor.h>
 #include <image_geometry/stereo_camera_model.h>
 #include <stereo_msgs/DisparityImage.h>
@@ -8,6 +10,41 @@
 #include <sensor_msgs/PointCloud2.h>
 
 namespace stereo_image_proc {
+
+// Polymorphic wrapper for the various GPU-accelerated stereo correspondance
+// algorithms.
+class Matcher {
+public:
+  virtual void operator()(cv::gpu::GpuMat const &left,
+                          cv::gpu::GpuMat const &right,
+                          cv::gpu::GpuMat       &disparity) = 0;
+  virtual void operator()(cv::gpu::GpuMat const &left,
+                          cv::gpu::GpuMat const &right,
+                          cv::gpu::GpuMat       &disparity,
+                          cv::gpu::Stream const &stream) = 0;
+};
+
+template <typename T>
+class MatcherWrapper : public Matcher {
+public:
+  MatcherWrapper(T &obj) : m_obj(obj) {}
+
+  virtual void operator()(cv::gpu::GpuMat const &left,
+                          cv::gpu::GpuMat const &right,
+                          cv::gpu::GpuMat &disparity) {
+    m_obj(left, right, disparity);
+  }
+
+  virtual void operator()(cv::gpu::GpuMat const &left,
+                          cv::gpu::GpuMat const &right,
+                          cv::gpu::GpuMat       &disparity,
+                          cv::gpu::Stream const &stream) {
+    m_obj(left, right, disparity, stream);
+  }
+
+private:
+  T &m_obj;
+};
 
 struct StereoImageSet
 {
@@ -102,10 +139,10 @@ public:
                       sensor_msgs::PointCloud2& points) const;
 
 private:
-  image_proc::Processor mono_processor_;
-  
-  mutable cv::Mat_<int16_t> disparity16_; // scratch buffer for 16-bit signed disparity image
+  mutable image_proc::Processor mono_processor_;
+
   mutable cv::StereoBM block_matcher_; // contains scratch buffers for block matching
+  mutable cv::Mat_<int16_t> disparity16_; // scratch buffer for 16-bit signed disparity image
   // scratch buffers for speckle filtering
   mutable cv::Mat_<uint32_t> labels_;
   mutable cv::Mat_<uint32_t> wavefront_;
