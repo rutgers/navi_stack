@@ -32,10 +32,15 @@ public:
   virtual void operator()(cv::Mat const &left,
                           cv::Mat const &right,
                           cv::Mat       &disparity) {
+
+	m_obj.preset = cv::gpu::StereoBM_GPU::PREFILTER_XSOBEL;
+
+	std::cout << "finding disparity" << std::endl;
     m_left  = left;
     m_right = right;
     m_obj(m_left, m_right, m_disparity);
     disparity = m_disparity;
+	std::cout << "found disparity" << std::endl;
   }
 
   virtual void operator()(cv::Mat const &left,

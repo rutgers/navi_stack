@@ -146,7 +146,7 @@ public:
     sync_.registerCallback(boost::bind(increment, &both_received_));
     check_synced_timer_ = nh_.createWallTimer(ros::WallDuration(30.0),
                                               boost::bind(&StereoProcNode::checkImagesSynchronized, this));
-    
+    connectCb();
     /// @todo Print a warning every minute until the camera topics are advertised (like image_proc)
   }
 
@@ -159,6 +159,8 @@ public:
       info_sub_l_ .subscribe(nh_, left_ns_  + "/camera_info", 1);
       image_sub_r_.subscribe(it_, right_ns_ + "/image_raw", 1);
       info_sub_r_ .subscribe(nh_, right_ns_ + "/camera_info", 1);
+	  std::cout << "LEFT_NS  = " << left_ns_ << "/image_raw" << std::endl;
+	  std::cout << "RIGHT_NS = " << right_ns_ << "/image_raw" << std::endl;
     }
   }
 
@@ -306,9 +308,13 @@ int main(int argc, char **argv)
   }
 
   // Start stereo processor
+  std::cout << "creating cv::gpu::StereoBM_GPU" << std::endl;
   cv::gpu::StereoBM_GPU cv_matcher;
+  std::cout << "creating MatcherWrapper" << std::endl;
   stereo_image_proc::MatcherWrapper<cv::gpu::StereoBM_GPU> matcher(cv_matcher);
+  std::cout << "creating StereoProcNode" << std::endl;
   StereoProcNode proc(matcher);
+  std::cout << "init done" << std::endl;
 
   ros::spin();
   return 0;
