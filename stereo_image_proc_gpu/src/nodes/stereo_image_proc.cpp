@@ -35,15 +35,11 @@
 #include <ros/ros.h>
 #include <ros/names.h>
 
-#include <opencv2/opencv.hpp>
-#include <opencv2/gpu/gpu.hpp>
-
 #include <sensor_msgs/Image.h>
 #include <sensor_msgs/CameraInfo.h>
 #include <sensor_msgs/PointCloud.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <stereo_msgs/DisparityImage.h>
-
 #include <sensor_msgs/fill_image.h>
 
 #include <image_transport/image_transport.h>
@@ -109,10 +105,10 @@ private:
   int left_received_, right_received_, both_received_;
 
 public:
-  StereoProcNode(stereo_image_proc::Matcher &matcher)
+
+  StereoProcNode()
     : it_(nh_), sync_(3),
       subscriber_count_(0),
-      processor_(matcher),
       left_received_(0), right_received_(0), both_received_(0)
   {
     // Advertise outputs
@@ -140,13 +136,17 @@ public:
     sync_.connectInput(image_sub_l_, info_sub_l_, image_sub_r_, info_sub_r_);
     sync_.registerCallback(boost::bind(&StereoProcNode::imageCb, this, _1, _2, _3, _4));
 
+    // Set up dynamic reconfiguration
+    ReconfigureServer::CallbackType f = boost::bind(&StereoProcNode::configCallback, this, _1, _2);
+    reconfigure_server_.setCallback(f);
+
     // Complain every 30s if it appears that the image topics are not synchronized
     image_sub_l_.registerCallback(boost::bind(increment, &left_received_));
     image_sub_r_.registerCallback(boost::bind(increment, &right_received_));
     sync_.registerCallback(boost::bind(increment, &both_received_));
     check_synced_timer_ = nh_.createWallTimer(ros::WallDuration(30.0),
                                               boost::bind(&StereoProcNode::checkImagesSynchronized, this));
-    connectCb();
+    
     /// @todo Print a warning every minute until the camera topics are advertised (like image_proc)
   }
 
@@ -159,8 +159,6 @@ public:
       info_sub_l_ .subscribe(nh_, left_ns_  + "/camera_info", 1);
       image_sub_r_.subscribe(it_, right_ns_ + "/image_raw", 1);
       info_sub_r_ .subscribe(nh_, right_ns_ + "/camera_info", 1);
-	  std::cout << "LEFT_NS  = " << left_ns_ << "/image_raw" << std::endl;
-	  std::cout << "RIGHT_NS = " << right_ns_ << "/image_raw" << std::endl;
     }
   }
 
@@ -285,6 +283,21 @@ public:
   void configCallback(stereo_image_proc::StereoImageProcConfig &config, uint32_t level)
   {
     ROS_DEBUG("[stereo_image_proc] Reconfigure request received.");
+
+    config.prefilter_size |= 0x1; // must be odd
+    processor_.setPreFilterSize(config.prefilter_size);
+    processor_.setPreFilterCap(config.prefilter_cap);
+
+    config.correlation_window_size |= 0x1; // must be odd
+    processor_.setCorrelationWindowSize(config.correlation_window_size);
+    processor_.setMinDisparity(config.min_disparity);
+    config.disparity_range = (config.disparity_range / 16) * 16; // must be multiple of 16
+    processor_.setDisparityRange(config.disparity_range);
+
+    processor_.setUniquenessRatio((int)(config.uniqueness_ratio + 0.5));
+    processor_.setTextureThreshold(config.texture_threshold);
+    processor_.setSpeckleSize(config.speckle_size);
+    processor_.setSpeckleRange(config.speckle_range);
   }
 };
 
@@ -308,13 +321,7 @@ int main(int argc, char **argv)
   }
 
   // Start stereo processor
-  std::cout << "creating cv::gpu::StereoBM_GPU" << std::endl;
-  cv::gpu::StereoBM_GPU cv_matcher;
-  std::cout << "creating MatcherWrapper" << std::endl;
-  stereo_image_proc::MatcherWrapper<cv::gpu::StereoBM_GPU> matcher(cv_matcher);
-  std::cout << "creating StereoProcNode" << std::endl;
-  StereoProcNode proc(matcher);
-  std::cout << "init done" << std::endl;
+  StereoProcNode proc;
 
   ros::spin();
   return 0;

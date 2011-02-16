@@ -1,11 +1,9 @@
 <package>
-  <description>
-  	Stereo, single image rectification, and disparity processing that is
-	hardware accelerated using OpenCV's alpha GPU module.
-  </description>
-  <author>Kurt Konolige, Jeremy Leibs, Patrick Mihelich, Michael Koval</author>
+  <description>Stereo and single image rectification and disparity processing.</description>
+  <author>Kurt Konolige, Jeremy Leibs, Patrick Mihelich</author>
   <license>BSD</license>
-  <review status="unreviewed"/>
+  <review status="Doc reviewed" notes="Jan 4, 2010"/>
+  <url>http://www.ros.org/wiki/stereo_image_proc</url>
   <export>
     <cpp cflags="-I${prefix}/include" lflags="-Wl,-rpath,${prefix}/lib -L${prefix}/lib -lstereo_image_proc" />
   </export>
