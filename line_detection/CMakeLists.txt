@@ -18,4 +18,3 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 #rosbuild_gensrv()
 
 rosbuild_add_executable(line_detection src/line_detection.cpp)
-rosbuild_add_executable(sync-test      src/sync.cpp)
