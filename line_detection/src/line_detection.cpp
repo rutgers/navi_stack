@@ -170,7 +170,7 @@ int main(int argc, char **argv)
 	nh.param("threshold", p_threshold, 0.0400);
 
 	image_transport::ImageTransport it(nh);
-	sub_cam = it.subscribeCamera("/usb_cam/image_raw", 1, &callback);
+	sub_cam = it.subscribeCamera("image", 1, &callback);
 	pub_pts = nh.advertise<sensor_msgs::PointCloud>("line_points", 10);
 
 	ros::spin();
