@@ -1,0 +1,88 @@
+<?xml version="1.0"?>
+<robot  xmlns:body="http://playerstage.sourceforge.net/gazebo/xmlschema/#body" 
+ xmlns:controller="http://playerstage.sourceforge.net/gazebo/xmlschema/#controller"
+ xmlns:geom="http://playerstage.sourceforge.net/gazebo/xmlschema/#geom" 
+ xmlns:interface="http://playerstage.sourceforge.net/gazebo/xmlschema/#interface" 
+ xmlns:joint="http://playerstage.sourceforge.net/gazebo/xmlschema/#slider" 
+ xmlns:sensor="http://playerstage.sourceforge.net/gazebo/xmlschema/#sensor" 
+ xmlns:xacro="http://ros.org/wiki/xacro"
+       >
+  
+  <property name="M_PI" value="3.1415926535897931" />
+
+      
+ <xacro:macro name="piper_base" params="name">
+  <link name="base_link">
+    <inertial>
+      <mass value="4.5" />
+      <!-- center of mass (com) is defined w.r.t. link local coordinate system -->
+      <origin xyz="0 0 0" /> 
+
+      <inertia  ixx="1.0" ixy="0.0"  ixz="0.0"  iyy="100.0"  iyz="0.0"  izz="1.0" />
+    </inertial>
+    <visual>
+      <!-- visual origin is defined w.r.t. link local coordinate system -->
+      <origin xyz=" 0 0 0" rpy="0 0  0" />
+      <geometry name="base_link_visual_geom">
+         <mesh filename="package://piper_model/meshes/base_assembly.stl" /> 
+        <box size="0.29845 0.35 0.2" />
+      </geometry>
+    <material name="Blue"/> 
+	
+    </visual>
+    <collision>
+      <!-- collision origin is defined w.r.t. link local coordinate system -->
+      <origin xyz="0 0 .2" rpy="0 0 0 " />
+      <geometry name="base_link_collision_geom">
+        <!--<box size="0.29845 0.35 0.2" />-->
+        <box size="0.001 0.001 0.001" />
+      </geometry>
+    </collision>
+  </link>
+  
+<gazebo reference="base_link">
+     <turnGravityOff>False</turnGravityOff>
+    <material>Gazebo/PioneerBody</material>
+    <canonicalBody>base_link</canonicalBody>
+ </gazebo>
+
+ 
+ <link name="base_footprint">
+      <inertial>
+        <mass value="1.0"/>
+        <origin xyz="0 0 0"/>
+        <inertia ixx="0.01" ixy="0.0" ixz="0.0" iyy="0.01" iyz="0.0" izz="0.01"/>
+      </inertial>
+      
+      <visual>
+        <origin rpy="0 0 0" xyz="0 0 0"/>
+        <geometry>
+          <box size="0.001 0.001 0.001"/>
+        </geometry>
+        
+        <material name="Green"/>
+      </visual>
+      <collision>
+        <!-- represent base collision with a simple rectangular model, positioned by base_size_z s.t. top
+             surface of the collision box matches the top surface of the PR2 base -->
+        <origin rpy="0 0 0" xyz="0 0 0.071"/>
+        <geometry>
+          <box size="0.001 0.001 0.001"/>
+        </geometry>
+      </collision>
+      
+    </link>
+    
+   <joint name="base_footprint_joint" type="fixed">
+      <origin rpy="0 0 0" xyz="0 0 0.08"/>
+      <child link="base_link"/>
+      <parent link="base_footprint"/>
+  </joint>
+ 
+
+ </xacro:macro>
+       
+
+       
+ </robot>
+    

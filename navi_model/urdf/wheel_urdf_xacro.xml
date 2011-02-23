@@ -1,0 +1,63 @@
+<?xml version="1.0"?>
+<robot  xmlns:body="http://playerstage.sourceforge.net/gazebo/xmlschema/#body" 
+ xmlns:controller="http://playerstage.sourceforge.net/gazebo/xmlschema/#controller"
+ xmlns:geom="http://playerstage.sourceforge.net/gazebo/xmlschema/#geom" 
+ xmlns:interface="http://playerstage.sourceforge.net/gazebo/xmlschema/#interface" 
+ xmlns:joint="http://playerstage.sourceforge.net/gazebo/xmlschema/#slider" 
+ xmlns:sensor="http://playerstage.sourceforge.net/gazebo/xmlschema/#sensor" 
+ xmlns:xacro="http://ros.org/wiki/xacro"
+       >
+  
+  
+<property name="M_PI" value="3.1415926535897931" />
+<property name="wheel_radius" value="0.0508"/>
+<property name="wheel_length" value="0.056134"/>
+<property name="wheel_offset_y" value="0.14129"/>
+<property name="wheel_offset_x" value="0.117475"/>
+
+ 
+ 
+ <xacro:macro name="wheel" params="prefix reflect_x reflect_y">
+    <joint name="${prefix}_wheel_joint" type="continuous">
+      <axis xyz="0 1 0" />
+      <dynamics damping="0.0" friction="0.0" />
+      <origin xyz="${reflect_x * wheel_offset_x} ${reflect_y * wheel_offset_y} -0.02381" rpy="0 0 0" />
+      <parent link="base_link"/>
+      <child link="${prefix}_wheel_link"/>
+    </joint>
+    
+    <link name="${prefix}_wheel_link">
+      <inertial>
+        <mass value="0.044036" />
+        <origin xyz="0 0 0" />
+        <inertia  ixx="0.012411765597" ixy="0.0" ixz="0.0"
+                  iyy="0.015218160428" iyz="0.0"
+                  izz="0.011763977943" />
+      </inertial>
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 ${reflect_y*M_PI/2 -M_PI/2}" />
+        <geometry>
+          <mesh filename="package://piper_model/meshes/wheel.stl" />
+        </geometry>
+        
+        <material name="Grey" />
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="${M_PI/2} 0 ${reflect_y*M_PI/2 -M_PI/2}" /> <!-- rotation because cyl. geom primitive has symmetry axis in +x direction -->
+        <geometry>
+          <cylinder radius="${wheel_radius}" length="${wheel_length}" />
+        </geometry>
+      </collision>
+    </link>
+ 
+ <gazebo reference="${prefix}_wheel_link">
+	<material>Gazebo/Grey</material>
+ </gazebo>
+ 
+ 
+ </xacro:macro>
+ 
+ 
+ 
+
+</robot>
