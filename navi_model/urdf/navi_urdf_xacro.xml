@@ -1,0 +1,50 @@
+<?xml version="1.0"?>
+<robot  xmlns:body="http://playerstage.sourceforge.net/gazebo/xmlschema/#body" 
+ xmlns:controller="http://playerstage.sourceforge.net/gazebo/xmlschema/#controller"
+ xmlns:geom="http://playerstage.sourceforge.net/gazebo/xmlschema/#geom" 
+ xmlns:interface="http://playerstage.sourceforge.net/gazebo/xmlschema/#interface" 
+ xmlns:joint="http://playerstage.sourceforge.net/gazebo/xmlschema/#slider" 
+ xmlns:sensor="http://playerstage.sourceforge.net/gazebo/xmlschema/#sensor" 
+ xmlns:xacro="http://ros.org/wiki/xacro"
+      name = "PIPER" >
+ 
+   <include filename="$(find piper_model)/urdf/common_urdf_xacro.xml" />
+   <include filename="$(find piper_model)/urdf/base_urdf_xacro.xml" />
+   <include filename="$(find piper_model)/urdf/wheel_urdf_xacro.xml" />
+   <include filename="$(find piper_model)/urdf/topQuarter_urdf_xacro.xml" />
+   <include filename="$(find piper_model)/urdf/camera_urdf_xacro.xml" />
+   <include filename="$(find piper_model)/urdf/ultrasound_urdf_xacro.xml" />
+   <include filename="$(find piper_model)/urdf/scissorLift_urdf_xacro.xml" />
+   <include filename="$(find piper_model)/urdf/laser_urdf_xacro.xml" />
+
+   
+   <!-- gazebo specific controllers/sensors-->
+		<include filename="$(find piper_model)/urdf/gazebo_urdf_xacro.xml" />
+
+
+       
+<piper_base name="base"/> 
+<wheel prefix="fl" reflect_x="1" reflect_y="1"/>
+<wheel prefix="fr" reflect_x="1" reflect_y="-1"/>
+<wheel prefix="br" reflect_x="-1" reflect_y="-1"/>
+<wheel prefix="bl" reflect_x="-1" reflect_y="1"/>
+
+<topQuarter prefix="fl" reflect_x="1" reflect_y="1" color="Red"/>
+<topQuarter prefix="fr" reflect_x="1" reflect_y="-1" color="Green"/>
+<topQuarter prefix="br" reflect_x="-1" reflect_y="-1" color="Blue"/>
+<topQuarter prefix="bl" reflect_x="-1" reflect_y="1" color ="Blue"/>
+
+<camera prefix="fl" reflect="1" baseLine="0"/>
+
+<!-- <ultrasound prefix="tl" xyz="0.130302 0.070104 0.034925" rpy="0  0 ${M_PI/4}" parent="fl_topQuarter_link"/>
+<ultrasound prefix="tr" xyz="0.130302 -0.070104 0.034925" rpy="0  0 ${-M_PI/4}" parent="fr_topQuarter_link"/> -->
+<ultrasound prefix="bl" xyz="0.15621  0.109474 0.0269875" rpy="0 0 0" parent="base_link"/>
+<ultrasound prefix="bc" xyz="0.15621 0 0.0269875" rpy="0 0 0" parent="base_link"/>
+<ultrasound prefix="br" xyz="0.15621 -0.109474 0.0269875" rpy="0 0 0" parent="base_link"/>
+
+
+<laser />
+
+       
+ </robot>
+    

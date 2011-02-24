@@ -1,0 +1,16 @@
+<package>
+  <description brief="navi_model">
+
+     navi_model
+
+  </description>
+  <author>asher</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/navi_model</url>
+  <depend package="xacro"/>
+  <depend package="urdf"/>
+
+</package>
+
+
