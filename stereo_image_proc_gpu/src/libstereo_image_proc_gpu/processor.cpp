@@ -55,7 +55,12 @@ void StereoProcessor::processDisparity(const cv::Mat& left_rect, const cv::Mat& 
   static const double inv_dpp = 1.0 / DPP;
 
   // Block matcher produces 16-bit signed (fixed point) disparity image
-  block_matcher_(left_rect, right_rect, disparity16_);
+  cv::gpu::GpuMat left_rect_gpu(left_rect);
+  cv::gpu::GpuMat right_rect_gpu(right_rect);
+  cv::gpu::GpuMat disparity_gpu;
+  block_matcher_(left_rect_gpu, right_rect_gpu, disparity_gpu);
+  cv::Mat disparity16_ = disparity_gpu;
+  // TODO: Convert back to cv::Mat types.
 
   // Fill in DisparityImage image data, converting to 32-bit float
   sensor_msgs::Image& dimage = disparity.image;
@@ -78,8 +83,12 @@ void StereoProcessor::processDisparity(const cv::Mat& left_rect, const cv::Mat& 
   /// @todo Window of (potentially) valid disparities
 
   // Disparity search range
+#if 0
   disparity.min_disparity = getMinDisparity();
   disparity.max_disparity = getMinDisparity() + getDisparityRange() - 1;
+#endif
+  disparity.min_disparity = 0;
+  disparity.max_disparity = 255;
   disparity.delta_d = inv_dpp;
 }
 

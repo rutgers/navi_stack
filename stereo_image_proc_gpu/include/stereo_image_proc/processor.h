@@ -24,7 +24,7 @@ class StereoProcessor
 public:
   
   StereoProcessor()
-    : block_matcher_(gpu::StereoBM_GPU::PREFILTER_XSOBEL)
+    : block_matcher_(cv::gpu::StereoBM_GPU::PREFILTER_XSOBEL)
   {
   }
 
@@ -124,96 +124,6 @@ inline int StereoProcessor::getInterpolation() const
 inline void StereoProcessor::setInterpolation(int interp)
 {
   mono_processor_.interpolation_ = interp;
-}
-
-inline int StereoProcessor::getPreFilterSize() const
-{
-  return block_matcher_.state->preFilterSize;
-}
-
-inline void StereoProcessor::setPreFilterSize(int size)
-{
-  block_matcher_.state->preFilterSize = size;
-}
-
-inline int StereoProcessor::getPreFilterCap() const
-{
-  return block_matcher_.state->preFilterCap;
-}
-
-inline void StereoProcessor::setPreFilterCap(int cap)
-{
-  block_matcher_.state->preFilterCap = cap;
-}
-
-inline int StereoProcessor::getCorrelationWindowSize() const
-{
-  return block_matcher_.state->SADWindowSize;
-}
-
-inline void StereoProcessor::setCorrelationWindowSize(int size)
-{
-  block_matcher_.state->SADWindowSize = size;
-}
-
-inline int StereoProcessor::getMinDisparity() const
-{
-  return block_matcher_.state->minDisparity;
-}
-
-inline void StereoProcessor::setMinDisparity(int min_d)
-{
-  block_matcher_.state->minDisparity = min_d;
-}
-
-inline int StereoProcessor::getDisparityRange() const
-{
-  return block_matcher_.state->numberOfDisparities;
-}
-
-inline void StereoProcessor::setDisparityRange(int range)
-{
-  block_matcher_.state->numberOfDisparities = range;
-}
-
-inline int StereoProcessor::getTextureThreshold() const
-{
-  return block_matcher_.state->textureThreshold;
-}
-
-inline void StereoProcessor::setTextureThreshold(int threshold)
-{
-  block_matcher_.state->textureThreshold = threshold;
-}
-
-inline float StereoProcessor::getUniquenessRatio() const
-{
-  return block_matcher_.state->uniquenessRatio;
-}
-
-inline void StereoProcessor::setUniquenessRatio(float ratio)
-{
-  block_matcher_.state->uniquenessRatio = ratio;
-}
-
-inline int StereoProcessor::getSpeckleSize() const
-{
-  return block_matcher_.state->speckleWindowSize;
-}
-
-inline void StereoProcessor::setSpeckleSize(int size)
-{
-  block_matcher_.state->speckleWindowSize = size;
-}
-
-inline int StereoProcessor::getSpeckleRange() const
-{
-  return block_matcher_.state->speckleRange;
-}
-
-inline void StereoProcessor::setSpeckleRange(int range)
-{
-  block_matcher_.state->speckleRange = range;
 }
 
 } //namespace stereo_image_proc
