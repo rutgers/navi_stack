@@ -139,6 +139,28 @@ void CameraInfoToMat(CameraInfoConstPtr const &msg, cv::Mat &mint)
 	}
 }
 
+void BuildLineFilter(int x, int dim, int width, cv::Mat &ker)
+{
+	int x1 = x - width;     // falling edge, trough
+	int x2 = x - width / 2; // rising edge,  peak
+	int x3 = x + width / 2; // falling edge, peak
+	int x4 = y + width;     // rising edge,  trough
+
+	ker.create(dim, 1, CV_64F);
+	ker.setTo(0);
+
+	// Neglect pixels where the kernel hits the edge of the image.
+	if (x1 >= 0 && x4 < dim) {
+		cv::Mat lo_l = ker(cv::Range(x1, x2), cv::Range(0, 1));
+		cv::Mat lo_r = ker(cv::Range(x3, x4), cv::Range(0, 1));
+		cv::Mat hi   = ker(cv::Range(x2, x3), cv::Range(0, 1));
+
+		lo_l.setTo(-1.0);
+		lo_r.setTo(-1.0);
+		hi.setTo(+1.0);
+	}
+}
+
 void callback(ImageConstPtr const &msg_img, CameraInfoConstPtr const &msg_cam)
 {
 	// Convert ROS message formats to OpenCV data types.
@@ -186,6 +208,31 @@ void callback(ImageConstPtr const &msg_img, CameraInfoConstPtr const &msg_cam)
 	cv::Mat img_val = img_hsv[2];
 	cv::Mat white;
 	cv::min(img_sat, val, white);
+
+	// Create a filter with the below shape:
+	//
+	//        +------+        <= +v
+	//        |      |
+	// ---+   |      |   +--- <=  0
+	//    |   |      |   |
+	//    +---+      +---+    <= -v
+	//
+	// The peak is the same width as the combination of the two equal-sized
+	// throughs. This is normalized to be zero-centered (i.e. sum to zero).
+	cv::Mat img_hor(img.rows, img.cols, CV_8U);
+	cv::Mat img_ver(img.rows, img.cols, CV_8U);
+
+	for (int y = 0; y < img.rows; ++y)
+	for (int x = 0; x < img.rows; ++x) {
+		double width = GetDistSize(cv::Point2d(x, y), p_thickness, mint, p_plane);
+
+		cv::Mat ker_row, ker_col;
+		BuildLineFilter(x, img.cols, width, ker_row);
+		BuildLineFilter(y, img.rows, height, ker_col);
+
+		img_ver.at<uint8_t>(y, x) = (uint8_t)ker_row.dot(img.row(y));
+		img_ver.at<uint8_t>(y, x) = (uint8_t)ker_col.dot(img.col(x));
+	}
 }
 
 int main(int argc, char **argv)
