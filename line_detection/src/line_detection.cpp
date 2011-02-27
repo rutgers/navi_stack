@@ -233,6 +233,27 @@ void callback(ImageConstPtr const &msg_img, CameraInfoConstPtr const &msg_cam)
 		img_ver.at<uint8_t>(y, x) = (uint8_t)ker_row.dot(img.row(y));
 		img_ver.at<uint8_t>(y, x) = (uint8_t)ker_col.dot(img.col(x));
 	}
+
+	// Perform non-maximal supression in the same direction as the matched pulse-
+	// width filter, greatly reducing the amount of superflous information in the
+	// data by removing clumps.
+	std::list<cv::Point2i> maxima;
+
+	for (int y = 1; y < img.rows - 1; ++y)
+	for (int x = 1; x < img.cols - 1; ++x) {
+		uint8_t val_m = img_hor.at<uint8_t>(y, x);
+		uint8_t val_l = img_hor.at<uint8_t>(y, x - 1);
+		uint8_t val_r = img_hor.at<uint8_t>(y, x + 1);
+		uint8_t val_t = img_ver.at<uint8_t>(y - 1, x);
+		uint8_t val_b = img_ver.at<uint8_t>(y + 1, x);
+
+		bool is_hor_max = val_m > threshold && val_m > val_l && val_m > val_r;
+		bool is_ver_max = val_m > threshold && val_m > val_t && val_m > val_b;
+
+		if (is_hor_max || is_ver_max) {
+			maxima.push_back(cv::Point2i(x, y));
+		}
+	}
 }
 
 int main(int argc, char **argv)
