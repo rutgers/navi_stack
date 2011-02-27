@@ -153,11 +153,26 @@ void callback(ImageConstPtr const &msg_img, CameraInfoConstPtr const &msg_cam)
 	double width_new = 0.0;
 
 	for (int y = img.rows - 1; y >= 0 && width_new <= width_old; --y) {
-		width_new = GetDistSize(cv::Point2d(img.cols / 2, y), p_thickness,
-		                        mint, p_plane);
+		cv::Point2d mid(img.cols / 2.0, y);
+		width_new = GetDistSize(mid, p_thickness, mint, p_plane);
+		if (width_new >= width_old) break;
+
 		line_width[y] = width_new;
 		width_old     = width_new;
+
+		cv::Point2d mid_left  = mid - cv::Point2d(width_new / 2.0, 0.0);
+		cv::Point2d mid_right = mid + cv::Point2d(width_new / 2.0, 0.0);
+
+		// Render a simulated line on the image for debugging purposes.
+		cv::Point2d offset(2, 0);
+		cv::line(img, mid_left - offset,  mid_left + offset,  cv::Scalar(0, 0, 255));
+		cv::line(img, mid_right - offset, mid_right + offset, cv::Scalar(0, 0, 255));
 	}
+
+	IplImage img_old = img;
+	sensor_msgs::Image msg_out = *bridge.cvToImgMsg(&img_old);
+	msg_out.header.stamp       = msg_img->header.stamp;
+	msg_out.header.frame_id    = msg_img->header.frame_id;
 }
 
 int main(int argc, char **argv)
