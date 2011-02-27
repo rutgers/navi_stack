@@ -280,7 +280,7 @@ void callback(ImageConstPtr const &msg_img, CameraInfoConstPtr const &msg_cam)
 		pc_msg.points.push_back(pt_msg);
 	}
 
-	pub_ren.publish(msg_out);
+	pub_debug.publish(msg_out);
 	pub_pts.publish(pts_msg);
 }
 
