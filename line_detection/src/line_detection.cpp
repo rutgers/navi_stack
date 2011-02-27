@@ -5,6 +5,7 @@
 
 #include <ros/ros.h>
 #include <cv_bridge/CvBridge.h>
+#include <geometry_msgs/Point32.h>
 #include <image_geometry/pinhole_camera_model.h>
 #include <image_transport/image_transport.h>
 #include <sensor_msgs/PointCloud.h>
@@ -254,6 +255,33 @@ void callback(ImageConstPtr const &msg_img, CameraInfoConstPtr const &msg_cam)
 			maxima.push_back(cv::Point2i(x, y));
 		}
 	}
+
+	// Publish a three-dimensional point cloud in the camera frame by converting
+	// each maximum's pixel coordinates to camera coordinates using the camera's
+	// intrinsics and knowledge of the ground plane.
+	sensor_msgs::PointCloud pts_msg;
+	pts_msg.header.stamp = msg_img->header.stamp;
+	pts_msg.header.frame = msg_img->header.frame;
+
+	std::list<cv::Point2i>::const_iterator it;
+
+	for (it = maxima.begin(); it != maxima.end(); ++it) {
+		cv::Point2i pt_image(*it);
+		cv::Point3d ray, pt_world;
+
+		GetPixelRay(mint, pt_image, ray);
+		GetRayPlaneInt(ray, p_plane, pt_world);
+
+		// Convert OpenCV cv::Point into a ROS geometry_msgs::Point object.
+		geometry_msgs::Point32 pt_msg;
+		pt_msg.x = (float)pt_world.x;
+		pt_msg.y = (float)pt_world.y;
+		pt_msg.z = (float)pt_world.z;
+		pc_msg.points.push_back(pt_msg);
+	}
+
+	pub_ren.publish(msg_out);
+	pub_pts.publish(pts_msg);
 }
 
 int main(int argc, char **argv)
