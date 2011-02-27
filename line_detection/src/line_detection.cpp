@@ -173,6 +173,19 @@ void callback(ImageConstPtr const &msg_img, CameraInfoConstPtr const &msg_cam)
 	sensor_msgs::Image msg_out = *bridge.cvToImgMsg(&img_old);
 	msg_out.header.stamp       = msg_img->header.stamp;
 	msg_out.header.frame_id    = msg_img->header.frame_id;
+
+	// Convert the image into the HSV color space. White lines should have a
+	// relatively low saturation and a relatively high brightness.
+	// TODO: Find a better way of merging saturation and brightness.
+	std::vector<cv::Mat> img_chan;
+	cv::Mat img_hsv;
+	cv::cvtColor(img, img_hsv, CV_BGR2HSV);
+	cv::split(img_hsv, img_chan);
+
+	cv::Mat img_sat = 255 - img_hsv[1];
+	cv::Mat img_val = img_hsv[2];
+	cv::Mat white;
+	cv::min(img_sat, val, white);
 }
 
 int main(int argc, char **argv)
