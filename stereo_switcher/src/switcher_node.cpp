@@ -44,10 +44,10 @@ void recieve(ImageConstPtr const &msg_img0, CameraInfoConstPtr const &msg_info0,
 
 int main(int argc, char **argv)
 {
+	ros::init(argc, argv, "switcher_node");
+
 	ros::NodeHandle nh, nh_priv("~");
 	ImageTransport it(nh);
-
-	ros::init(argc, argv, "switcher_node");
 
 	// Cap the output FPS at a fixed rate.
 	double fps;
@@ -71,4 +71,6 @@ int main(int argc, char **argv)
 	                                             sub_img1, sub_info1,
 	                                             sub_img2, sub_info2, 10);
 	sub_sync.registerCallback(boost::bind(&recieve, _1, _2, _3, _4, _5, _6));
+
+	ros::spin();
 }
