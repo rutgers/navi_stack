@@ -1,0 +1,14 @@
+<package>
+	<description brief="multiplex between two baselines">
+		Use three cameras to improve stereo depth resolution by alternating
+		between a small baseline (e.g. left camera and center cameras) and a
+		large baseline (e.g. left and right cameras). Designed to be used with
+		synchronized images from the stereo_webcam node.
+	</description>
+	<author>Michael Koval</author>
+	<license>BSD</license>
+	<review status="unreviewed" notes=""/>
+	<depend package="image_transport"/>
+	<depend package="message_filters"/>
+	<depend package="sensor_msgs"/>
+</package>

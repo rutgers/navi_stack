@@ -5,7 +5,7 @@
   <review status="Doc reviewed" notes="Jan 4, 2010"/>
   <url>http://www.ros.org/wiki/stereo_image_proc</url>
   <export>
-    <cpp cflags="-I${prefix}/include" lflags="-Wl,-rpath,${prefix}/lib -L${prefix}/lib -lstereo_image_proc" />
+    <cpp cflags="-I${prefix}/include" lflags="-Wl,-rpath,${prefix}/lib -L${prefix}/lib -lstereo_image_proc_gpu"/>
   </export>
   <depend package="roscpp"/>
   <depend package="message_filters"/>
