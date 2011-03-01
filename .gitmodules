@@ -1,3 +1,6 @@
 [submodule "stereo_webcam"]
 	path = stereo_webcam
 	url = git@github.com:mkoval/stereo_webcam.git
+[submodule "hj_node"]
+	path = hj_node
+	url = https://github.com/jmesmon/hj_node.git
