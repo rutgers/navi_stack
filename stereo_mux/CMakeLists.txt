@@ -14,6 +14,6 @@ rosbuild_init()
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 
-rosbuild_add_executable(switcher_node
-	src/switcher_node.cpp
+rosbuild_add_executable(mux_node
+	src/mux_node.cpp
 )
