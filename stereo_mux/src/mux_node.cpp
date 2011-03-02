@@ -1,5 +1,6 @@
 #include <ros/ros.h>
 
+#include <camera_info_manager/camera_info_manager.h>
 #include <image_transport/image_transport.h>
 #include <message_filters/subscriber.h>
 #include <message_filters/time_synchronizer.h>
@@ -16,26 +17,36 @@ using message_filters::TimeSynchronizer;
 
 static double const def_fps = 10;
 
-static CameraPublisher pub0;
-static CameraPublisher pub1;
-static ros::Time       latest(0, 0); 
-static ros::Duration   step;
-static bool            narrow = true;
+static CameraInfoManager *man_nl, *man_nr;
+static CameraInfoManager *man_wl, *man_wr;
 
-void recieve(ImageConstPtr const &msg_img0, CameraInfoConstPtr const &msg_info0,
-             ImageConstPtr const &msg_img1, CameraInfoConstPtr const &msg_info1,
-             ImageConstPtr const &msg_img2, CameraInfoConstPtr const &msg_info2)
+static CameraPublisher pub_pl, pub_pr;
+static CameraPublisher pub_nl, pub_nr;
+static CameraPublisher pub_wl, pub_wr;
+static ros::Duration   step;
+static ros::Time       latest(0, 0); 
+static bool            narrow = false;
+
+void recieve(ImageConstPtr const &msg_left, ImageConstPtr const &msg_middle,
+             ImageConstPtr const &msg_right)
 {
 	// Limit the publishing rate to a maximum sample rate.
-	ros::Time now = msg_img0->header.stamp;
+	ros::Time now = msg_left->header.stamp;
 	if (now - latest < step) return;
 
+	// Duplicate the left camera with two sets of calibration parameters.
+	pub_nl.publish(*msg_left,   man_nl->getCameraInfo());
+	pub_nr.publish(*msg_middle, man_nr->getCameraInfo());
+	pub_wl.publish(*msg_left,   man_wl->getCameraInfo());
+	pub_wr.publish(*msg_right,  man_wr->getCameraInfo());
+
+	// Multiplex between the narrow and wide pairs of cameras.
 	if (narrow) {
-		pub0.publish(msg_img0, msg_info0);
-		pub1.publish(msg_img1, msg_info1);
+		pub_pl.publish(*msg_left,   man_nl->getCameraInfo());
+		pub_pr.publish(*msg_middle, man_nr->getCameraInfo());
 	} else {
-		pub0.publish(msg_img0, msg_info0);
-		pub1.publish(msg_img2, msg_info2);
+		pub_pl.publish(*msg_left,   man_wl->getCameraInfo());
+		pub_pr.publish(*msg_right,  man_wr->getCameraInfo());
 	}
 
 	latest = now;
@@ -47,30 +58,50 @@ int main(int argc, char **argv)
 	ros::init(argc, argv, "switcher_node");
 
 	ros::NodeHandle nh, nh_priv("~");
+	ros::NodeHandle nh_nl("narrow/left"), nh_nr("narrow/right");
+	ros::NodeHandle nh_wl("wide/left"),   nh_wr("wide/right");
 	ImageTransport it(nh);
+
+	// Use completely separate calibration parameters for the narrow and wide
+	// camera pairs even though one of the cameras is shared. This is
+	// necessary to preserve the integrity of the recitification.
+	std::string info_nl, info_nr, info_wl, info_wr;
+	nh_priv.getParam("info_nl", info_nl);
+	nh_priv.getParam("info_nr", info_nr);
+	nh_priv.getParam("info_wl", info_wl);
+	nh_priv.getParam("info_wr", info_wr);
+	
+	man_nl = new CameraInfoManager(nh_nl, "", info_nl);
+	man_nr = new CameraInfoManager(nh_nr, "", info_nr);
+	man_wl = new CameraInfoManager(nh_wl, "", info_wl);
+	man_wr = new CameraInfoManager(nh_wr, "", info_wr);
 
 	// Cap the output FPS at a fixed rate.
 	double fps;
 	nh_priv.param("fps", fps, def_fps);
 	step.fromSec(1 / fps);
 
-	// Publish "pseudo-cameras" that multiplex the available baselines.
-	pub0 = it.advertiseCamera("pseudo0/image", 10);
-	pub1 = it.advertiseCamera("pseudo1/image", 10);
+	// Publish two pairs of "pseudo-cameras" that multiplex the two available
+	// baselines.
+	pub_pl = it.advertiseCamera("pseudo/left/image_raw",  10);
+	pub_pr = it.advertiseCamera("pseudo/right/image_raw", 10);
+	pub_nl = it.advertiseCamera("narrow/left/image_raw",  10);
+	pub_nr = it.advertiseCamera("narrow/right/image_raw", 10);
+	pub_wl = it.advertiseCamera("wide/left/image_raw",    10);
+	pub_wr = it.advertiseCamera("wide/right/image_raw",   10);
 
-	// Subscribe to all synchronized images; discard one in the callback.
-	message_filters::Subscriber<Image> sub_img0(nh, "camera0/image_raw", 1);
-	message_filters::Subscriber<Image> sub_img1(nh, "camera1/image_raw", 1);
-	message_filters::Subscriber<Image> sub_img2(nh, "camera2/image_raw", 1);
-	message_filters::Subscriber<CameraInfo> sub_info0(nh, "camera0/camera_info", 1);
-	message_filters::Subscriber<CameraInfo> sub_info1(nh, "camera1/camera_info", 1);
-	message_filters::Subscriber<CameraInfo> sub_info2(nh, "camera2/camera_info", 1);
-	TimeSynchronizer<Image, CameraInfo,
-	                 Image, CameraInfo,
-	                 Image, CameraInfo> sub_sync(sub_img0, sub_info0,
-	                                             sub_img1, sub_info1,
-	                                             sub_img2, sub_info2, 10);
-	sub_sync.registerCallback(boost::bind(&recieve, _1, _2, _3, _4, _5, _6));
+	// Always subscribe to synchronized (left, middle, right) image triplets;
+	// we will handle the multiplexing entirely in the callback.
+	message_filters::Subscriber<Image> sub_left(nh, "left/image_raw", 1);
+	message_filters::Subscriber<Image> sub_middle(nh, "middle/image_raw", 1);
+	message_filters::Subscriber<Image> sub_right(nh, "right/image_raw", 1);
+	TimeSynchronizer<Image, Image, Image> sub_sync(sub_left, sub_middle, sub_right, 10);
+	sub_sync.registerCallback(boost::bind(&recieve, _1, _2, _3));
 
 	ros::spin();
+
+	delete man_nl;
+	delete man_nr;
+	delete man_wl;
+	delete man_wr;
 }

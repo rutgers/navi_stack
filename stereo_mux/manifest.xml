@@ -8,6 +8,7 @@
 	<author>Michael Koval</author>
 	<license>BSD</license>
 	<review status="unreviewed" notes=""/>
+	<depend package="camera_info_manager"/>
 	<depend package="image_transport"/>
 	<depend package="message_filters"/>
 	<depend package="sensor_msgs"/>
