@@ -1,0 +1,18 @@
+<package>
+  <description brief="navi_simulation">
+
+     navi_simulation
+
+  </description>
+  <author>asher</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/navi_simulation</url>
+  <depend package="gazebo"/>
+  <depend package="gazebo_tools"/>
+  <depend package="gazebo_plugins"/>
+  <depend package="navi_model"/>
+
+</package>
+
+
