@@ -34,19 +34,34 @@ void recieve(ImageConstPtr const &msg_left, ImageConstPtr const &msg_middle,
 	ros::Time now = msg_left->header.stamp;
 	if (now - latest < step) return;
 
+	CameraInfo info_nl = man_nl->getCameraInfo();
+	CameraInfo info_nr = man_nr->getCameraInfo();
+	CameraInfo info_wl = man_wl->getCameraInfo();
+	CameraInfo info_wr = man_wr->getCameraInfo();
+
+	// Synchronize the CameraInfo's with their respective images.
+	info_nl.header.stamp = now;
+	info_nr.header.stamp = now;
+	info_wl.header.stamp = now;
+	info_wr.header.stamp = now;
+	info_nl.header.frame_id = "stereo_link";
+	info_nr.header.frame_id = "stereo_link";
+	info_wl.header.frame_id = "stereo_link";
+	info_wr.header.frame_id = "stereo_link";
+
 	// Duplicate the left camera with two sets of calibration parameters.
-	pub_nl.publish(*msg_left,   man_nl->getCameraInfo());
-	pub_nr.publish(*msg_middle, man_nr->getCameraInfo());
-	pub_wl.publish(*msg_left,   man_wl->getCameraInfo());
-	pub_wr.publish(*msg_right,  man_wr->getCameraInfo());
+	pub_nl.publish(*msg_left,   info_nl);
+	pub_nr.publish(*msg_middle, info_nr);
+	pub_wl.publish(*msg_left,   info_wl);
+	pub_wr.publish(*msg_right,  info_wr);
 
 	// Multiplex between the narrow and wide pairs of cameras.
 	if (narrow) {
-		pub_pl.publish(*msg_left,   man_nl->getCameraInfo());
-		pub_pr.publish(*msg_middle, man_nr->getCameraInfo());
+		pub_pl.publish(*msg_left,   info_nl);
+		pub_pr.publish(*msg_middle, info_nr);
 	} else {
-		pub_pl.publish(*msg_left,   man_wl->getCameraInfo());
-		pub_pr.publish(*msg_right,  man_wr->getCameraInfo());
+		pub_pl.publish(*msg_left,   info_wl);
+		pub_pr.publish(*msg_right,  info_wr);
 	}
 
 	latest = now;
