@@ -1,0 +1,5 @@
+KERNEL=="ttyUSB[0-9]*", ATTRS{product}=="FT232R USB UART", ATTRS{serial}=="A700ekLU", SYMLINK+="motors_back" 
+
+KERNEL=="ttyUSB[0-9]*", ATTRS{product}=="FT232R USB UART", ATTRS{serial}=="A700ek5i", SYMLINK+="motors_front" 
+
+
