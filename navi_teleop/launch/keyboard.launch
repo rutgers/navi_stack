@@ -1,0 +1,9 @@
+<launch>
+
+	<node pkg="navi_teleop" type="teleop_keyboard" name="teleop_keyboard">
+		<param name="trans_vel" value="1"/>
+		<param name="angular_vel" value="2"/>
+		<param name="always_command" value="false"/>
+	</node>
+
+</launch>

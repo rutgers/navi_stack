@@ -1,0 +1,23 @@
+<package>
+  <description brief="navi_telop">
+
+     navi_telop
+
+  </description>
+  <author>Adam Stambler</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/navi_telop</url>
+  <depend package="roscpp"/>
+  <depend package="wiimote"/>
+  <depend package="joy"/>
+  <depend package="nav_msgs"/>
+  <depend package="std_msgs"/>
+
+<export>
+    <cpp cflags="-I${prefix}/include -I${prefix}/msg/cpp -I${prefix}/srv/cpp" lflags="-Wl,-rpath,${prefix}/lib -L${prefix}/lib" />
+  </export>
+
+</package>
+
+
