@@ -1,0 +1,5 @@
+<launch>
+	<include file="$(find navi_model)/launch/model_upload.launch"/>
+	
+
+</launch>
