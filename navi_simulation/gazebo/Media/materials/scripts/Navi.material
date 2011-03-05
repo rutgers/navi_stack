@@ -1,0 +1,17 @@
+
+material Navi/circle_field
+{
+	receive_shadows on
+
+	technique
+	{
+
+    // Decal pass
+		pass
+		{
+			texture_unit
+			{
+				texture circle_field.png			}
+		}
+	}
+}
