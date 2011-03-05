@@ -22,7 +22,7 @@
     </inertial>
     <visual>
       <!-- visual origin is defined w.r.t. link local coordinate system -->
-      <origin xyz=" 0 0 -0.1793875" rpy="0 0  0" />
+      <origin xyz=" 0 0 0" rpy="0 0  0" />
       <geometry name="base_link_visual_geom">
         <mesh filename="package://navi_model/meshes/base_link.stl" /> 
         <box size="0.9917 0.511175 0.358775" />
@@ -32,7 +32,7 @@
     </visual>
     <collision>
       <!-- collision origin is defined w.r.t. link local coordinate system -->
-      <origin xyz=" 0 0 -0.1793875" rpy="0 0  0" />
+      <origin xyz=" 0 0 0" rpy="0 0  0" />
       <geometry name="base_link_collision_geom">
         <!--<box size="0.29845 0.35 0.2" />-->
         <box size="0.9917 0.511175 0.358775" />
