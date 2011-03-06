@@ -21,6 +21,7 @@
 	<property name="hfov"         value="90"/>
 	<property name="fps"          value="10.0"/>
 
+	<!--
 	<link name="camera_link">
 		<inertial>
 			<mass value="0.014036"/>
@@ -29,13 +30,15 @@
 					 iyy="0.015218160428" iyz="-0.000004273467" izz="0.011763977943"/>
 		</inertial>
 	</link>
-	<gazebo reference="camera_link"/>
-	  
-	<xacro:macro name="camera" params="prefix x y z baseline">
+	-->
+	 
+	<!-- Monocular Camera -->
+	<xacro:macro name="camera" params="prefix topic x baseline">
 		<joint name="${prefix}_camera_joint" type="fixed">
 			<axis xyz="0 0 0"/>
 			<origin xyz="${x} 0 0" rpy="0 0 0"/>
-			<parent link="camera_link"/>
+			<!-- XXX: Should be camera_link -->
+			<parent link="base_footprint"/>
 			<child link="${prefix}_camera_link"/>
 		</joint>
 		
@@ -46,16 +49,6 @@
 				<inertia ixx="0.012411765597" ixy="-0.000711733678" ixz="0.00050272983"
 						 iyy="0.015218160428" iyz="-0.000004273467" izz="0.011763977943"/>
 			</inertial>
-			<visual>
-				<origin xyz="0 0 0" rpy="0 0 0" />
-				<!-- TODO: Model of the camera for Navi. -->
-				<!--
-				<geometry>
-					<mesh filename="package://piper_model/meshes/camera.stl"/>
-				</geometry>
-				-->
-				<material name="Grey"/>
-			</visual>
 			<collision>
 				<origin xyz="0 0 ${camera_height/2-camera_offset_z}" rpy="0 0 0"/>
 				<geometry>
@@ -77,8 +70,8 @@
 				<controller:gazebo_ros_camera name="${prefix}_camera_controller" plugin="libgazebo_ros_camera.so">
 					<alwaysOn>true</alwaysOn>
 					<updateRate>${fps}</updateRate>
-					<imageTopicName>${prefix}_camera/image_raw</imageTopicName>
-					<cameraInfoTopicName>${prefix}_camera/camera_info</cameraInfoTopicName>
+					<imageTopicName>${topic}/image_raw</imageTopicName>
+					<cameraInfoTopicName>${topic}/camera_info</cameraInfoTopicName>
 					<frameName>camera_link</frameName>
 					<hackBaseline>${baseline}</hackBaseline>
 					<CxPrime>${(image_width+1)/2}</CxPrime>
@@ -96,5 +89,11 @@
 				</controller:gazebo_ros_camera>
 			</sensor:camera>
 		</gazebo>
+	</xacro:macro>
+
+	<!-- Stereo Camera: Pair of monocular cameras -->
+	<xacro:macro name="stereo-camera" params="prefix topic baseline">
+		<camera prefix="${prefix}_left"  topic="${topic}/left"  x="0.0"         baseline="0.0"/>
+		<camera prefix="${prefix}_right" topic="${topic}/right" x="${baseline}" baseline="${baseline}"/>
 	</xacro:macro>
 </robot>

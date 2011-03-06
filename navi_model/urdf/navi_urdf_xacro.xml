@@ -8,8 +8,12 @@
        xmlns:xacro="http://ros.org/wiki/xacro"
        name="Navigator">
 
+	<property name="baseline_narrow" value="0.010"/>
+	<property name="baseline_wide"   value="0.020"/>
+
 	<include filename="$(find navi_model)/urdf/common_urdf_xacro.xml" />
 	<include filename="$(find navi_model)/urdf/base_urdf_xacro.xml" />
+	<include filename="$(find navi_model)/urdf/camera_urdf_xacro.xml" />
 	<include filename="$(find navi_model)/urdf/wheel_urdf_xacro.xml" />
 	   
 	<navi_base name="base"/> 
@@ -17,4 +21,7 @@
 	<wheel prefix="fr" reflect_x="1" reflect_y="-1"/>
 	<wheel prefix="br" reflect_x="-1" reflect_y="-1"/>
 	<wheel prefix="bl" reflect_x="-1" reflect_y="1"/>
- </robot>
+
+	<stereo-camera prefix="narrow" topic="vision/narrow" baseline="${baseline_narrow}"/>
+	<stereo-camera prefix="wide"   topic="vision/wide"   baseline="${baseline_wide}"/>
+</robot>
