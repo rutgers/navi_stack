@@ -6,22 +6,33 @@
        xmlns:joint="http://playerstage.sourceforge.net/gazebo/xmlschema/#slider" 
        xmlns:sensor="http://playerstage.sourceforge.net/gazebo/xmlschema/#sensor" 
        xmlns:xacro="http://ros.org/wiki/xacro">
-	<property name="M_PI" value="3.1415926535897931" />
-	<property name="camera_offset_x" value="0.144"/>
-	<property name="camera_offset_y" value="0.023813"/>
-	<property name="camera_offset_z" value = "0.0254"/>
 
-	<property name="camera_width"    value="0.03"/>
-	<property name="camera_length"   value="0.03"/>
+	<property name="M_PI" value="3.1415926535897931"/>
+
+	<!-- Position of the left camera w.r.t. the chassis --> 
+	<property name="camera_x" value="+0.300"/>
+	<property name="camera_y" value="-0.010"/>
+	<property name="camera_z" value="+0.600"/>
+
+	<!-- Dimensions of each camera for visualization -->
+	<property name="camera_width"    value="0.030"/>
+	<property name="camera_length"   value="0.030"/>
 	<property name="camera_height"   value="0.068"/>
 
+	<!-- TODO: Modify camera intrinsics to match a PS3 Eye -->
 	<property name="image_width"  value="320"/>
 	<property name="image_height" value="240"/>
 	<property name="focal_length" value="640"/>
-	<property name="hfov"         value="90"/>
+	<property name="hfov"         value="90.0"/>
 	<property name="fps"          value="10.0"/>
 
-	<!--
+	<joint name="camera_joint" type="fixed">
+		<axis xyz="0 0 0"/>
+		<origin xyz="${camera_x} ${camera_y} ${camera_z}" rpy="0 0 0"/>
+		<parent link="base_footprint"/>
+		<child link="camera_link"/>
+	</joint>
+
 	<link name="camera_link">
 		<inertial>
 			<mass value="0.014036"/>
@@ -30,15 +41,13 @@
 					 iyy="0.015218160428" iyz="-0.000004273467" izz="0.011763977943"/>
 		</inertial>
 	</link>
-	-->
 	 
 	<!-- Monocular Camera -->
 	<xacro:macro name="camera" params="prefix topic x baseline">
 		<joint name="${prefix}_camera_joint" type="fixed">
 			<axis xyz="0 0 0"/>
 			<origin xyz="${x} 0 0" rpy="0 0 0"/>
-			<!-- XXX: Should be camera_link -->
-			<parent link="base_footprint"/>
+			<parent link="camera_link"/>
 			<child link="${prefix}_camera_link"/>
 		</joint>
 		
@@ -49,12 +58,6 @@
 				<inertia ixx="0.012411765597" ixy="-0.000711733678" ixz="0.00050272983"
 						 iyy="0.015218160428" iyz="-0.000004273467" izz="0.011763977943"/>
 			</inertial>
-			<collision>
-				<origin xyz="0 0 ${camera_height/2-camera_offset_z}" rpy="0 0 0"/>
-				<geometry>
-					<box size="${camera_length} ${camera_width} ${camera_height}"/>
-				</geometry>
-			</collision>
 		</link>
 		 
 		<gazebo reference="${prefix}_camera_link">
