@@ -11,10 +11,10 @@
   <property name="M_PI" value="3.1415926535897931" />
 
       
- <xacro:macro name="piper_base" params="name">
+ <xacro:macro name="navi_base" params="name">
   <link name="base_link">
     <inertial>
-      <mass value="4.5" />
+      <mass value="46" />
       <!-- center of mass (com) is defined w.r.t. link local coordinate system -->
       <origin xyz="0 0 0" /> 
 
@@ -22,20 +22,20 @@
     </inertial>
     <visual>
       <!-- visual origin is defined w.r.t. link local coordinate system -->
-      <origin xyz=" 0 0 0" rpy="0 0  0" />
+      <origin xyz=" 0 0 -0.1793875" rpy="0 0  0" />
       <geometry name="base_link_visual_geom">
-         <mesh filename="package://piper_model/meshes/base_assembly.stl" /> 
-        <box size="0.29845 0.35 0.2" />
+        <mesh filename="package://navi_model/meshes/base_link.stl" /> 
+        <box size="0.9917 0.511175 0.358775" />
       </geometry>
     <material name="Blue"/> 
 	
     </visual>
     <collision>
       <!-- collision origin is defined w.r.t. link local coordinate system -->
-      <origin xyz="0 0 .2" rpy="0 0 0 " />
+      <origin xyz=" 0 0 -0.1793875" rpy="0 0  0" />
       <geometry name="base_link_collision_geom">
         <!--<box size="0.29845 0.35 0.2" />-->
-        <box size="0.001 0.001 0.001" />
+        <box size="0.9917 0.511175 0.358775" />
       </geometry>
     </collision>
   </link>
@@ -53,7 +53,6 @@
         <origin xyz="0 0 0"/>
         <inertia ixx="0.01" ixy="0.0" ixz="0.0" iyy="0.01" iyz="0.0" izz="0.01"/>
       </inertial>
-      
       <visual>
         <origin rpy="0 0 0" xyz="0 0 0"/>
         <geometry>
@@ -74,15 +73,12 @@
     </link>
     
    <joint name="base_footprint_joint" type="fixed">
-      <origin rpy="0 0 0" xyz="0 0 0.08"/>
+      <origin rpy="0 0 0" xyz="0 0 0.485775"/>
       <child link="base_link"/>
       <parent link="base_footprint"/>
   </joint>
- 
-
  </xacro:macro>
-       
-
-       
+      
+      
  </robot>
     

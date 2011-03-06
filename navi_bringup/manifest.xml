@@ -1,0 +1,15 @@
+<package>
+  <description brief="navi_bringup">
+
+     navi_bringup
+
+  </description>
+  <author>asher</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/navi_bringup</url>
+  <depend package="navi_model"/>
+
+</package>
+
+
