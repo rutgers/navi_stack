@@ -1,0 +1,4 @@
+<launch>
+	<include file="$(find navi_bringup)/launch/basic.launch"/>
+	<include file="$(find stereo_webcam)/launch/navi_hardware.launch"/>
+</launch>
