@@ -11,7 +11,6 @@
    <include filename="$(find navi_model)/urdf/common_urdf_xacro.xml" />
    <include filename="$(find navi_model)/urdf/base_urdf_xacro.xml" />
    <include filename="$(find navi_model)/urdf/wheel_urdf_xacro.xml" />
-
        
 <navi_base name="base"/> 
 <wheel prefix="fl" reflect_x="1" reflect_y="1"/>
