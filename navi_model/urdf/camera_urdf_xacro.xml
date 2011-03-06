@@ -1,0 +1,100 @@
+<?xml version="1.0"?>
+<robot xmlns:body="http://playerstage.sourceforge.net/gazebo/xmlschema/#body" 
+       xmlns:controller="http://playerstage.sourceforge.net/gazebo/xmlschema/#controller"
+       xmlns:geom="http://playerstage.sourceforge.net/gazebo/xmlschema/#geom" 
+       xmlns:interface="http://playerstage.sourceforge.net/gazebo/xmlschema/#interface" 
+       xmlns:joint="http://playerstage.sourceforge.net/gazebo/xmlschema/#slider" 
+       xmlns:sensor="http://playerstage.sourceforge.net/gazebo/xmlschema/#sensor" 
+       xmlns:xacro="http://ros.org/wiki/xacro">
+	<property name="M_PI" value="3.1415926535897931" />
+	<property name="camera_offset_x" value="0.144"/>
+	<property name="camera_offset_y" value="0.023813"/>
+	<property name="camera_offset_z" value = "0.0254"/>
+
+	<property name="camera_width"    value="0.03"/>
+	<property name="camera_length"   value="0.03"/>
+	<property name="camera_height"   value="0.068"/>
+
+	<property name="image_width"  value="320"/>
+	<property name="image_height" value="240"/>
+	<property name="focal_length" value="640"/>
+	<property name="hfov"         value="90"/>
+	<property name="fps"          value="10.0"/>
+
+	<link name="camera_link">
+		<inertial>
+			<mass value="0.014036"/>
+			<origin xyz="0 0 0"/>
+			<inertia ixx="0.012411765597" ixy="-0.000711733678" ixz="0.00050272983"
+					 iyy="0.015218160428" iyz="-0.000004273467" izz="0.011763977943"/>
+		</inertial>
+	</link>
+	<gazebo reference="camera_link"/>
+	  
+	<xacro:macro name="camera" params="prefix x y z baseline">
+		<joint name="${prefix}_camera_joint" type="fixed">
+			<axis xyz="0 0 0"/>
+			<origin xyz="${x} 0 0" rpy="0 0 0"/>
+			<parent link="camera_link"/>
+			<child link="${prefix}_camera_link"/>
+		</joint>
+		
+		<link name="${prefix}_camera_link">
+			<inertial>
+				<mass value="0.044036"/>
+				<origin xyz="${x} 0 0"/>
+				<inertia ixx="0.012411765597" ixy="-0.000711733678" ixz="0.00050272983"
+						 iyy="0.015218160428" iyz="-0.000004273467" izz="0.011763977943"/>
+			</inertial>
+			<visual>
+				<origin xyz="0 0 0" rpy="0 0 0" />
+				<!-- TODO: Model of the camera for Navi. -->
+				<!--
+				<geometry>
+					<mesh filename="package://piper_model/meshes/camera.stl"/>
+				</geometry>
+				-->
+				<material name="Grey"/>
+			</visual>
+			<collision>
+				<origin xyz="0 0 ${camera_height/2-camera_offset_z}" rpy="0 0 0"/>
+				<geometry>
+					<box size="${camera_length} ${camera_width} ${camera_height}"/>
+				</geometry>
+			</collision>
+		</link>
+		 
+		<gazebo reference="${prefix}_camera_link">
+			<material>Gazebo/Grey</material>
+
+			<sensor:camera name="${prefix}_camera_sensor">
+				<imageSize>${image_width} ${image_height}</imageSize>
+				<imageFormat>R8G8B8</imageFormat>
+				<hfov>${hfov}</hfov>
+				<nearClip>.1</nearClip>
+				<farClip>100</farClip>
+				<updateRate>${fps}</updateRate>
+				<controller:gazebo_ros_camera name="${prefix}_camera_controller" plugin="libgazebo_ros_camera.so">
+					<alwaysOn>true</alwaysOn>
+					<updateRate>${fps}</updateRate>
+					<imageTopicName>${prefix}_camera/image_raw</imageTopicName>
+					<cameraInfoTopicName>${prefix}_camera/camera_info</cameraInfoTopicName>
+					<frameName>camera_link</frameName>
+					<hackBaseline>${baseline}</hackBaseline>
+					<CxPrime>${(image_width+1)/2}</CxPrime>
+					<Cx>${(image_width+1)/2}</Cx>
+					<Cy>${(image_height+1)/2}</Cy>
+					<!-- image_width / (2*tan(hfov_radian /2)) -->
+					<!-- 320 for wide and 772.55 for narrow stereo camera -->
+					<focal_length>${focal_length}</focal_length>
+					<distortion_k1>0.00000001</distortion_k1>
+					<distortion_k2>0.00000001</distortion_k2>
+					<distortion_k3>0.00000001</distortion_k3>
+					<distortion_t1>0.00000001</distortion_t1>
+					<distortion_t2>0.00000001</distortion_t2>
+					<interface:camera name="${prefix}_camera_iface" />
+				</controller:gazebo_ros_camera>
+			</sensor:camera>
+		</gazebo>
+	</xacro:macro>
+</robot>

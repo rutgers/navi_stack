@@ -1,23 +1,20 @@
 <?xml version="1.0"?>
-<robot  xmlns:body="http://playerstage.sourceforge.net/gazebo/xmlschema/#body" 
- xmlns:controller="http://playerstage.sourceforge.net/gazebo/xmlschema/#controller"
- xmlns:geom="http://playerstage.sourceforge.net/gazebo/xmlschema/#geom" 
- xmlns:interface="http://playerstage.sourceforge.net/gazebo/xmlschema/#interface" 
- xmlns:joint="http://playerstage.sourceforge.net/gazebo/xmlschema/#slider" 
- xmlns:sensor="http://playerstage.sourceforge.net/gazebo/xmlschema/#sensor" 
- xmlns:xacro="http://ros.org/wiki/xacro"
-      name = "Navigator" >
- 
-   <include filename="$(find navi_model)/urdf/common_urdf_xacro.xml" />
-   <include filename="$(find navi_model)/urdf/base_urdf_xacro.xml" />
-   <include filename="$(find navi_model)/urdf/wheel_urdf_xacro.xml" />
-       
-<navi_base name="base"/> 
-<wheel prefix="fl" reflect_x="1" reflect_y="1"/>
-<wheel prefix="fr" reflect_x="1" reflect_y="-1"/>
-<wheel prefix="br" reflect_x="-1" reflect_y="-1"/>
-<wheel prefix="bl" reflect_x="-1" reflect_y="1"/>
+<robot xmlns:body="http://playerstage.sourceforge.net/gazebo/xmlschema/#body" 
+       xmlns:controller="http://playerstage.sourceforge.net/gazebo/xmlschema/#controller"
+       xmlns:geom="http://playerstage.sourceforge.net/gazebo/xmlschema/#geom" 
+       xmlns:interface="http://playerstage.sourceforge.net/gazebo/xmlschema/#interface" 
+       xmlns:joint="http://playerstage.sourceforge.net/gazebo/xmlschema/#slider" 
+       xmlns:sensor="http://playerstage.sourceforge.net/gazebo/xmlschema/#sensor" 
+       xmlns:xacro="http://ros.org/wiki/xacro"
+       name="Navigator">
 
-    
+	<include filename="$(find navi_model)/urdf/common_urdf_xacro.xml" />
+	<include filename="$(find navi_model)/urdf/base_urdf_xacro.xml" />
+	<include filename="$(find navi_model)/urdf/wheel_urdf_xacro.xml" />
+	   
+	<navi_base name="base"/> 
+	<wheel prefix="fl" reflect_x="1" reflect_y="1"/>
+	<wheel prefix="fr" reflect_x="1" reflect_y="-1"/>
+	<wheel prefix="br" reflect_x="-1" reflect_y="-1"/>
+	<wheel prefix="bl" reflect_x="-1" reflect_y="1"/>
  </robot>
-    
