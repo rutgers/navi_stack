@@ -10,9 +10,9 @@
 	<property name="M_PI" value="3.1415926535897931"/>
 
 	<!-- Position of the left camera w.r.t. the chassis --> 
-	<property name="camera_x" value="+0.300"/>
-	<property name="camera_y" value="-0.010"/>
-	<property name="camera_z" value="+0.600"/>
+	<property name="camera_x" value="0.43815"/>
+	<property name="camera_y" value="0.079121"/>
+	<property name="camera_z" value="0.0127"/>
 
 	<!-- Dimensions of each camera for visualization -->
 	<property name="camera_width"    value="0.030"/>
@@ -29,7 +29,7 @@
 	<joint name="camera_joint" type="fixed">
 		<axis xyz="0 0 0"/>
 		<origin xyz="${camera_x} ${camera_y} ${camera_z}" rpy="0 0 0"/>
-		<parent link="base_footprint"/>
+		<parent link="base_link"/>
 		<child link="camera_link"/>
 	</joint>
 
@@ -40,13 +40,28 @@
 			<inertia ixx="0.012411765597" ixy="-0.000711733678" ixz="0.00050272983"
 					 iyy="0.015218160428" iyz="-0.000004273467" izz="0.011763977943"/>
 		</inertial>
+		<visual>
+				<!-- visual origin is defined w.r.t. link local coordinate system -->
+		<origin xyz=" 0 0 0" rpy="0 0 0"/>
+			<geometry name="base_link_visual_geom">
+					<box size=".2 .05 0.05"/>
+			</geometry>
+		<material name="Blue"/> 
+		</visual>
+		<collision>
+				<!-- collision origin is defined w.r.t. link local coordinate system -->
+		<origin xyz=" 0 0 0" rpy="0 0 0"/>
+			<geometry name="base_link_collision_geom">
+					<box size=".2 .05 0.05"/>
+			</geometry>
+		</collision>
 	</link>
 	 
 	<!-- Monocular Camera -->
-	<xacro:macro name="camera" params="prefix topic x baseline">
+	<xacro:macro name="camera" params="prefix topic y baseline">
 		<joint name="${prefix}_camera_joint" type="fixed">
 			<axis xyz="0 0 0"/>
-			<origin xyz="${x} 0 0" rpy="0 0 0"/>
+			<origin xyz="0 ${y} 0" rpy="0 0 0"/>
 			<parent link="camera_link"/>
 			<child link="${prefix}_camera_link"/>
 		</joint>
@@ -54,7 +69,7 @@
 		<link name="${prefix}_camera_link">
 			<inertial>
 				<mass value="0.044036"/>
-				<origin xyz="${x} 0 0"/>
+				<origin xyz="0 ${y} 0"/>
 				<inertia ixx="0.012411765597" ixy="-0.000711733678" ixz="0.00050272983"
 						 iyy="0.015218160428" iyz="-0.000004273467" izz="0.011763977943"/>
 			</inertial>
@@ -96,7 +111,7 @@
 
 	<!-- Stereo Camera: Pair of monocular cameras -->
 	<xacro:macro name="stereo-camera" params="prefix topic baseline">
-		<camera prefix="${prefix}_left"  topic="${topic}/left"  x="0.0"         baseline="0.0"/>
-		<camera prefix="${prefix}_right" topic="${topic}/right" x="${baseline}" baseline="${baseline}"/>
+		<camera prefix="${prefix}_left"  topic="${topic}/left"  y="0.0"         baseline="0.0"/>
+		<camera prefix="${prefix}_right" topic="${topic}/right" y="${baseline}" baseline="${baseline}"/>
 	</xacro:macro>
 </robot>
