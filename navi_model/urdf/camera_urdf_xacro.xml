@@ -41,18 +41,16 @@
 					 iyy="0.015218160428" iyz="-0.000004273467" izz="0.011763977943"/>
 		</inertial>
 		<visual>
-				<!-- visual origin is defined w.r.t. link local coordinate system -->
-		<origin xyz=" 0 0 0" rpy="0 0 0"/>
-			<geometry name="base_link_visual_geom">
+			<origin xyz=" 0 0 0" rpy="0 0 0"/>
+				<geometry name="base_link_visual_geom">
 					<box size=".2 .05 0.05"/>
-			</geometry>
-		<material name="Blue"/> 
+				</geometry>
+			<material name="Blue"/> 
 		</visual>
 		<collision>
-				<!-- collision origin is defined w.r.t. link local coordinate system -->
-		<origin xyz=" 0 0 0" rpy="0 0 0"/>
+			<origin xyz=" 0 0 0" rpy="0 0 0"/>
 			<geometry name="base_link_collision_geom">
-					<box size=".2 .05 0.05"/>
+				<box size=".2 .05 0.05"/>
 			</geometry>
 		</collision>
 	</link>
@@ -71,7 +69,7 @@
 				<mass value="0.044036"/>
 				<origin xyz="0 ${y} 0"/>
 				<inertia ixx="0.012411765597" ixy="-0.000711733678" ixz="0.00050272983"
-						 iyy="0.015218160428" iyz="-0.000004273467" izz="0.011763977943"/>
+				         iyy="0.015218160428" iyz="-0.000004273467" izz="0.011763977943"/>
 			</inertial>
 		</link>
 		 
