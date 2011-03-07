@@ -5,13 +5,28 @@ material Navi/circle_field
 
 	technique
 	{
-
-    // Decal pass
 		pass
 		{
 			texture_unit
 			{
-				texture circle_field.png			}
+				texture circle_field.png
+			}
+		}
+	}
+}
+
+material Navi/nav_field
+{
+	receive_shadows on
+
+	technique
+	{
+		pass
+		{
+			texture_unit
+			{
+				texture nav_field.jpg
+			}
 		}
 	}
 }
