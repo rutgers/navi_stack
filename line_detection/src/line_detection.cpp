@@ -147,8 +147,8 @@ void BuildLineFilter(int x, int dim, int width, cv::Mat &ker)
 	int x3 = x + width / 2; // falling edge, peak
 	int x4 = x + width;     // rising edge,  trough
 
-	ker.create(dim, 1, CV_64F);
-	ker.setTo(0);
+	ker.create(dim, 1, CV_64FC1);
+	ker.setTo(0.0);
 
 	// Neglect pixels where the kernel hits the edge of the image.
 	if (x1 >= 0 && x4 < dim) {
@@ -207,8 +207,11 @@ void callback(ImageConstPtr const &msg_img, CameraInfoConstPtr const &msg_cam)
 
 	cv::Mat img_sat = 255 - img_chan[1];
 	cv::Mat img_val = img_chan[2];
+
 	cv::Mat white;
-	cv::min(img_sat, img_val, white);
+	cv::Mat white_tmp;
+	cv::min(img_sat, img_val, white_tmp);
+	white_tmp.convertTo(white, CV_64FC1);
 
 	// Create a filter with the below shape:
 	//
@@ -220,19 +223,19 @@ void callback(ImageConstPtr const &msg_img, CameraInfoConstPtr const &msg_cam)
 	//
 	// The peak is the same width as the combination of the two equal-sized
 	// throughs. This is normalized to be zero-centered (i.e. sum to zero).
-	cv::Mat img_hor(img.rows, img.cols, CV_8U);
-	cv::Mat img_ver(img.rows, img.cols, CV_8U);
+	cv::Mat img_hor(img.rows, img.cols, CV_64FC1);
+	cv::Mat img_ver(img.rows, img.cols, CV_64FC1);
 
 	for (int y = 0; y < img.rows; ++y)
-	for (int x = 0; x < img.rows; ++x) {
+	for (int x = 0; x < img.cols; ++x) {
 		double width = GetDistSize(cv::Point2d(x, y), p_thickness, mint, p_plane);
 
 		cv::Mat ker_row, ker_col;
 		BuildLineFilter(x, img.cols, width, ker_row);
 		BuildLineFilter(y, img.rows, width, ker_col);
 
-		img_ver.at<uint8_t>(y, x) = (uint8_t)ker_row.dot(img.row(y));
-		img_ver.at<uint8_t>(y, x) = (uint8_t)ker_col.dot(img.col(x));
+		img_hor.at<double>(y, x) = ker_row.t().dot(white.row(y));
+		img_ver.at<double>(y, x) = ker_col.dot(white.col(x));
 	}
 
 	// Perform non-maximal supression in the same direction as the matched pulse-
@@ -281,7 +284,7 @@ void callback(ImageConstPtr const &msg_img, CameraInfoConstPtr const &msg_cam)
 		pts_msg.points.push_back(pt_msg);
 	}
 
-	pub_debug.publish(msg_out);
+	//pub_debug.publish(msg_out);
 	pub_pts.publish(pts_msg);
 }
 
