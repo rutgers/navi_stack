@@ -5,15 +5,18 @@
 #include <opencv/cv.h>
 
 #include <ros/ros.h>
-#include <cv_bridge/CvBridge.h>
+#include <cv_bridge/cv_bridge.h>
 #include <geometry_msgs/PointStamped.h>
 #include <geometry_msgs/Vector3Stamped.h>
 #include <image_geometry/pinhole_camera_model.h>
 #include <image_transport/image_transport.h>
 #include <sensor_msgs/PointCloud.h>
+#include <sensor_msgs/image_encodings.h>
 #include <tf/transform_listener.h>
 
 #define DEBUG
+
+namespace image_encodings = sensor_msgs::image_encodings;
 
 using geometry_msgs::PointStamped;
 using geometry_msgs::Vector3Stamped;
@@ -27,8 +30,6 @@ struct Plane {
 	cv::Point3d normal;
 	cv::Point3d point;
 };
-
-static sensor_msgs::CvBridge bridge;
 
 static CameraSubscriber sub_cam;
 static ros::Publisher   pub_pts;
@@ -174,7 +175,16 @@ void BuildLineFilter(int x, int dim, int width, cv::Mat &ker)
 void callback(ImageConstPtr const &msg_img, CameraInfoConstPtr const &msg_cam)
 {
 	// Convert ROS message formats to OpenCV data types.
-	cv::Mat img = bridge.imgMsgToCv(msg_img, "bgr8");
+	// TODO: Verify the incoming message's frame_id.
+	cv_bridge::CvImagePtr img_ptr;
+	try {
+		img_ptr = cv_bridge::toCvCopy(msg_img, image_encodings::BGR8);
+	} catch (cv_bridge::Exception &e) {
+		ROS_ERROR_THROTTLE(10, "%s", e.what());
+		return;
+	}
+
+	cv::Mat &img = img_ptr->image;
 	cv::Mat mint;
 	CameraInfoToMat(msg_cam, mint);
 
@@ -290,12 +300,12 @@ void callback(ImageConstPtr const &msg_img, CameraInfoConstPtr const &msg_cam)
 		cv::line(img_debug, mid_right - offset, mid_right + offset, cv::Scalar(0, 0, 255));
 	}
 
-	IplImage img_old = img_debug;
-	sensor_msgs::Image msg_debug = *bridge.cvToImgMsg(&img_old);
-	msg_debug.header.stamp       = msg_img->header.stamp;
-	msg_debug.header.frame_id    = msg_img->header.frame_id;
-
-	pub_debug.publish(msg_debug);
+	cv_bridge::CvImage msg_debug;
+	msg_debug.header.stamp    = msg_img->header.stamp;
+	msg_debug.header.frame_id = msg_img->header.frame_id;
+	msg_debug.encoding = image_encodings::BGR8;
+	msg_debug.image    = img_debug;
+	pub_debug.publish(msg_debug.toImageMsg());
 #endif
 }
 
