@@ -13,6 +13,8 @@
 #include <sensor_msgs/PointCloud.h>
 #include <tf/transform_listener.h>
 
+#define DEBUG
+
 using geometry_msgs::PointStamped;
 using geometry_msgs::Vector3Stamped;
 using image_transport::CameraSubscriber;
@@ -176,34 +178,6 @@ void callback(ImageConstPtr const &msg_img, CameraInfoConstPtr const &msg_cam)
 	cv::Mat mint;
 	CameraInfoToMat(msg_cam, mint);
 
-	// Calculate the expected width of a line in each row of the image. Stop
-	// at the horizon line by detecting an increase in pixel width.
-	std::vector<double> line_width(img.rows, 0.0);
-	double width_old = INFINITY;
-	double width_new = 0.0;
-
-	for (int y = img.rows - 1; y >= 0 && width_new <= width_old; --y) {
-		cv::Point2d mid(img.cols / 2.0, y);
-		width_new = GetDistSize(mid, p_thickness, mint, plane);
-		if (width_new >= width_old) break;
-
-		line_width[y] = width_new;
-		width_old     = width_new;
-
-		cv::Point2d mid_left  = mid - cv::Point2d(width_new / 2.0, 0.0);
-		cv::Point2d mid_right = mid + cv::Point2d(width_new / 2.0, 0.0);
-
-		// Render a simulated line on the image for debugging purposes.
-		cv::Point2d offset(2, 0);
-		cv::line(img, mid_left - offset,  mid_left + offset,  cv::Scalar(0, 0, 255));
-		cv::line(img, mid_right - offset, mid_right + offset, cv::Scalar(0, 0, 255));
-	}
-
-	IplImage img_old = img;
-	sensor_msgs::Image msg_out = *bridge.cvToImgMsg(&img_old);
-	msg_out.header.stamp       = msg_img->header.stamp;
-	msg_out.header.frame_id    = msg_img->header.frame_id;
-
 	// Convert the image into the HSV color space. White lines should have a
 	// relatively low saturation and a relatively high brightness.
 	// TODO: Find a better way of merging saturation and brightness.
@@ -291,8 +265,38 @@ void callback(ImageConstPtr const &msg_img, CameraInfoConstPtr const &msg_cam)
 		pts_msg.points.push_back(pt_msg);
 	}
 
-	//pub_debug.publish(msg_out);
 	pub_pts.publish(pts_msg);
+
+#ifdef DEBUG
+	// Calculate the expected width of a line in each row of the image. Stop
+	// at the horizon line by detecting an increase in pixel width.
+	double width_old = INFINITY;
+	double width_new = 0.0;
+
+	cv::Mat img_debug = img.clone();
+
+	for (int y = img.rows - 1; y >= 0 && width_new <= width_old; --y) {
+		cv::Point2d mid(img.cols / 2.0, y);
+		width_new = GetDistSize(mid, p_thickness, mint, plane);
+		if (width_new >= width_old) break;
+		width_old = width_new;
+
+		cv::Point2d mid_left  = mid - cv::Point2d(width_new / 2.0, 0.0);
+		cv::Point2d mid_right = mid + cv::Point2d(width_new / 2.0, 0.0);
+
+		// Render a simulated line on the image for debugging purposes.
+		cv::Point2d offset(2, 0);
+		cv::line(img_debug, mid_left - offset,  mid_left + offset,  cv::Scalar(0, 0, 255));
+		cv::line(img_debug, mid_right - offset, mid_right + offset, cv::Scalar(0, 0, 255));
+	}
+
+	IplImage img_old = img_debug;
+	sensor_msgs::Image msg_debug = *bridge.cvToImgMsg(&img_old);
+	msg_debug.header.stamp       = msg_img->header.stamp;
+	msg_debug.header.frame_id    = msg_img->header.frame_id;
+
+	pub_debug.publish(msg_debug);
+#endif
 }
 
 void GuessGroundPlane(std::string fr_gnd, std::string fr_cam, Plane &plane)
