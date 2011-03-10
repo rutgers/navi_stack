@@ -33,7 +33,10 @@ struct Plane {
 
 static CameraSubscriber sub_cam;
 static ros::Publisher   pub_pts;
-static ros::Publisher   pub_debug;
+
+#ifdef DEBUG
+static image_transport::Publisher pub_debug;
+#endif
 
 static std::string p_frame_ground;
 static std::string p_frame_camera;
@@ -431,8 +434,12 @@ int main(int argc, char **argv)
 	nh.param<std::string>("frame_camera", p_frame_camera, "/narrow_left_camera_link");
 
 	image_transport::ImageTransport it(nh);
-	sub_cam = it.subscribeCamera("image", 1, &callback);
-	pub_pts = nh.advertise<sensor_msgs::PointCloud>("line_points", 10);
+	sub_cam   = it.subscribeCamera("image", 1, &callback);
+	pub_pts   = nh.advertise<sensor_msgs::PointCloud>("line_points", 10);
+
+#ifdef DEBUG
+	pub_debug = it.advertise("line_debug", 10);
+#endif
 
 	// Estimate the ground plane using the base_footprint tf frame.
 	GuessGroundPlane(p_frame_ground, p_frame_camera, plane);
