@@ -5,11 +5,15 @@
 
 #include <ros/ros.h>
 #include <cv_bridge/CvBridge.h>
-#include <geometry_msgs/Point32.h>
+#include <geometry_msgs/PointStamped.h>
+#include <geometry_msgs/Vector3Stamped.h>
 #include <image_geometry/pinhole_camera_model.h>
 #include <image_transport/image_transport.h>
 #include <sensor_msgs/PointCloud.h>
+#include <tf/transform_listener.h>
 
+using geometry_msgs::PointStamped;
+using geometry_msgs::Vector3Stamped;
 using image_transport::CameraSubscriber;
 using sensor_msgs::CameraInfoConstPtr;
 using sensor_msgs::ImageConstPtr;
@@ -288,6 +292,50 @@ void callback(ImageConstPtr const &msg_img, CameraInfoConstPtr const &msg_cam)
 	pub_pts.publish(pts_msg);
 }
 
+void GuessGroundPlane(std::string fr_gnd, std::string fr_cam, Plane &plane)
+{
+	tf::TransformListener listener;
+
+	// Assume the origin of the base_footprint frame is on the ground plane.
+	PointStamped point_gnd, point_cam;
+	point_gnd.header.stamp    = ros::Time::now();
+	point_gnd.header.frame_id = fr_gnd;
+	point_gnd.point.x = 0.0;
+	point_gnd.point.y = 0.0;
+	point_gnd.point.z = 0.0;
+
+	// Assume the positive z-axis of the base_footprint frame is "up", implying
+	// that it is normal to the ground plane.
+	Vector3Stamped normal_gnd, normal_cam;
+	normal_gnd.header.stamp    = ros::Time::now();
+	normal_gnd.header.frame_id = fr_gnd;
+	normal_gnd.vector.x = 0.0;
+	normal_gnd.vector.y = 0.0;
+	normal_gnd.vector.z = 1.0;
+
+	for (;;) {
+		try {
+			listener.transformPoint(fr_cam, point_gnd, point_cam);
+			listener.transformVector(fr_cam, normal_gnd, normal_cam);
+			break;
+		} catch (tf::TransformException ex) {
+			ROS_ERROR("%s", ex.what());
+		}
+	}
+
+	// Convert from a StampedVector to the OpenCV data type.
+	plane.point.x  = point_cam.point.x;
+	plane.point.y  = point_cam.point.y;
+	plane.point.z  = point_cam.point.z;
+	plane.normal.x = normal_cam.vector.x;
+	plane.normal.y = normal_cam.vector.y;
+	plane.normal.z = normal_cam.vector.z;
+
+	ROS_DEBUG("guessed ground plane P(%3f, %3f, %3f) N(%3f, %3f, %3f)",
+	          plane.point.x,  plane.point.y,  plane.point.z,
+	          plane.normal.x, plane.normal.y, plane.normal.z);
+}
+
 int main(int argc, char **argv)
 {
 	ros::init(argc, argv, "line_detection");
@@ -300,6 +348,9 @@ int main(int argc, char **argv)
 	image_transport::ImageTransport it(nh);
 	sub_cam = it.subscribeCamera("image", 1, &callback);
 	pub_pts = nh.advertise<sensor_msgs::PointCloud>("line_points", 10);
+
+	// Estimate the ground plane using the robot's URDF.
+	GuessGroundPlane("/base_footprint", "/camera_link", p_plane);
 
 	ros::spin();
 	return 0;

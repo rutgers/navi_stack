@@ -11,4 +11,5 @@
 	<depend package="image_geometry"/>
 	<depend package="image_transport"/>
 	<depend package="opencv2"/>
+	<depend package="tf"/>
 </package>
