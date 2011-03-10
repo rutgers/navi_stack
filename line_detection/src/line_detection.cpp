@@ -319,10 +319,11 @@ void GuessGroundPlane(std::string fr_gnd, std::string fr_cam, Plane &plane)
 			listener.transformVector(fr_cam, normal_gnd, normal_cam);
 			break;
 		} catch (tf::TransformException ex) {
-			ROS_ERROR("%s", ex.what());
+			// TODO: Does ROS_DEBUG_THROTTLE look at the message contents when
+			//       deciding when to throttle messages?
+			ROS_ERROR_THROTTLE(30, "%s", ex.what());
 		}
 	}
-
 	// Convert from a StampedVector to the OpenCV data type.
 	plane.point.x  = point_cam.point.x;
 	plane.point.y  = point_cam.point.y;
