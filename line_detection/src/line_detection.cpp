@@ -4,6 +4,7 @@
 
 #include <opencv/cv.h>
 
+#include <ros/console.h>
 #include <ros/ros.h>
 #include <cv_bridge/cv_bridge.h>
 #include <geometry_msgs/PointStamped.h>
@@ -55,6 +56,9 @@ static Plane  plane;
  */
 void GetPixelRay(cv::Mat mint, cv::Point2i pt, cv::Point3d &dst)
 {
+	ROS_ASSERT(mint.rows == 3 && mint.cols == 3);
+	ROS_ASSERT(mint.type() == CV_64FC1);
+
 	// Convert the image coordinates into a homogenous coordinate system.
 	cv::Mat p_img(3, 1, CV_64FC1);
 	p_img.at<double>(0, 0) = pt.x;
@@ -113,6 +117,9 @@ void GetRayPlaneInt(cv::Point3d ray, Plane plane, cv::Point3d &dst)
  */
 double GetDistSize(cv::Point2d pt0, double dist, cv::Mat mint, Plane plane)
 {
+	ROS_ASSERT(mint.rows == 3 && mint.cols == 3);
+	ROS_ASSERT(mint.type() == CV_64FC1);
+
 	// Find the world coordiante of the point on the plane corresponding to
 	// the given pixel coordinates in the image.
 	cv::Point3d ray, pt0_world;
@@ -183,6 +190,10 @@ void CameraInfoToMat(CameraInfoConstPtr const &msg, cv::Mat &mint)
  */
 void BuildLineFilter(int x, int dim, int width, cv::Mat &ker)
 {
+	ROS_ASSERT(0 <= x && x < dim);
+	ROS_ASSERT(0 < width && 2 * width < dim);
+	ROS_ASSERT(dim > 0);
+
 	int x1 = x - width;     // falling edge, trough
 	int x2 = x - width / 2; // rising edge,  peak
 	int x3 = x + width / 2; // falling edge, peak
@@ -218,6 +229,11 @@ void BuildLineFilter(int x, int dim, int width, cv::Mat &ker)
 void LineFilter(cv::Mat src, cv::Mat &dst_hor, cv::Mat &dst_ver, cv::Mat mint,
                 Plane plane, double thick)
 {
+	ROS_ASSERT(mint.rows == 3 && mint.cols == 3);
+	ROS_ASSERT(mint.type() == CV_64FC1);
+	ROS_ASSERT(src.type() == CV_64FC1);
+	ROS_ASSERT(thick > 0);
+
 	cv::Mat img_hor(src.rows, src.cols, CV_64FC1);
 	cv::Mat img_ver(src.rows, src.cols, CV_64FC1);
 	cv::Mat ker_row, ker_col;
@@ -252,6 +268,9 @@ void LineFilter(cv::Mat src, cv::Mat &dst_hor, cv::Mat &dst_ver, cv::Mat mint,
 void FindMaxima(cv::Mat src_hor, cv::Mat src_ver, std::list<cv::Point2i> &dst,
                 double threshold)
 {
+	ROS_ASSERT(src_hor.rows == src_ver.rows && src_hor.cols == src_ver.cols);
+	ROS_ASSERT(src_hor.type() == CV_64FC1 && src_ver.type() == CV_64FC1);
+
 	for (int y = 1; y < src_hor.rows - 1; ++y)
 	for (int x = 1; x < src_hor.cols - 1; ++x) {
 		uint8_t val_hor = src_hor.at<uint8_t>(y, x);
@@ -279,6 +298,8 @@ void FindMaxima(cv::Mat src_hor, cv::Mat src_ver, std::list<cv::Point2i> &dst,
  */
 void LineColorTransform(cv::Mat src, cv::Mat &dst)
 {
+	ROS_ASSERT(src.type() == CV_8UC3);
+
 	// Convert to the HSV color space to get saturation and intensity.
 	std::vector<cv::Mat> img_chan;
 	cv::Mat img_hsv;
