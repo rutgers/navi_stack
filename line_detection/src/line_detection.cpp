@@ -1,4 +1,5 @@
 #include <cmath>
+#include <string>
 #include <vector>
 
 #include <opencv/cv.h>
@@ -31,9 +32,11 @@ static CameraSubscriber sub_cam;
 static ros::Publisher   pub_pts;
 static ros::Publisher   pub_debug;
 
+static std::string p_frame_ground;
+static std::string p_frame_camera;
 static double p_thickness;
 static double p_threshold;
-static Plane  p_plane;
+static Plane  plane;
 
 /**
  * Solves for the ray that starts at the camera center and passes through a
@@ -181,7 +184,7 @@ void callback(ImageConstPtr const &msg_img, CameraInfoConstPtr const &msg_cam)
 
 	for (int y = img.rows - 1; y >= 0 && width_new <= width_old; --y) {
 		cv::Point2d mid(img.cols / 2.0, y);
-		width_new = GetDistSize(mid, p_thickness, mint, p_plane);
+		width_new = GetDistSize(mid, p_thickness, mint, plane);
 		if (width_new >= width_old) break;
 
 		line_width[y] = width_new;
@@ -232,7 +235,7 @@ void callback(ImageConstPtr const &msg_img, CameraInfoConstPtr const &msg_cam)
 
 	for (int y = 0; y < img.rows; ++y)
 	for (int x = 0; x < img.cols; ++x) {
-		double width = GetDistSize(cv::Point2d(x, y), p_thickness, mint, p_plane);
+		double width = GetDistSize(cv::Point2d(x, y), p_thickness, mint, plane);
 
 		cv::Mat ker_row, ker_col;
 		BuildLineFilter(x, img.cols, width, ker_row);
@@ -278,7 +281,7 @@ void callback(ImageConstPtr const &msg_img, CameraInfoConstPtr const &msg_cam)
 		cv::Point3d ray, pt_world;
 
 		GetPixelRay(mint, pt_image, ray);
-		GetRayPlaneInt(ray, p_plane, pt_world);
+		GetRayPlaneInt(ray, plane, pt_world);
 
 		// Convert OpenCV cv::Point into a ROS geometry_msgs::Point object.
 		geometry_msgs::Point32 pt_msg;
@@ -332,9 +335,9 @@ void GuessGroundPlane(std::string fr_gnd, std::string fr_cam, Plane &plane)
 	plane.normal.y = normal_cam.vector.y;
 	plane.normal.z = normal_cam.vector.z;
 
-	ROS_DEBUG("guessed ground plane P(%3f, %3f, %3f) N(%3f, %3f, %3f)",
-	          plane.point.x,  plane.point.y,  plane.point.z,
-	          plane.normal.x, plane.normal.y, plane.normal.z);
+	ROS_INFO("guessed ground plane P(%3f, %3f, %3f) N(%3f, %3f, %3f)",
+	         plane.point.x,  plane.point.y,  plane.point.z,
+	         plane.normal.x, plane.normal.y, plane.normal.z);
 }
 
 int main(int argc, char **argv)
@@ -342,16 +345,17 @@ int main(int argc, char **argv)
 	ros::init(argc, argv, "line_detection");
 	ros::NodeHandle nh;
 
-	// TODO: Populate p_plane from either messages or parameters.
-	nh.param("thickness", p_thickness, 0.0726);
-	nh.param("threshold", p_threshold, 0.0400);
+	nh.param<double>("thickness", p_thickness, 0.0726);
+	nh.param<double>("threshold", p_threshold, 0.0400);
+	nh.param<std::string>("frame_ground", p_frame_ground, "/base_footprint");
+	nh.param<std::string>("frame_camera", p_frame_camera, "/narrow_left_camera_link");
 
 	image_transport::ImageTransport it(nh);
 	sub_cam = it.subscribeCamera("image", 1, &callback);
 	pub_pts = nh.advertise<sensor_msgs::PointCloud>("line_points", 10);
 
-	// Estimate the ground plane using the robot's URDF.
-	GuessGroundPlane("/base_footprint", "/camera_link", p_plane);
+	// Estimate the ground plane using the base_footprint tf frame.
+	GuessGroundPlane(p_frame_ground, p_frame_camera, plane);
 
 	ros::spin();
 	return 0;
