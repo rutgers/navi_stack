@@ -200,6 +200,28 @@ void BuildLineFilter(int x, int dim, int width, cv::Mat &ker)
 	}
 }
 
+void LineFilter(cv::Mat src, cv::Mat &dst_hor, cv::Mat &dst_ver, cv::Mat mint,
+                Plane plane, double thick)
+{
+	cv::Mat img_hor(src.rows, src.cols, CV_64FC1);
+	cv::Mat img_ver(src.rows, src.cols, CV_64FC1);
+	cv::Mat ker_row, ker_col;
+
+	dst_hor.create(src.rows, src.cols, CV_64FC1);
+	dst_ver.create(src.rows, src.cols, CV_64FC1);
+
+	for (int y = 0; y < src.rows; ++y)
+	for (int x = 0; x < src.cols; ++x) {
+		double width = GetDistSize(cv::Point2d(x, y), thick, mint, plane);
+
+		BuildLineFilter(x, src.cols, width, ker_row);
+		BuildLineFilter(y, src.rows, width, ker_col);
+
+		img_hor.at<double>(y, x) = ker_row.t().dot(src.row(y));
+		img_ver.at<double>(y, x) = ker_col.dot(src.col(x));
+	}
+}
+
 void callback(ImageConstPtr const &msg_img, CameraInfoConstPtr const &msg_cam)
 {
 	// Convert ROS message formats to OpenCV data types.
@@ -234,20 +256,8 @@ void callback(ImageConstPtr const &msg_img, CameraInfoConstPtr const &msg_cam)
 
 	// Filter the image using a matched pulse-width filter. See the
 	// BuildLineFilter() helper function for an in-depth description.
-	cv::Mat img_hor(img.rows, img.cols, CV_64FC1);
-	cv::Mat img_ver(img.rows, img.cols, CV_64FC1);
-
-	for (int y = 0; y < img.rows; ++y)
-	for (int x = 0; x < img.cols; ++x) {
-		double width = GetDistSize(cv::Point2d(x, y), p_thickness, mint, plane);
-
-		cv::Mat ker_row, ker_col;
-		BuildLineFilter(x, img.cols, width, ker_row);
-		BuildLineFilter(y, img.rows, width, ker_col);
-
-		img_hor.at<double>(y, x) = ker_row.t().dot(white.row(y));
-		img_ver.at<double>(y, x) = ker_col.dot(white.col(x));
-	}
+	cv::Mat img_hor, img_ver;
+	LineFilter(img, img_hor, img_ver, mint, plane, p_thickness);
 
 	// Perform non-maximal supression in the same direction as the matched pulse-
 	// width filter, greatly reducing the amount of superflous information in the
