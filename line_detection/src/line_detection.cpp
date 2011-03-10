@@ -200,6 +200,18 @@ void BuildLineFilter(int x, int dim, int width, cv::Mat &ker)
 	}
 }
 
+/**
+ * Filter a grayscale image along each row and column using a matched
+ * pulse-width filter centered at each pixel. See BuildLineFilter() for an
+ * in-depth description of the pulse-width filter.
+ *
+ * \param src input grayscale image
+ * \param dst_hor   horizontally filtered output image
+ * \param dst_ver   vertically filtered output image
+ * \param mint      intrinsic camera matrix
+ * \param plane     ground plane in the camera's coordinate frame
+ * \param thick     line thickness in real-world coordinates
+ */
 void LineFilter(cv::Mat src, cv::Mat &dst_hor, cv::Mat &dst_ver, cv::Mat mint,
                 Plane plane, double thick)
 {
