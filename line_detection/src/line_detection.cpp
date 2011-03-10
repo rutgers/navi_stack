@@ -137,6 +137,7 @@ double GetDistSize(cv::Point2d pt0, double dist, cv::Mat mint, Plane plane)
  * Extracts the intrinsic matrix from a ROS CameraInfo message into an OpenCV
  * matrix object. This should be replaced by an operation in CvBridge, if
  * equivalent functionality is added.
+*
  * \param msg  CameraInfo message
  * \param mint output intrinsic camera parameters
  */
@@ -150,6 +151,33 @@ void CameraInfoToMat(CameraInfoConstPtr const &msg, cv::Mat &mint)
 	}
 }
 
+/**
+ * Construct a pulse-width filter tailored to the desired width with the
+ * following shape:
+ *
+ *        /  0 : 0       <= x < c - w
+ *        | -1 : c - w   <= x < c - w/2
+ * f(x) = | +1 : c - w/2 <= x < c + w/2
+ *        | -1 : c + w/2 <= x < c + w
+ *        \  0 : c + w   <= x,
+ *
+ * where $c$ is the filter's center and $w$ is its pulse width. Graphically,
+ * this looks like:
+ *
+ *        +------+        <= +1
+ *        |      |
+ * ---+   |      |   +--- <=  0
+ *    |   |      |   |
+ *    +---+      +---+    <= -1
+ *
+ * Note that the filter is constructed such that it will have a zero response
+ * on regions of solid color (i.e. the kernel elements sum to zero).
+ *
+ * \param x     filter center
+ * \param dim   width of the image to be filtered, in pixels
+ * \param width filter width
+ * \param ker   output parameter for the kernel
+ */
 void BuildLineFilter(int x, int dim, int width, cv::Mat &ker)
 {
 	int x1 = x - width;     // falling edge, trough
@@ -204,16 +232,8 @@ void callback(ImageConstPtr const &msg_img, CameraInfoConstPtr const &msg_cam)
 	cv::min(img_sat, img_val, white_tmp);
 	white_tmp.convertTo(white, CV_64FC1);
 
-	// Create a filter with the below shape:
-	//
-	//        +------+        <= +v
-	//        |      |
-	// ---+   |      |   +--- <=  0
-	//    |   |      |   |
-	//    +---+      +---+    <= -v
-	//
-	// The peak is the same width as the combination of the two equal-sized
-	// throughs. This is normalized to be zero-centered (i.e. sum to zero).
+	// Filter the image using a matched pulse-width filter. See the
+	// BuildLineFilter() helper function for an in-depth description.
 	cv::Mat img_hor(img.rows, img.cols, CV_64FC1);
 	cv::Mat img_ver(img.rows, img.cols, CV_64FC1);
 
