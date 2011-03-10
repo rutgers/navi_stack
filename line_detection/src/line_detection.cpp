@@ -234,22 +234,34 @@ void LineFilter(cv::Mat src, cv::Mat &dst_hor, cv::Mat &dst_ver, cv::Mat mint,
 	}
 }
 
+/**
+ * Perform non-maximal supression to reduce the amount of superfluous
+ * information in a grayscale image. This simulaneously performs non-maximal
+ * supression on horizontally and vertically filtered images to avoid duplicate
+ * maxima. Designed to directly accept the output of LineFilter() with no
+ * modifications.
+ *
+ * \param src_hor   horizontally filtered image
+ * \param src_ver   vertically filtered image
+ * \param dst       output parameter; list of local maxima
+ * \param threshold minimum value acceptable for a maximum
+ */
 void FindMaxima(cv::Mat src_hor, cv::Mat src_ver, std::list<cv::Point2i> &dst,
                 double threshold)
 {
 	for (int y = 1; y < src_hor.rows - 1; ++y)
 	for (int x = 1; x < src_hor.cols - 1; ++x) {
-		uint8_t val_m = src_hor.at<uint8_t>(y, x);
+		uint8_t val_hor = src_hor.at<uint8_t>(y, x);
+		uint8_t val_ver = src_hor.at<uint8_t>(y, x);
 		uint8_t val_l = src_hor.at<uint8_t>(y, x - 1);
 		uint8_t val_r = src_hor.at<uint8_t>(y, x + 1);
 		uint8_t val_t = src_ver.at<uint8_t>(y - 1, x);
 		uint8_t val_b = src_ver.at<uint8_t>(y + 1, x);
 
-		bool is_threshold = val_m > threshold;
-		bool is_hor_max   = val_m > val_l && val_m > val_r;
-		bool is_ver_max   = val_m > val_t && val_m > val_b;
+		bool is_hor = val_hor > val_l && val_hor > val_r && val_hor > threshold;
+		bool is_ver = val_ver > val_t && val_ver > val_b && val_ver > threshold;
 
-		if (is_threshold || is_hor_max || is_ver_max) {
+		if (is_hor || is_ver) {
 			dst.push_back(cv::Point2i(x, y));
 		}
 	}
