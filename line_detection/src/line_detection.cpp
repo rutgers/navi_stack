@@ -299,24 +299,16 @@ void callback(ImageConstPtr const &msg_img, CameraInfoConstPtr const &msg_cam)
 	cv::min(img_sat, img_val, white_tmp);
 	white_tmp.convertTo(white, CV_64FC1);
 
-	// Filter the image using a matched pulse-width filter. See the
-	// BuildLineFilter() helper function for an in-depth description.
+	// Find local maxima in the response of a matched pulse-width filter.
+	std::list<cv::Point2i> maxima;
 	cv::Mat img_hor, img_ver;
 	LineFilter(img, img_hor, img_ver, mint, plane, p_thickness);
-
-	// Perform non-maximal supression in the same direction as the matched pulse-
-	// width filter, greatly reducing the amount of superflous information in the
-	// data by removing clumps.
-	std::list<cv::Point2i> maxima;
 	FindMaxima(img_hor, img_ver, maxima, p_threshold);
 
 	// Publish a three-dimensional point cloud in the camera frame by converting
 	// each maximum's pixel coordinates to camera coordinates using the camera's
 	// intrinsics and knowledge of the ground plane.
 	sensor_msgs::PointCloud pts_msg;
-	pts_msg.header.stamp    = msg_img->header.stamp;
-	pts_msg.header.frame_id = msg_img->header.frame_id;
-
 	std::list<cv::Point2i>::const_iterator it;
 
 	for (it = maxima.begin(); it != maxima.end(); ++it) {
@@ -334,6 +326,8 @@ void callback(ImageConstPtr const &msg_img, CameraInfoConstPtr const &msg_cam)
 		pts_msg.points.push_back(pt_msg);
 	}
 
+	pts_msg.header.stamp    = msg_img->header.stamp;
+	pts_msg.header.frame_id = msg_img->header.frame_id;
 	pub_pts.publish(pts_msg);
 
 #ifdef DEBUG
