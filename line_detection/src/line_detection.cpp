@@ -267,6 +267,32 @@ void FindMaxima(cv::Mat src_hor, cv::Mat src_ver, std::list<cv::Point2i> &dst,
 	}
 }
 
+/**
+ * Transform a color 8-bit BGR image into a grayscale image where regions of
+ * white are over-emphasized. Note that the input of this function is of type
+ * CV_8U and the output it CV_64F (for future computations).
+ * \param src color input image, 8-bit BGR
+ * \param dst grayscale output image, 64-bit
+ */
+void LineColorTransform(cv::Mat src, cv::Mat &dst)
+{
+	// Convert to the HSV color space to get saturation and intensity.
+	std::vector<cv::Mat> img_chan;
+	cv::Mat img_hsv;
+	cv::cvtColor(src, img_hsv, CV_BGR2HSV);
+	cv::split(img_hsv, img_chan);
+
+	// Find bright (i.e. high intensity) regions of little color (i.e. low
+	// saturation) using the minimum operator.
+	// TODO: Find a better way of doing this transformation.
+	cv::Mat img_sat = 255 - img_chan[1];
+	cv::Mat img_val = img_chan[2];
+	cv::Mat dst_8u;
+
+	cv::min(img_sat, img_val, dst_8u);
+	dst_8u.convertTo(dst, CV_64FC1);
+}
+
 void callback(ImageConstPtr const &msg_img, CameraInfoConstPtr const &msg_cam)
 {
 	// Convert ROS message formats to OpenCV data types.
@@ -279,30 +305,17 @@ void callback(ImageConstPtr const &msg_img, CameraInfoConstPtr const &msg_cam)
 		return;
 	}
 
-	cv::Mat &img = img_ptr->image;
+	cv::Mat &img_input = img_ptr->image;
 	cv::Mat mint;
 	CameraInfoToMat(msg_cam, mint);
 
-	// Convert the image into the HSV color space. White lines should have a
-	// relatively low saturation and a relatively high brightness.
-	// TODO: Find a better way of merging saturation and brightness.
-	std::vector<cv::Mat> img_chan;
-	cv::Mat img_hsv;
-	cv::cvtColor(img, img_hsv, CV_BGR2HSV);
-	cv::split(img_hsv, img_chan);
-
-	cv::Mat img_sat = 255 - img_chan[1];
-	cv::Mat img_val = img_chan[2];
-
 	cv::Mat white;
-	cv::Mat white_tmp;
-	cv::min(img_sat, img_val, white_tmp);
-	white_tmp.convertTo(white, CV_64FC1);
 
 	// Find local maxima in the response of a matched pulse-width filter.
 	std::list<cv::Point2i> maxima;
-	cv::Mat img_hor, img_ver;
-	LineFilter(img, img_hor, img_ver, mint, plane, p_thickness);
+	cv::Mat img_white, img_hor, img_ver;
+	LineColorTransform(img_input, img_white);
+	LineFilter(img_white, img_hor, img_ver, mint, plane, p_thickness);
 	FindMaxima(img_hor, img_ver, maxima, p_threshold);
 
 	// Publish a three-dimensional point cloud in the camera frame by converting
@@ -336,10 +349,10 @@ void callback(ImageConstPtr const &msg_img, CameraInfoConstPtr const &msg_cam)
 	double width_old = INFINITY;
 	double width_new = 0.0;
 
-	cv::Mat img_debug = img.clone();
+	cv::Mat img_debug = img_input.clone();
 
-	for (int y = img.rows - 1; y >= 0 && width_new <= width_old; --y) {
-		cv::Point2d mid(img.cols / 2.0, y);
+	for (int y = img_debug.rows - 1; y >= 0 && width_new <= width_old; --y) {
+		cv::Point2d mid(img_debug.cols / 2.0, y);
 		width_new = GetDistSize(mid, p_thickness, mint, plane);
 		if (width_new >= width_old) break;
 		width_old = width_new;
