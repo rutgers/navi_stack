@@ -454,7 +454,7 @@ int main(int argc, char **argv)
 	nh.param<double>("thickness", p_thickness, 0.0726);
 	nh.param<double>("threshold", p_threshold, 0.0400);
 	nh.param<std::string>("frame_ground", p_frame_ground, "/base_footprint");
-	nh.param<std::string>("frame_camera", p_frame_camera, "/narrow_left_camera_link");
+	nh.param<std::string>("frame_camera", p_frame_camera, "/camera_link");
 
 	image_transport::ImageTransport it(nh);
 	sub_cam   = it.subscribeCamera("image", 1, &callback);
