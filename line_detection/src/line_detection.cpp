@@ -43,7 +43,6 @@ static std::string p_frame_ground;
 static std::string p_frame_camera;
 static double p_thickness;
 static double p_threshold;
-static Plane  plane;
 
 /**
  * Solves for the ray that starts at the camera center and passes through a
@@ -317,7 +316,43 @@ void LineColorTransform(cv::Mat src, cv::Mat &dst)
 	dst_8u.convertTo(dst, CV_64FC1);
 }
 
-#include <opencv/highgui.h>
+bool GuessGroundPlane(std::string fr_gnd, std::string fr_cam, Plane &plane)
+{
+	tf::TransformListener listener;
+
+	// Assume the origin of the base_footprint frame is on the ground plane.
+	PointStamped point_gnd, point_cam;
+	point_gnd.header.stamp    = ros::Time::now();
+	point_gnd.header.frame_id = fr_gnd;
+	point_gnd.point.x = 0.0;
+	point_gnd.point.y = 0.0;
+	point_gnd.point.z = 0.0;
+
+	// Assume the positive z-axis of the base_footprint frame is "up", implying
+	// that it is normal to the ground plane.
+	Vector3Stamped normal_gnd, normal_cam;
+	normal_gnd.header.stamp    = ros::Time::now();
+	normal_gnd.header.frame_id = fr_gnd;
+	normal_gnd.vector.x = 0.0;
+	normal_gnd.vector.y = 0.0;
+	normal_gnd.vector.z = 1.0;
+
+	try {
+		listener.transformPoint(fr_cam, point_gnd, point_cam);
+		listener.transformVector(fr_cam, normal_gnd, normal_cam);
+	} catch (tf::TransformException ex) {
+		return false;
+	}
+
+	// Convert from a StampedVector to the OpenCV data type.
+	plane.point.x  = point_cam.point.x;
+	plane.point.y  = point_cam.point.y;
+	plane.point.z  = point_cam.point.z;
+	plane.normal.x = normal_cam.vector.x;
+	plane.normal.y = normal_cam.vector.y;
+	plane.normal.z = normal_cam.vector.z;
+	return true;
+}
 
 void callback(ImageConstPtr const &msg_img, CameraInfoConstPtr const &msg_cam)
 {
@@ -330,10 +365,19 @@ void callback(ImageConstPtr const &msg_img, CameraInfoConstPtr const &msg_cam)
 		ROS_ERROR_THROTTLE(10, "%s", e.what());
 		return;
 	}
-
 	cv::Mat &img_input = img_ptr->image;
 	cv::Mat mint;
 	CameraInfoToMat(msg_cam, mint);
+
+	// Estimate the ground plane using the /base_footprint tf frame.
+	Plane plane;
+	bool plane_valid = GuessGroundPlane(p_frame_ground, p_frame_camera, plane);
+
+	if (!plane_valid) {
+		ROS_ERROR_THROTTLE(30, "unable to transform from %s and %s",
+		                   p_frame_ground.c_str(), p_frame_camera.c_str());
+		return;
+	}
 
 	cv::Mat white;
 
@@ -400,52 +444,6 @@ void callback(ImageConstPtr const &msg_img, CameraInfoConstPtr const &msg_cam)
 	pub_debug.publish(msg_debug.toImageMsg());
 #endif
 }
-
-void GuessGroundPlane(std::string fr_gnd, std::string fr_cam, Plane &plane)
-{
-	tf::TransformListener listener;
-
-	// Assume the origin of the base_footprint frame is on the ground plane.
-	PointStamped point_gnd, point_cam;
-	point_gnd.header.stamp    = ros::Time::now();
-	point_gnd.header.frame_id = fr_gnd;
-	point_gnd.point.x = 0.0;
-	point_gnd.point.y = 0.0;
-	point_gnd.point.z = 0.0;
-
-	// Assume the positive z-axis of the base_footprint frame is "up", implying
-	// that it is normal to the ground plane.
-	Vector3Stamped normal_gnd, normal_cam;
-	normal_gnd.header.stamp    = ros::Time::now();
-	normal_gnd.header.frame_id = fr_gnd;
-	normal_gnd.vector.x = 0.0;
-	normal_gnd.vector.y = 0.0;
-	normal_gnd.vector.z = 1.0;
-
-	for (;;) {
-		try {
-			listener.transformPoint(fr_cam, point_gnd, point_cam);
-			listener.transformVector(fr_cam, normal_gnd, normal_cam);
-			break;
-		} catch (tf::TransformException ex) {
-			// TODO: Does ROS_DEBUG_THROTTLE look at the message contents when
-			//       deciding when to throttle messages?
-			ROS_ERROR_THROTTLE(30, "%s", ex.what());
-		}
-	}
-	// Convert from a StampedVector to the OpenCV data type.
-	plane.point.x  = point_cam.point.x;
-	plane.point.y  = point_cam.point.y;
-	plane.point.z  = point_cam.point.z;
-	plane.normal.x = normal_cam.vector.x;
-	plane.normal.y = normal_cam.vector.y;
-	plane.normal.z = normal_cam.vector.z;
-
-	ROS_INFO("guessed ground plane P(%3f, %3f, %3f) N(%3f, %3f, %3f)",
-	         plane.point.x,  plane.point.y,  plane.point.z,
-	         plane.normal.x, plane.normal.y, plane.normal.z);
-}
-
 int main(int argc, char **argv)
 {
 	ros::init(argc, argv, "line_detection");
@@ -463,9 +461,6 @@ int main(int argc, char **argv)
 #ifdef DEBUG
 	pub_debug = it.advertise("line_debug", 10);
 #endif
-
-	// Estimate the ground plane using the base_footprint tf frame.
-	GuessGroundPlane(p_frame_ground, p_frame_camera, plane);
 
 	ros::spin();
 	return 0;
