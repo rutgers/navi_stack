@@ -317,6 +317,8 @@ void LineColorTransform(cv::Mat src, cv::Mat &dst)
 	dst_8u.convertTo(dst, CV_64FC1);
 }
 
+#include <opencv/highgui.h>
+
 void callback(ImageConstPtr const &msg_img, CameraInfoConstPtr const &msg_cam)
 {
 	// Convert ROS message formats to OpenCV data types.
@@ -393,7 +395,7 @@ void callback(ImageConstPtr const &msg_img, CameraInfoConstPtr const &msg_cam)
 	cv_bridge::CvImage msg_debug;
 	msg_debug.header.stamp    = msg_img->header.stamp;
 	msg_debug.header.frame_id = msg_img->header.frame_id;
-	msg_debug.encoding = image_encodings::BGR8;
+	msg_debug.encoding = image_encodings::RGB8;
 	msg_debug.image    = img_debug;
 	pub_debug.publish(msg_debug.toImageMsg());
 #endif
