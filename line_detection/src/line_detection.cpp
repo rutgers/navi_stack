@@ -39,8 +39,7 @@ static ros::Publisher   pub_pts;
 static image_transport::Publisher pub_debug;
 #endif
 
-static std::string p_frame_ground;
-static std::string p_frame_camera;
+static std::string p_frame;
 static double p_thickness;
 static double p_threshold;
 
@@ -356,30 +355,29 @@ bool GuessGroundPlane(std::string fr_gnd, std::string fr_cam, Plane &plane)
 
 void callback(ImageConstPtr const &msg_img, CameraInfoConstPtr const &msg_cam)
 {
+	// Estimate the ground plane using the /base_footprint tf frame.
+	Plane plane;
+	std::string ground_id = p_frame;
+	std::string camera_id = msg_img->header.frame_id;
+	bool plane_valid      = GuessGroundPlane(ground_id, camera_id, plane);
+
+	if (!plane_valid) {
+		ROS_ERROR_THROTTLE(30, "unable to transform frames %s and %s",
+		                   ground_id.c_str(), camera_id.c_str());
+		return;
+	}
+
 	// Convert ROS message formats to OpenCV data types.
-	// TODO: Verify the incoming message's frame_id.
 	cv_bridge::CvImagePtr img_ptr;
 	try {
 		img_ptr = cv_bridge::toCvCopy(msg_img, image_encodings::BGR8);
 	} catch (cv_bridge::Exception &e) {
-		ROS_ERROR_THROTTLE(10, "%s", e.what());
+		ROS_ERROR_THROTTLE(30, "%s", e.what());
 		return;
 	}
 	cv::Mat &img_input = img_ptr->image;
 	cv::Mat mint;
 	CameraInfoToMat(msg_cam, mint);
-
-	// Estimate the ground plane using the /base_footprint tf frame.
-	Plane plane;
-	bool plane_valid = GuessGroundPlane(p_frame_ground, p_frame_camera, plane);
-
-	if (!plane_valid) {
-		ROS_ERROR_THROTTLE(30, "unable to transform from %s and %s",
-		                   p_frame_ground.c_str(), p_frame_camera.c_str());
-		return;
-	}
-
-	cv::Mat white;
 
 	// Find local maxima in the response of a matched pulse-width filter.
 	std::list<cv::Point2i> maxima;
@@ -451,12 +449,11 @@ int main(int argc, char **argv)
 
 	nh.param<double>("thickness", p_thickness, 0.0726);
 	nh.param<double>("threshold", p_threshold, 0.0400);
-	nh.param<std::string>("frame_ground", p_frame_ground, "/base_footprint");
-	nh.param<std::string>("frame_camera", p_frame_camera, "/camera_link");
+	nh.param<std::string>("frame", p_frame, "/base_footprint");
 
 	image_transport::ImageTransport it(nh);
-	sub_cam   = it.subscribeCamera("image", 1, &callback);
-	pub_pts   = nh.advertise<sensor_msgs::PointCloud>("line_points", 10);
+	sub_cam = it.subscribeCamera("image", 1, &callback);
+	pub_pts = nh.advertise<sensor_msgs::PointCloud>("line_points", 10);
 
 #ifdef DEBUG
 	pub_debug = it.advertise("line_debug", 10);
