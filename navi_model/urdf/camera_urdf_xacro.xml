@@ -28,7 +28,7 @@
 
 	<joint name="camera_joint" type="fixed">
 		<axis xyz="0 0 0"/>
-		<origin xyz="${camera_x} ${camera_y} ${camera_z}" rpy="0 0 0"/>
+		<origin xyz="${camera_x} ${camera_y} ${camera_z}" rpy="1.5707963267948966 3.14 1.5707963267948966"/>
 		<parent link="base_link"/>
 		<child link="camera_link"/>
 	</joint>
@@ -56,10 +56,9 @@
 	</link>
 	 
 	<!-- Monocular Camera -->
-	<xacro:macro name="camera" params="prefix topic y baseline">
+	<xacro:macro name="camera" params="prefix topic x baseline">
 		<joint name="${prefix}_camera_joint" type="fixed">
-			<axis xyz="0 0 0"/>
-			<origin xyz="0 ${y} 0" rpy="0 0 0"/>
+			<origin xyz="${x} 0 0" rpy="1.5707963267948966 -1.5707963267948966 0"/>
 			<parent link="camera_link"/>
 			<child link="${prefix}_camera_link"/>
 		</joint>
@@ -67,7 +66,7 @@
 		<link name="${prefix}_camera_link">
 			<inertial>
 				<mass value="0.044036"/>
-				<origin xyz="0 ${y} 0"/>
+				<origin xyz="0 0 0"/>
 				<inertia ixx="0.012411765597" ixy="-0.000711733678" ixz="0.00050272983"
 				         iyy="0.015218160428" iyz="-0.000004273467" izz="0.011763977943"/>
 			</inertial>
@@ -109,7 +108,7 @@
 
 	<!-- Stereo Camera: Pair of monocular cameras -->
 	<xacro:macro name="stereo-camera" params="prefix topic baseline">
-		<camera prefix="${prefix}_left"  topic="${topic}/left"  y="0.0"         baseline="0.0"/>
-		<camera prefix="${prefix}_right" topic="${topic}/right" y="${baseline}" baseline="${baseline}"/>
+		<camera prefix="${prefix}_left"  topic="${topic}/left"  x="0.0"         baseline="0.0"/>
+		<camera prefix="${prefix}_right" topic="${topic}/right" x="${baseline}" baseline="${baseline}"/>
 	</xacro:macro>
 </robot>
