@@ -34,6 +34,7 @@ struct Plane {
 
 static CameraSubscriber sub_cam;
 static ros::Publisher   pub_pts;
+static tf::TransformListener *listener;
 
 #ifdef DEBUG
 static image_transport::Publisher pub_debug;
@@ -42,6 +43,7 @@ static image_transport::Publisher pub_debug;
 static std::string p_frame;
 static double p_thickness;
 static double p_threshold;
+
 
 /**
  * Solves for the ray that starts at the camera center and passes through a
@@ -189,13 +191,13 @@ void CameraInfoToMat(CameraInfoConstPtr const &msg, cv::Mat &mint)
 void BuildLineFilter(int x, int dim, int width, cv::Mat &ker)
 {
 	ROS_ASSERT(0 <= x && x < dim);
-	ROS_ASSERT(0 < width && 2 * width < dim);
+	//ROS_ASSERT(0 < width && width < dim / 2);
 	ROS_ASSERT(dim > 0);
 
-	int x1 = x - width;     // falling edge, trough
-	int x2 = x - width / 2; // rising edge,  peak
-	int x3 = x + width / 2; // falling edge, peak
-	int x4 = x + width;     // rising edge,  trough
+	int x1 = MAX(x - width,     0);       // falling edge, trough
+	int x2 = MAX(x - width / 2, 0);       // rising edge,  peak
+	int x3 = MIN(x + width / 2, dim - 1); // falling edge, peak
+	int x4 = MIN(x + width,     dim - 1); // rising edge,  trough
 
 	ker.create(dim, 1, CV_64FC1);
 	ker.setTo(0.0);
@@ -244,9 +246,9 @@ void LineFilter(cv::Mat src, cv::Mat &dst_hor, cv::Mat &dst_ver, cv::Mat mint,
 		double width = GetDistSize(cv::Point2d(x, y), thick, mint, plane);
 
 		BuildLineFilter(x, src.cols, width, ker_row);
-		BuildLineFilter(y, src.rows, width, ker_col);
-
 		img_hor.at<double>(y, x) = ker_row.t().dot(src.row(y));
+
+		BuildLineFilter(y, src.rows, width, ker_col);
 		img_ver.at<double>(y, x) = ker_col.dot(src.col(x));
 	}
 }
@@ -315,13 +317,11 @@ void LineColorTransform(cv::Mat src, cv::Mat &dst)
 	dst_8u.convertTo(dst, CV_64FC1);
 }
 
-bool GuessGroundPlane(std::string fr_gnd, std::string fr_cam, Plane &plane)
+void GuessGroundPlane(std::string fr_gnd, std::string fr_cam, Plane &plane)
 {
-	tf::TransformListener listener;
-
 	// Assume the origin of the base_footprint frame is on the ground plane.
 	PointStamped point_gnd, point_cam;
-	point_gnd.header.stamp    = ros::Time::now();
+	point_gnd.header.stamp    = ros::Time(0);
 	point_gnd.header.frame_id = fr_gnd;
 	point_gnd.point.x = 0.0;
 	point_gnd.point.y = 0.0;
@@ -330,18 +330,15 @@ bool GuessGroundPlane(std::string fr_gnd, std::string fr_cam, Plane &plane)
 	// Assume the positive z-axis of the base_footprint frame is "up", implying
 	// that it is normal to the ground plane.
 	Vector3Stamped normal_gnd, normal_cam;
-	normal_gnd.header.stamp    = ros::Time::now();
+	normal_gnd.header.stamp    = ros::Time(0);
 	normal_gnd.header.frame_id = fr_gnd;
 	normal_gnd.vector.x = 0.0;
 	normal_gnd.vector.y = 0.0;
 	normal_gnd.vector.z = 1.0;
 
-	try {
-		listener.transformPoint(fr_cam, point_gnd, point_cam);
-		listener.transformVector(fr_cam, normal_gnd, normal_cam);
-	} catch (tf::TransformException ex) {
-		return false;
-	}
+	// These may throw a tf::TransformException.
+	listener->transformPoint(fr_cam, point_gnd, point_cam);
+	listener->transformVector(fr_cam, normal_gnd, normal_cam);
 
 	// Convert from a StampedVector to the OpenCV data type.
 	plane.point.x  = point_cam.point.x;
@@ -350,7 +347,6 @@ bool GuessGroundPlane(std::string fr_gnd, std::string fr_cam, Plane &plane)
 	plane.normal.x = normal_cam.vector.x;
 	plane.normal.y = normal_cam.vector.y;
 	plane.normal.z = normal_cam.vector.z;
-	return true;
 }
 
 void callback(ImageConstPtr const &msg_img, CameraInfoConstPtr const &msg_cam)
@@ -359,11 +355,11 @@ void callback(ImageConstPtr const &msg_img, CameraInfoConstPtr const &msg_cam)
 	Plane plane;
 	std::string ground_id = p_frame;
 	std::string camera_id = msg_img->header.frame_id;
-	bool plane_valid      = GuessGroundPlane(ground_id, camera_id, plane);
 
-	if (!plane_valid) {
-		ROS_ERROR_THROTTLE(30, "unable to transform frames %s and %s",
-		                   ground_id.c_str(), camera_id.c_str());
+	try {
+		GuessGroundPlane(ground_id, camera_id, plane);
+	} catch (tf::TransformException ex) {
+		ROS_ERROR_THROTTLE(30, "%s", ex.what());
 		return;
 	}
 
@@ -437,7 +433,7 @@ void callback(ImageConstPtr const &msg_img, CameraInfoConstPtr const &msg_cam)
 	cv_bridge::CvImage msg_debug;
 	msg_debug.header.stamp    = msg_img->header.stamp;
 	msg_debug.header.frame_id = msg_img->header.frame_id;
-	msg_debug.encoding = image_encodings::RGB8;
+	msg_debug.encoding = image_encodings::BGR8;
 	msg_debug.image    = img_debug;
 	pub_debug.publish(msg_debug.toImageMsg());
 #endif
@@ -447,9 +443,11 @@ int main(int argc, char **argv)
 	ros::init(argc, argv, "line_detection");
 	ros::NodeHandle nh;
 
+	listener = new tf::TransformListener;
+
 	nh.param<double>("thickness", p_thickness, 0.0726);
 	nh.param<double>("threshold", p_threshold, 0.0400);
-	nh.param<std::string>("frame", p_frame, "/base_footprint");
+	nh.param<std::string>("frame", p_frame, "base_footprint");
 
 	image_transport::ImageTransport it(nh);
 	sub_cam = it.subscribeCamera("image", 1, &callback);
