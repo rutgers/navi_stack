@@ -39,6 +39,7 @@ static tf::TransformListener *listener;
 #ifdef DEBUG
 static image_transport::Publisher pub_blur;
 static image_transport::Publisher pub_debug;
+static image_transport::Publisher pub_combo;
 #endif
 
 static std::string p_frame;
@@ -457,6 +458,20 @@ void callback(ImageConstPtr const &msg_img, CameraInfoConstPtr const &msg_cam)
 	msg_debug.encoding = image_encodings::BGR8;
 	msg_debug.image    = img_debug;
 	pub_debug.publish(msg_debug.toImageMsg());
+
+	// Normalized response of the matched pulse-width filter.
+	cv::Mat img_combo = img_hor + img_ver;
+
+	double min_val, max_val;
+	cv::minMaxLoc(img_combo, &min_val, &max_val);
+	std::cout << "(min, max) = (" << min_val << ", " << max_val << ")" << std::endl;
+
+	cv_bridge::CvImage msg_combo;
+	msg_combo.header.stamp    = msg_img->header.stamp;
+	msg_combo.header.frame_id = msg_img->header.frame_id;
+	msg_combo.encoding = image_encodings::TYPE_64FC1; //image_encodings::MONO8;
+	msg_combo.image    = img_combo;
+	pub_combo.publish(msg_combo.toImageMsg());
 #endif
 }
 int main(int argc, char **argv)
