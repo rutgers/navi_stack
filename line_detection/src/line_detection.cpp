@@ -40,6 +40,7 @@ static tf::TransformListener *listener;
 static image_transport::Publisher pub_blur;
 static image_transport::Publisher pub_debug;
 static image_transport::Publisher pub_combo;
+static image_transport::Publisher pub_maxima;
 #endif
 
 static std::string p_frame;
@@ -472,6 +473,19 @@ void callback(ImageConstPtr const &msg_img, CameraInfoConstPtr const &msg_cam)
 	msg_combo.encoding = image_encodings::TYPE_64FC1; //image_encodings::MONO8;
 	msg_combo.image    = img_combo;
 	pub_combo.publish(msg_combo.toImageMsg());
+
+	// Non-maximal supression.
+	cv::Mat img_maxima(img_input.rows, img_input.cols, CV_8U, cv::Scalar(0));
+	for (it = maxima.begin(); it != maxima.end(); ++it) {
+		img_maxima.at<uint8_t>(it->y, it->x) = 255;
+	}
+
+	cv_bridge::CvImage msg_maxima;
+	msg_maxima.header.stamp    = msg_img->header.stamp;
+	msg_maxima.header.frame_id = msg_img->header.frame_id;
+	msg_maxima.encoding = image_encodings::MONO8;
+	msg_maxima.image    = img_maxima;
+	pub_maxima.publish(msg_maxima.toImageMsg());
 #endif
 }
 int main(int argc, char **argv)
@@ -491,6 +505,7 @@ int main(int argc, char **argv)
 
 #ifdef DEBUG
 	pub_debug = it.advertise("line_debug", 10);
+	pub_maxima = it.advertise("line_maxima", 10);
 #endif
 
 	ros::spin();
