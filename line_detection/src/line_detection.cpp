@@ -280,12 +280,12 @@ void FindMaxima(cv::Mat src_hor, cv::Mat src_ver, std::list<cv::Point2i> &dst,
 
 	for (int y = 1; y < src_hor.rows - 1; ++y)
 	for (int x = 1; x < src_hor.cols - 1; ++x) {
-		uint8_t val_hor = src_hor.at<uint8_t>(y, x);
-		uint8_t val_ver = src_hor.at<uint8_t>(y, x);
-		uint8_t val_l = src_hor.at<uint8_t>(y, x - 1);
-		uint8_t val_r = src_hor.at<uint8_t>(y, x + 1);
-		uint8_t val_t = src_ver.at<uint8_t>(y - 1, x);
-		uint8_t val_b = src_ver.at<uint8_t>(y + 1, x);
+		double val_hor = src_hor.at<double>(y, x);
+		double val_ver = src_hor.at<double>(y, x);
+		double val_l = src_hor.at<double>(y, x - 1);
+		double val_r = src_hor.at<double>(y, x + 1);
+		double val_t = src_ver.at<double>(y - 1, x);
+		double val_b = src_ver.at<double>(y + 1, x);
 
 		bool is_hor = val_hor > val_l && val_hor > val_r && val_hor > threshold;
 		bool is_ver = val_ver > val_t && val_ver > val_b && val_ver > threshold;
