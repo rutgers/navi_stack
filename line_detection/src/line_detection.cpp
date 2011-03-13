@@ -44,7 +44,6 @@ static std::string p_frame;
 static double p_thickness;
 static double p_threshold;
 
-
 /**
  * Solves for the ray that starts at the camera center and passes through a
  * given pixel on the image plane. Output is expressed with respect to the
@@ -165,20 +164,21 @@ void CameraInfoToMat(CameraInfoConstPtr const &msg, cv::Mat &mint)
  * Construct a pulse-width filter tailored to the desired width with the
  * following shape:
  *
- *        /  0 : 0       <= x < c - w
- *        | -1 : c - w   <= x < c - w/2
- * f(x) = | +1 : c - w/2 <= x < c + w/2
- *        | -1 : c + w/2 <= x < c + w
- *        \  0 : c + w   <= x,
+ *        /  0 : 0          <= x < c - w
+ *        | -1 : c - (3/2)w <= x < c - w/2
+ * f(x) = | +1 : c - (1/2)w <= x < c + w/2
+ *        | -1 : c + (1/2)w <= x < c + w
+ *        \  0 : c + (3/2)w <= x,
  *
  * where $c$ is the filter's center and $w$ is its pulse width. Graphically,
  * this looks like:
  *
- *        +------+        <= +1
- *        |      |
- * ---+   |      |   +--- <=  0
- *    |   |      |   |
- *    +---+      +---+    <= -1
+ *           +------+           <= +1.0
+ *           |      |
+ *           |      |
+ * ---+      |      |      +--- <=  0.0
+ *    |      |      |      |
+ *    +------+      +------+    <= -0.5
  *
  * Note that the filter is constructed such that it will have a zero response
  * on regions of solid color (i.e. the kernel elements sum to zero).
@@ -191,27 +191,23 @@ void CameraInfoToMat(CameraInfoConstPtr const &msg, cv::Mat &mint)
 void BuildLineFilter(int x, int dim, int width, cv::Mat &ker)
 {
 	ROS_ASSERT(0 <= x && x < dim);
-	//ROS_ASSERT(0 < width && width < dim / 2);
 	ROS_ASSERT(dim > 0);
 
-	int x1 = MAX(x - width,     0);       // falling edge, trough
-	int x2 = MAX(x - width / 2, 0);       // rising edge,  peak
-	int x3 = MIN(x + width / 2, dim - 1); // falling edge, peak
-	int x4 = MIN(x + width,     dim - 1); // rising edge,  trough
+	int x1 = MAX(x - width * 3 / 2, 0);       // falling edge, trough
+	int x2 = MAX(x - width * 1 / 2, 0);       // rising edge,  peak
+	int x3 = MIN(x + width * 1 / 2, dim - 1); // falling edge, peak
+	int x4 = MIN(x + width * 3 / 2, dim - 1); // rising edge,  trough
 
-	ker.create(dim, 1, CV_64FC1);
+	ker.create(1, dim, CV_64FC1);
 	ker.setTo(0.0);
 
-	// Neglect pixels where the kernel hits the edge of the image.
-	if (x1 >= 0 && x4 < dim) {
-		cv::Mat lo_l = ker(cv::Range(x1, x2), cv::Range(0, 1));
-		cv::Mat lo_r = ker(cv::Range(x3, x4), cv::Range(0, 1));
-		cv::Mat hi   = ker(cv::Range(x2, x3), cv::Range(0, 1));
+	cv::Mat lo_l = ker(cv::Range(0, 1), cv::Range(x1, x2));
+	cv::Mat lo_r = ker(cv::Range(0, 1), cv::Range(x3, x4));
+	cv::Mat hi   = ker(cv::Range(0, 1), cv::Range(x2, x3));
 
-		lo_l.setTo(-1.0);
-		lo_r.setTo(-1.0);
-		hi.setTo(+1.0);
-	}
+	lo_l.setTo(-0.5 / lo_l.cols);
+	lo_r.setTo(-0.5 / lo_r.cols);
+	hi.setTo(  +1.0 / hi.cols);
 }
 
 /**
