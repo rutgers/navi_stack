@@ -230,22 +230,33 @@ void LineFilter(cv::Mat src, cv::Mat &dst_hor, cv::Mat &dst_ver, cv::Mat mint,
 	ROS_ASSERT(src.type() == CV_64FC1);
 	ROS_ASSERT(thick > 0);
 
-	cv::Mat img_hor(src.rows, src.cols, CV_64FC1);
-	cv::Mat img_ver(src.rows, src.cols, CV_64FC1);
 	cv::Mat ker_row, ker_col;
 
 	dst_hor.create(src.rows, src.cols, CV_64FC1);
 	dst_ver.create(src.rows, src.cols, CV_64FC1);
+	dst_hor.setTo(0);
+	dst_ver.setTo(0);
 
-	for (int y = 0; y < src.rows; ++y)
-	for (int x = 0; x < src.cols; ++x) {
-		double width = GetDistSize(cv::Point2d(x, y), thick, mint, plane);
+	double width      = 0.0;
+	double width_prev = INFINITY;
+
+	for (int y = src.rows - 1; y >= 0; --y)
+	for (int x = src.cols - 1; x >= 0; --x) {
+		width = GetDistSize(cv::Point2d(x, y), thick, mint, plane);
+
+		// Stop processing at the horizon.
+		if (width > width_prev) return;
+		width_prev = width;
+
+		cv::Mat row = src.row(y);
+		cv::Mat col = src.col(x);
 
 		BuildLineFilter(x, src.cols, width, ker_row);
-		img_hor.at<double>(y, x) = ker_row.t().dot(src.row(y));
+		dst_hor.at<double>(y, x) = ker_row.dot(row);
 
 		BuildLineFilter(y, src.rows, width, ker_col);
-		img_ver.at<double>(y, x) = ker_col.dot(src.col(x));
+		dst_ver.at<double>(y, x) = ker_col.t().dot(col);
+	}
 	}
 }
 
