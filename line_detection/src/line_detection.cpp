@@ -307,10 +307,15 @@ void LineColorTransform(cv::Mat src, cv::Mat &dst)
 {
 	ROS_ASSERT(src.type() == CV_8UC3);
 
+	// Blur the original image to reduce noise in the grass.
+	// TODO: Make the radius a parameter.
+	cv::Mat src_blur;
+	cv::GaussianBlur(src, src_blur, cv::Size(13, 13), 0.0);
+
 	// Convert to the HSV color space to get saturation and intensity.
 	std::vector<cv::Mat> img_chan;
 	cv::Mat img_hsv;
-	cv::cvtColor(src, img_hsv, CV_BGR2HSV);
+	cv::cvtColor(src_blur, img_hsv, CV_BGR2HSV);
 	cv::split(img_hsv, img_chan);
 
 	// Find bright (i.e. high intensity) regions of little color (i.e. low
