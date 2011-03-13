@@ -37,6 +37,7 @@ static ros::Publisher   pub_pts;
 static tf::TransformListener *listener;
 
 #ifdef DEBUG
+static image_transport::Publisher pub_blur;
 static image_transport::Publisher pub_debug;
 #endif
 
@@ -420,6 +421,14 @@ void callback(ImageConstPtr const &msg_img, CameraInfoConstPtr const &msg_cam)
 	pub_pts.publish(pts_msg);
 
 #ifdef DEBUG
+	// Color space transformation.
+	cv_bridge::CvImage msg_blur;
+	msg_blur.header.stamp    = msg_img->header.stamp;
+	msg_blur.header.frame_id = msg_img->header.frame_id;
+	msg_blur.encoding = image_encodings::TYPE_64FC1; //image_encodings::MONO8;
+	msg_blur.image    = img_white;
+	pub_blur.publish(msg_blur.toImageMsg());
+
 	// Calculate the expected width of a line in each row of the image. Stop
 	// at the horizon line by detecting an increase in pixel width.
 	double width_old = INFINITY;
