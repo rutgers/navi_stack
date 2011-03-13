@@ -504,7 +504,9 @@ int main(int argc, char **argv)
 	pub_pts = nh.advertise<sensor_msgs::PointCloud>("line_points", 10);
 
 #ifdef DEBUG
-	pub_debug = it.advertise("line_debug", 10);
+	pub_blur   = it.advertise("line_blur", 10);
+	pub_debug  = it.advertise("line_width", 10);
+	pub_combo  = it.advertise("line_filter", 10);
 	pub_maxima = it.advertise("line_maxima", 10);
 #endif
 
