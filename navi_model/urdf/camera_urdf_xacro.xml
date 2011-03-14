@@ -13,6 +13,9 @@
 	<property name="camera_x" value="0.43815"/>
 	<property name="camera_y" value="0.079121"/>
 	<property name="camera_z" value="0.0127"/>
+	<property name="camera_roll"  value="1.57079633"/>
+	<property name="camera_pitch" value="3.14159265"/>
+	<property name="camera_yaw"   value="1.57079633"/>
 
 	<!-- Dimensions of the camera mount for visualization -->
 	<property name="camera_width"  value="0.30"/>
@@ -27,12 +30,12 @@
 	<property name="image_width"  value="320"/>
 	<property name="image_height" value="240"/>
 	<property name="focal_length" value="640"/>
-	<property name="hfov"         value="90.0"/>
+	<property name="hfov"         value="120.0"/>
 	<property name="fps"          value="10.0"/>
 
 	<joint name="camera_joint" type="fixed">
 		<axis xyz="0 0 0"/>
-		<origin xyz="${camera_x} ${camera_y} ${camera_z}" rpy="1.5707963267948966 3.14 1.5707963267948966"/>
+		<origin xyz="${camera_x} ${camera_y} ${camera_z}" rpy="${camera_roll} ${camera_pitch} ${camera_yaw}"/>
 		<parent link="base_link"/>
 		<child link="camera_link"/>
 	</joint>
