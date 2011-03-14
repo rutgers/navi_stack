@@ -37,15 +37,17 @@ static ros::Publisher   pub_pts;
 static tf::TransformListener *listener;
 
 #ifdef DEBUG
-static image_transport::Publisher pub_blur;
-static image_transport::Publisher pub_debug;
-static image_transport::Publisher pub_combo;
-static image_transport::Publisher pub_maxima;
+static image_transport::Publisher pub_debug_filt;
+static image_transport::Publisher pub_debug_hor;
+static image_transport::Publisher pub_debug_ver;
+static image_transport::Publisher pub_debug_combo;
+static image_transport::Publisher pub_debug_max;
 #endif
 
 static std::string p_frame;
 static double p_thickness;
 static double p_threshold;
+static double p_border;
 
 /**
  * Solves for the ray that starts at the camera center and passes through a
@@ -81,7 +83,7 @@ void GetPixelRay(cv::Mat mint, cv::Point2i pt, cv::Point3d &dst)
  * Assume the plane is parameterized by an arbitrary point on its surface,
  * \f$ p_p \f$, and a normal vector \f$ n \f$. Similarly, assume the line is
  * parameterized by an arbitrary point, \f$ p_l \f$, and a direction vector,
- * $ \f$ v \f$. The intersection point, \f$ p \f$, must satisfy
+ * \f$ v \f$. The intersection point, \f$ p \f$, must satisfy
  * \f{eqnarray*}{
  *     (p - p_p) \cdot n    & = & 0 \\
  *     -p + p_l + \lambda v & = & 0,
@@ -191,15 +193,15 @@ void CameraInfoToMat(CameraInfoConstPtr const &msg, cv::Mat &mint)
  * \param width filter width
  * \param ker   output parameter for the kernel
  */
-void BuildLineFilter(int x, int dim, int width, cv::Mat &ker)
+void BuildLineFilter(int x, int dim, int width, int border, cv::Mat &ker)
 {
 	ROS_ASSERT(0 <= x && x < dim);
 	ROS_ASSERT(dim > 0);
 
-	int x1 = MAX(x - width * 3 / 2, 0);       // falling edge, trough
-	int x2 = MAX(x - width * 1 / 2, 0);       // rising edge,  peak
-	int x3 = MIN(x + width * 1 / 2, dim - 1); // falling edge, peak
-	int x4 = MIN(x + width * 3 / 2, dim - 1); // rising edge,  trough
+	int x1 = MAX(x - (width + 0) / 2 - border, 0);       // falling edge, trough
+	int x2 = MAX(x - (width + 0) / 2,          0);       // rising edge,  peak
+	int x3 = MIN(x + (width + 1) / 2,          dim - 1); // falling edge, peak
+	int x4 = MIN(x + (width + 1) / 2 + border, dim - 1); // rising edge,  trough
 
 	ker.create(1, dim, CV_64FC1);
 	ker.setTo(0.0);
@@ -208,8 +210,11 @@ void BuildLineFilter(int x, int dim, int width, cv::Mat &ker)
 	cv::Mat lo_r = ker(cv::Range(0, 1), cv::Range(x3, x4));
 	cv::Mat hi   = ker(cv::Range(0, 1), cv::Range(x2, x3));
 
+	// Too narrow...
+	if (lo_l.cols < 1 || lo_r.cols < 1 || hi.cols < 1) return;
+
 	lo_l.setTo(-0.5 / lo_l.cols);
-	lo_r.setTo(-0.5 / lo_r.cols);
+	lo_r.setTo(-0.5 / lo_r.cols); 
 	hi.setTo(  +1.0 / hi.cols);
 }
 
@@ -226,7 +231,7 @@ void BuildLineFilter(int x, int dim, int width, cv::Mat &ker)
  * \param thick     line thickness in real-world coordinates
  */
 void LineFilter(cv::Mat src, cv::Mat &dst_hor, cv::Mat &dst_ver, cv::Mat mint,
-                Plane plane, double thick)
+                Plane plane, double thick, double edge)
 {
 	ROS_ASSERT(mint.rows == 3 && mint.cols == 3);
 	ROS_ASSERT(mint.type() == CV_64FC1);
@@ -240,12 +245,12 @@ void LineFilter(cv::Mat src, cv::Mat &dst_hor, cv::Mat &dst_ver, cv::Mat mint,
 	dst_hor.setTo(0);
 	dst_ver.setTo(0);
 
-	double width      = 0.0;
 	double width_prev = INFINITY;
 
 	for (int y = src.rows - 1; y >= 0; --y)
 	for (int x = src.cols - 1; x >= 0; --x) {
-		width = GetDistSize(cv::Point2d(x, y), thick, mint, plane);
+		double width  = GetDistSize(cv::Point2d(x, y), thick, mint, plane);
+		double border = GetDistSize(cv::Point2d(x, y), edge,  mint, plane);
 
 		// Stop processing at the horizon.
 		if (width > width_prev) return;
@@ -254,12 +259,11 @@ void LineFilter(cv::Mat src, cv::Mat &dst_hor, cv::Mat &dst_ver, cv::Mat mint,
 		cv::Mat row = src.row(y);
 		cv::Mat col = src.col(x);
 
-		BuildLineFilter(x, src.cols, width, ker_row);
+		BuildLineFilter(x, src.cols, width, border, ker_row);
 		dst_hor.at<double>(y, x) = ker_row.dot(row);
 
-		BuildLineFilter(y, src.rows, width, ker_col);
+		BuildLineFilter(y, src.rows, width, border, ker_col);
 		dst_ver.at<double>(y, x) = ker_col.t().dot(col);
-	}
 	}
 }
 
@@ -273,6 +277,7 @@ void LineFilter(cv::Mat src, cv::Mat &dst_hor, cv::Mat &dst_ver, cv::Mat mint,
  * \param src_hor   horizontally filtered image
  * \param src_ver   vertically filtered image
  * \param dst       output parameter; list of local maxima
+
  * \param threshold minimum value acceptable for a maximum
  */
 void FindMaxima(cv::Mat src_hor, cv::Mat src_ver, std::list<cv::Point2i> &dst,
@@ -281,21 +286,32 @@ void FindMaxima(cv::Mat src_hor, cv::Mat src_ver, std::list<cv::Point2i> &dst,
 	ROS_ASSERT(src_hor.rows == src_ver.rows && src_hor.cols == src_ver.cols);
 	ROS_ASSERT(src_hor.type() == CV_64FC1 && src_ver.type() == CV_64FC1);
 
-	for (int y = 1; y < src_hor.rows - 1; ++y)
-	for (int x = 1; x < src_hor.cols - 1; ++x) {
-		double val_hor = src_hor.at<double>(y, x);
-		double val_ver = src_hor.at<double>(y, x);
-		double val_l = src_hor.at<double>(y, x - 1);
-		double val_r = src_hor.at<double>(y, x + 1);
-		double val_t = src_ver.at<double>(y - 1, x);
-		double val_b = src_ver.at<double>(y + 1, x);
+	for (int y = 1; y < src_hor.rows - 1; ++y) {
+		double v1 = -INFINITY;
+		double v2 = -INFINITY;
+		int x1 = 0;
+		int x2 = 0;
 
-		bool is_hor = val_hor > val_l && val_hor > val_r && val_hor > threshold;
-		bool is_ver = val_ver > val_t && val_ver > val_b && val_ver > threshold;
+		// Find the two largest values in this row.
+		for (int x = 2; x < src_hor.cols; ++x) {
+			double vx = src_hor.at<double>(y, x);
 
-		if (is_hor || is_ver) {
-			dst.push_back(cv::Point2i(x, y));
+			// New primary maximum.
+			if (vx >= v1) {
+				x2 = x1;
+				v2 = v1;
+				x1 = x;
+				v1 = vx;
+			}
+			// New secondary maximum.
+			else if (vx >= v2) {
+				x2 = x;
+				v2 = vx;
+			}
 		}
+
+		if (v1 > threshold) dst.push_back(cv::Point2i(x1, y));
+		if (v2 > threshold) dst.push_back(cv::Point2i(x2, y));
 	}
 }
 
@@ -313,7 +329,8 @@ void LineColorTransform(cv::Mat src, cv::Mat &dst)
 	// Blur the original image to reduce noise in the grass.
 	// TODO: Make the radius a parameter.
 	cv::Mat src_blur;
-	cv::GaussianBlur(src, src_blur, cv::Size(13, 13), 0.0);
+	//cv::GaussianBlur(src, src_blur, cv::Size(3, 3), 0.0);
+	src_blur = src;
 
 	// Convert to the HSV color space to get saturation and intensity.
 	std::vector<cv::Mat> img_chan;
@@ -328,8 +345,7 @@ void LineColorTransform(cv::Mat src, cv::Mat &dst)
 	cv::Mat img_val = img_chan[2];
 	cv::Mat dst_8u;
 
-	cv::min(img_sat, img_val, dst_8u);
-	dst_8u.convertTo(dst, CV_64FC1);
+	img_sat.convertTo(dst, CV_64FC1);
 }
 
 void GuessGroundPlane(std::string fr_gnd, std::string fr_cam, Plane &plane)
@@ -339,6 +355,7 @@ void GuessGroundPlane(std::string fr_gnd, std::string fr_cam, Plane &plane)
 	point_gnd.header.stamp    = ros::Time(0);
 	point_gnd.header.frame_id = fr_gnd;
 	point_gnd.point.x = 0.0;
+
 	point_gnd.point.y = 0.0;
 	point_gnd.point.z = 0.0;
 
@@ -362,6 +379,51 @@ void GuessGroundPlane(std::string fr_gnd, std::string fr_cam, Plane &plane)
 	plane.normal.x = normal_cam.vector.x;
 	plane.normal.y = normal_cam.vector.y;
 	plane.normal.z = normal_cam.vector.z;
+}
+
+void NormalizeSaturation(cv::Mat src, cv::Mat &dst, cv::Size size)
+{
+	ROS_ASSERT(src.type() == CV_8UC3);
+	ROS_ASSERT(size.width > 0 && size.width % 2 == 1);
+	ROS_ASSERT(size.height > 0 && size.height % 2 == 1);
+
+	int off_hor = size.width / 2;
+	int off_ver = size.height / 2;
+
+	// Convert the image into the HSV color space to get direct access to its
+	// per-pixel saturation.
+	std::vector<cv::Mat> img_chan;
+	cv::Mat img_hsv;
+	cv::cvtColor(src, img_hsv, CV_BGR2HSV);
+	cv::split(img_hsv, img_chan);
+
+	cv::Mat sat_new(src.rows, src.cols, CV_8U, cv::Scalar(0));
+	cv::Mat sat_old = img_chan[1];
+
+	for (int r0 = off_ver; r0 < src.rows - off_ver; ++r0)
+	for (int c0 = off_hor; c0 < src.cols - off_hor; ++c0) {
+		uint8_t  val_old = sat_old.at<uint8_t>(r0, c0);
+		uint8_t &val_new = sat_new.at<uint8_t>(r0, c0);
+
+		// Find the minimum and maximum saturation in a window.
+		cv::Range range_ver(r0 - off_ver, r0 + off_ver);
+		cv::Range range_hor(c0 - off_hor, c0 + off_hor);
+		cv::Mat window = sat_new(range_ver, range_hor);
+
+		double sat_min, sat_max;
+		cv::minMaxLoc(window, &sat_min, &sat_max);
+
+		val_new = (uint8_t)((val_old - sat_min) * 255.0 / sat_max);
+	}
+
+	std::vector<cv::Mat> img_chan_out(3);
+	img_chan_out[0] = img_chan[0];
+	img_chan_out[1] = sat_new;
+	img_chan_out[2] = img_chan[2];
+
+	cv::Mat dst_hsv;
+	cv::merge(img_chan_out, dst_hsv);
+	cv::cvtColor(dst_hsv, dst, CV_HSV2BGR);
 }
 
 void callback(ImageConstPtr const &msg_img, CameraInfoConstPtr const &msg_cam)
@@ -394,7 +456,7 @@ void callback(ImageConstPtr const &msg_img, CameraInfoConstPtr const &msg_cam)
 	std::list<cv::Point2i> maxima;
 	cv::Mat img_white, img_hor, img_ver;
 	LineColorTransform(img_input, img_white);
-	LineFilter(img_white, img_hor, img_ver, mint, plane, p_thickness);
+	LineFilter(img_white, img_hor, img_ver, mint, plane, p_thickness, p_border);
 	FindMaxima(img_hor, img_ver, maxima, p_threshold);
 
 	// Publish a three-dimensional point cloud in the camera frame by converting
@@ -423,56 +485,77 @@ void callback(ImageConstPtr const &msg_img, CameraInfoConstPtr const &msg_cam)
 	pub_pts.publish(pts_msg);
 
 #ifdef DEBUG
+#if 0
 	// Color space transformation.
 	cv_bridge::CvImage msg_blur;
 	msg_blur.header.stamp    = msg_img->header.stamp;
 	msg_blur.header.frame_id = msg_img->header.frame_id;
-	msg_blur.encoding = image_encodings::TYPE_64FC1; //image_encodings::MONO8;
+	msg_blur.encoding = image_encodings::MONO8;
 	msg_blur.image    = img_white;
 	pub_blur.publish(msg_blur.toImageMsg());
+#endif
 
 	// Calculate the expected width of a line in each row of the image. Stop
 	// at the horizon line by detecting an increase in pixel width.
 	double width_old = INFINITY;
-	double width_new = 0.0;
 
-	cv::Mat img_debug = img_input.clone();
+	cv::Mat img_debug(img_input.rows, img_input.cols, CV_64FC1, cv::Scalar(0)); 
 
-	for (int y = img_debug.rows - 1; y >= 0 && width_new <= width_old; --y) {
+	for (int y = img_debug.rows - 1; y >= 0; --y) {
 		cv::Point2d mid(img_debug.cols / 2.0, y);
-		width_new = GetDistSize(mid, p_thickness, mint, plane);
-		if (width_new >= width_old) break;
-		width_old = width_new;
+		double width  = GetDistSize(mid, p_thickness, mint, plane);
+		double border = GetDistSize(mid, p_border,    mint, plane);
 
-		cv::Point2d mid_left  = mid - cv::Point2d(width_new / 2.0, 0.0);
-		cv::Point2d mid_right = mid + cv::Point2d(width_new / 2.0, 0.0);
+		if (width >= width_old) break;
+		width_old = width;
 
-		// Render a simulated line on the image for debugging purposes.
-		cv::Point2d offset(2, 0);
-		cv::line(img_debug, mid_left - offset,  mid_left + offset,  cv::Scalar(0, 0, 255));
-		cv::line(img_debug, mid_right - offset, mid_right + offset, cv::Scalar(0, 0, 255));
+		cv::Mat row = img_debug.row(y);
+		BuildLineFilter(mid.x, img_debug.cols, width, border, row);
 	}
 
-	cv_bridge::CvImage msg_debug;
-	msg_debug.header.stamp    = msg_img->header.stamp;
-	msg_debug.header.frame_id = msg_img->header.frame_id;
-	msg_debug.encoding = image_encodings::BGR8;
-	msg_debug.image    = img_debug;
-	pub_debug.publish(msg_debug.toImageMsg());
+	cv::Mat img_debug_8u;
+	cv::normalize(img_debug, img_debug_8u, 0, 255, CV_MINMAX, CV_8UC1);
 
-	// Normalized response of the matched pulse-width filter.
-	cv::Mat img_combo = img_hor + img_ver;
+	cv_bridge::CvImage msg_debug_filt;
+	msg_debug_filt.header.stamp    = msg_img->header.stamp;
+	msg_debug_filt.header.frame_id = msg_img->header.frame_id;
+	msg_debug_filt.encoding = image_encodings::MONO8;
+	msg_debug_filt.image    = img_debug_8u;
+	pub_debug_filt.publish(msg_debug_filt.toImageMsg());
 
-	double min_val, max_val;
-	cv::minMaxLoc(img_combo, &min_val, &max_val);
-	std::cout << "(min, max) = (" << min_val << ", " << max_val << ")" << std::endl;
+	// Response of the horizontal matched pulse-width filter.
+	cv::Mat img_debug_hor;
+	cv::normalize(img_hor, img_debug_hor, 0, 255, CV_MINMAX, CV_8UC1);
 
-	cv_bridge::CvImage msg_combo;
-	msg_combo.header.stamp    = msg_img->header.stamp;
-	msg_combo.header.frame_id = msg_img->header.frame_id;
-	msg_combo.encoding = image_encodings::TYPE_64FC1; //image_encodings::MONO8;
-	msg_combo.image    = img_combo;
-	pub_combo.publish(msg_combo.toImageMsg());
+	cv_bridge::CvImage msg_debug_hor;
+	msg_debug_hor.header.stamp    = msg_img->header.stamp;
+	msg_debug_hor.header.frame_id = msg_img->header.frame_id;
+	msg_debug_hor.encoding = image_encodings::MONO8;
+	msg_debug_hor.image    = img_debug_hor;
+	pub_debug_hor.publish(msg_debug_hor.toImageMsg());
+
+	// Response of the vertical matched pulse-width filter.
+	cv::Mat img_debug_ver;
+	cv::normalize(img_ver, img_debug_ver, 0, 255, CV_MINMAX, CV_8UC1);
+
+	cv_bridge::CvImage msg_debug_ver;
+	msg_debug_ver.header.stamp    = msg_img->header.stamp;
+	msg_debug_ver.header.frame_id = msg_img->header.frame_id;
+	msg_debug_ver.encoding = image_encodings::MONO8;
+	msg_debug_ver.image    = img_debug_ver;
+	pub_debug_ver.publish(msg_debug_ver.toImageMsg());
+
+	// Combination of the two filter responses.
+	cv::Mat img_debug_combo_tmp = img_debug_hor + img_debug_ver;
+	cv::Mat img_debug_combo;
+	cv::normalize(img_debug_combo_tmp, img_debug_combo, 0, 255, CV_MINMAX, CV_8UC1);
+
+	cv_bridge::CvImage msg_debug_combo;
+	msg_debug_combo.header.stamp    = msg_img->header.stamp;
+	msg_debug_combo.header.frame_id = msg_img->header.frame_id;
+	msg_debug_combo.encoding = image_encodings::MONO8;
+	msg_debug_combo.image    = img_debug_combo;
+	pub_debug_combo.publish(msg_debug_combo.toImageMsg());
 
 	// Non-maximal supression.
 	cv::Mat img_maxima(img_input.rows, img_input.cols, CV_8U, cv::Scalar(0));
@@ -480,12 +563,12 @@ void callback(ImageConstPtr const &msg_img, CameraInfoConstPtr const &msg_cam)
 		img_maxima.at<uint8_t>(it->y, it->x) = 255;
 	}
 
-	cv_bridge::CvImage msg_maxima;
-	msg_maxima.header.stamp    = msg_img->header.stamp;
-	msg_maxima.header.frame_id = msg_img->header.frame_id;
-	msg_maxima.encoding = image_encodings::MONO8;
-	msg_maxima.image    = img_maxima;
-	pub_maxima.publish(msg_maxima.toImageMsg());
+	cv_bridge::CvImage msg_debug_max;
+	msg_debug_max.header.stamp    = msg_img->header.stamp;
+	msg_debug_max.header.frame_id = msg_img->header.frame_id;
+	msg_debug_max.encoding = image_encodings::MONO8;
+	msg_debug_max.image    = img_maxima;
+	pub_debug_max.publish(msg_debug_max.toImageMsg());
 #endif
 }
 int main(int argc, char **argv)
@@ -496,7 +579,8 @@ int main(int argc, char **argv)
 	listener = new tf::TransformListener;
 
 	nh.param<double>("thickness", p_thickness, 0.0726);
-	nh.param<double>("threshold", p_threshold, 0.0400);
+	nh.param<double>("border",    p_border,    1.0000);//0.1452);
+	nh.param<double>("threshold", p_threshold, 25);
 	nh.param<std::string>("frame", p_frame, "base_footprint");
 
 	image_transport::ImageTransport it(nh);
@@ -504,10 +588,11 @@ int main(int argc, char **argv)
 	pub_pts = nh.advertise<sensor_msgs::PointCloud>("line_points", 10);
 
 #ifdef DEBUG
-	pub_blur   = it.advertise("line_blur", 10);
-	pub_debug  = it.advertise("line_width", 10);
-	pub_combo  = it.advertise("line_filter", 10);
-	pub_maxima = it.advertise("line_maxima", 10);
+	pub_debug_filt   = it.advertise("debug_filt",  10);
+	pub_debug_hor    = it.advertise("debug_hor",   10);
+	pub_debug_ver    = it.advertise("debug_ver",   10);
+	pub_debug_combo  = it.advertise("debug_combo", 10);
+	pub_debug_max    = it.advertise("debug_max",   10);
 #endif
 
 	ros::spin();
