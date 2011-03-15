@@ -42,6 +42,7 @@ static image_transport::Publisher pub_debug_hor;
 static image_transport::Publisher pub_debug_ver;
 static image_transport::Publisher pub_debug_combo;
 static image_transport::Publisher pub_debug_max;
+static image_transport::Publisher pub_debug_overlay;
 #endif
 
 static std::string p_frame;
@@ -286,62 +287,22 @@ void FindMaxima(cv::Mat src_hor, cv::Mat src_ver, std::list<cv::Point2i> &dst,
 	ROS_ASSERT(src_hor.rows == src_ver.rows && src_hor.cols == src_ver.cols);
 	ROS_ASSERT(src_hor.type() == CV_64FC1 && src_ver.type() == CV_64FC1);
 
-	// Horizontal filter output
-	for (int y = 0; y < src_hor.rows; ++y) {
-		double v1 = -INFINITY;
-		double v2 = -INFINITY;
-		int x1 = 0;
-		int x2 = 0;
+	for (int y = 1; y < src_hor.rows - 1; ++y)
+	for (int x = 1; x < src_hor.cols - 1; ++x) {
+		double val_hor   = src_hor.at<double>(y, x);
+		double val_left  = src_hor.at<double>(y, x - 1);
+		double val_right = src_hor.at<double>(y, x + 1);
 
-		// Find the two largest values in this row.
-		for (int x = 0; x < src_hor.cols; ++x) {
-			double vx = src_hor.at<double>(y, x);
+		double val_ver = src_ver.at<double>(y + 0, x);
+		double val_top = src_ver.at<double>(y - 1, x);
+		double val_bot = src_ver.at<double>(y + 1, x);
 
-			// New primary maximum.
-			if (vx >= v1) {
-				x2 = x1;
-				v2 = v1;
-				x1 = x;
-				v1 = vx;
-			}
-			// New secondary maximum.
-			else if (vx >= v2) {
-				x2 = x;
-				v2 = vx;
-			}
+		bool is_hor = val_hor > val_left && val_hor > val_right && val_hor > threshold;
+		bool is_ver = val_ver > val_top  && val_ver > val_bot   && val_ver > threshold;
+
+		if (is_hor || is_ver) {
+			dst.push_back(cv::Point2i(x, y));
 		}
-
-		if (v1 > threshold) dst.push_back(cv::Point2i(x1, y));
-		if (v2 > threshold) dst.push_back(cv::Point2i(x2, y));
-	}
-
-	// Vertical filter output
-	for (int x = 0; x < src_ver.cols; ++x) {
-		double v1 = -INFINITY;
-		double v2 = -INFINITY;
-		int y1 = 0;
-		int y2 = 0;
-
-		// Find the two largest values in this row.
-		for (int y = 0; y < src_hor.rows; ++y) {
-			double vy = src_hor.at<double>(y, x);
-
-			// New primary maximum.
-			if (vy >= v1) {
-				y2 = y1;
-				v2 = v1;
-				y1 = y;
-				v1 = vy;
-			}
-			// New secondary maximum.
-			else if (vy >= v2) {
-				y2 = y;
-				v2 = vy;
-			}
-		}
-
-		if (v1 > threshold) dst.push_back(cv::Point2i(x, y1));
-		if (v2 > threshold) dst.push_back(cv::Point2i(x, y2));
 	}
 }
 
@@ -600,6 +561,26 @@ void callback(ImageConstPtr const &msg_img, CameraInfoConstPtr const &msg_cam)
 	msg_debug_max.encoding = image_encodings::MONO8;
 	msg_debug_max.image    = img_maxima;
 	pub_debug_max.publish(msg_debug_max.toImageMsg());
+
+	// Overlay maxima on the original image.
+	cv::Mat img_overlay = img_input.clone();
+	std::vector<cv::Mat> img_overlay_chan;
+	cv::split(img_overlay, img_overlay_chan);
+
+	for (it = maxima.begin(); it != maxima.end(); ++it) {
+		img_overlay_chan[0].at<uint8_t>(it->y, it->x) = 0;
+		img_overlay_chan[1].at<uint8_t>(it->y, it->x) = 0;
+		img_overlay_chan[2].at<uint8_t>(it->y, it->x) = 255;
+	}
+
+	cv::merge(img_overlay_chan, img_overlay);
+
+	cv_bridge::CvImage msg_debug_overlay;
+	msg_debug_overlay.header.stamp    = msg_img->header.stamp;
+	msg_debug_overlay.header.frame_id = msg_img->header.frame_id;
+	msg_debug_overlay.encoding = image_encodings::BGR8;
+	msg_debug_overlay.image    = img_overlay;
+	pub_debug_overlay.publish(msg_debug_overlay.toImageMsg());
 #endif
 }
 int main(int argc, char **argv)
@@ -611,7 +592,7 @@ int main(int argc, char **argv)
 
 	nh.param<double>("thickness", p_thickness, 0.0726);
 	nh.param<double>("border",    p_border,    0.1452);
-	nh.param<double>("threshold", p_threshold, 25);
+	nh.param<double>("threshold", p_threshold, 40);
 	nh.param<std::string>("frame", p_frame, "base_footprint");
 
 	image_transport::ImageTransport it(nh);
@@ -619,11 +600,12 @@ int main(int argc, char **argv)
 	pub_pts = nh.advertise<sensor_msgs::PointCloud>("line_points", 10);
 
 #ifdef DEBUG
-	pub_debug_filt   = it.advertise("debug_filt",  10);
-	pub_debug_hor    = it.advertise("debug_hor",   10);
-	pub_debug_ver    = it.advertise("debug_ver",   10);
-	pub_debug_combo  = it.advertise("debug_combo", 10);
-	pub_debug_max    = it.advertise("debug_max",   10);
+	pub_debug_filt    = it.advertise("debug_filt",    10);
+	pub_debug_hor     = it.advertise("debug_hor",     10);
+	pub_debug_ver     = it.advertise("debug_ver",     10);
+	pub_debug_combo   = it.advertise("debug_combo",   10);
+	pub_debug_max     = it.advertise("debug_max",     10);
+	pub_debug_overlay = it.advertise("debug_overlay", 10);
 #endif
 
 	ros::spin();
