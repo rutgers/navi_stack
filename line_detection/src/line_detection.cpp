@@ -242,8 +242,8 @@ void LineFilter(cv::Mat src, cv::Mat &dst_hor, cv::Mat &dst_ver, cv::Mat mint,
 
 	dst_hor.create(src.rows, src.cols, CV_64FC1);
 	dst_ver.create(src.rows, src.cols, CV_64FC1);
-	dst_hor.setTo(0);
-	dst_ver.setTo(0);
+	dst_hor.setTo(-255);
+	dst_ver.setTo(-255);
 
 	double width_prev = INFINITY;
 
@@ -286,14 +286,15 @@ void FindMaxima(cv::Mat src_hor, cv::Mat src_ver, std::list<cv::Point2i> &dst,
 	ROS_ASSERT(src_hor.rows == src_ver.rows && src_hor.cols == src_ver.cols);
 	ROS_ASSERT(src_hor.type() == CV_64FC1 && src_ver.type() == CV_64FC1);
 
-	for (int y = 1; y < src_hor.rows - 1; ++y) {
+	// Horizontal filter output
+	for (int y = 0; y < src_hor.rows; ++y) {
 		double v1 = -INFINITY;
 		double v2 = -INFINITY;
 		int x1 = 0;
 		int x2 = 0;
 
 		// Find the two largest values in this row.
-		for (int x = 2; x < src_hor.cols; ++x) {
+		for (int x = 0; x < src_hor.cols; ++x) {
 			double vx = src_hor.at<double>(y, x);
 
 			// New primary maximum.
@@ -312,6 +313,35 @@ void FindMaxima(cv::Mat src_hor, cv::Mat src_ver, std::list<cv::Point2i> &dst,
 
 		if (v1 > threshold) dst.push_back(cv::Point2i(x1, y));
 		if (v2 > threshold) dst.push_back(cv::Point2i(x2, y));
+	}
+
+	// Vertical filter output
+	for (int x = 0; x < src_ver.cols; ++x) {
+		double v1 = -INFINITY;
+		double v2 = -INFINITY;
+		int y1 = 0;
+		int y2 = 0;
+
+		// Find the two largest values in this row.
+		for (int y = 0; y < src_hor.rows; ++y) {
+			double vy = src_hor.at<double>(y, x);
+
+			// New primary maximum.
+			if (vy >= v1) {
+				y2 = y1;
+				v2 = v1;
+				y1 = y;
+				v1 = vy;
+			}
+			// New secondary maximum.
+			else if (vy >= v2) {
+				y2 = y;
+				v2 = vy;
+			}
+		}
+
+		if (v1 > threshold) dst.push_back(cv::Point2i(x, y1));
+		if (v2 > threshold) dst.push_back(cv::Point2i(x, y2));
 	}
 }
 
@@ -343,9 +373,10 @@ void LineColorTransform(cv::Mat src, cv::Mat &dst)
 	// TODO: Find a better way of doing this transformation.
 	cv::Mat img_sat = 255 - img_chan[1];
 	cv::Mat img_val = img_chan[2];
-	cv::Mat dst_8u;
 
-	img_sat.convertTo(dst, CV_64FC1);
+	cv::Mat dst_8u;
+	cv::min(img_sat, img_val, dst_8u);
+	dst_8u.convertTo(dst, CV_64FC1);
 }
 
 void GuessGroundPlane(std::string fr_gnd, std::string fr_cam, Plane &plane)
@@ -579,7 +610,7 @@ int main(int argc, char **argv)
 	listener = new tf::TransformListener;
 
 	nh.param<double>("thickness", p_thickness, 0.0726);
-	nh.param<double>("border",    p_border,    1.0000);//0.1452);
+	nh.param<double>("border",    p_border,    0.1452);
 	nh.param<double>("threshold", p_threshold, 25);
 	nh.param<std::string>("frame", p_frame, "base_footprint");
 
