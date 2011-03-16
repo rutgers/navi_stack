@@ -83,7 +83,9 @@ private:
 	bool m_valid;
 	int m_rows;
 	int m_cols;
+	int m_cutoff;
 	int m_horizon;
+	int m_width_cutoff;
 	double m_width_line;
 	double m_width_dead;
 	double m_threshold;
@@ -92,7 +94,7 @@ private:
 	std::string m_ground_id;
 	std::vector<int>     m_cache_dead;
 	std::vector<int>     m_cache_line;
-	std::vector<cv::Mat> m_cache_kernel;
+	std::vector<cv::Mat> m_cache_kernel; // TODO: Switch to dynamic memory.
 
 	ros::NodeHandle                 m_nh;
 	tf::TransformListener           m_tf;

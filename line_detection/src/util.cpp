@@ -81,8 +81,8 @@ void BuildLineFilter(cv::Mat &ker, int x, int dim, int width, int border, bool f
 		ker.create(1, width + 2 * border, CV_64FC1);
 
 		range_lo_l = cv::Range(0, border);
-		range_hi   = cv::Range(border + 1, border + width);
-		range_lo_r = cv::Range(border + width + 1, border + width + border);
+		range_hi   = cv::Range(border, border + width);
+		range_lo_r = cv::Range(border + width, border + width + border);
 	}
 	// Allocate a full row to make the dot multiplication simpler.
 	else {
@@ -106,6 +106,8 @@ void BuildLineFilter(cv::Mat &ker, int x, int dim, int width, int border, bool f
 	lo_l.setTo(-0.5 / lo_l.cols);
 	hi.setTo(  +1.0 / hi.cols);
 	lo_r.setTo(-0.5 / lo_r.cols); 
+
+	ROS_INFO("width = %d", ker.cols);
 }
 
 void LineFilter(cv::Mat src, cv::Mat &dst_hor, cv::Mat &dst_ver, cv::Mat mint,

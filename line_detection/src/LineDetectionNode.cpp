@@ -4,6 +4,7 @@ LineDetectionNode::LineDetectionNode(ros::NodeHandle nh, std::string ground_id,
                                      bool debug)
 	: m_debug(debug),
 	  m_valid(false),
+	  m_width_cutoff(3), // TODO: Make this a parameter.
 	  m_ground_id(ground_id),
 	  m_nh(nh),
 	  m_it(nh)
@@ -143,6 +144,7 @@ void LineDetectionNode::UpdateCache(void)
 {
 	ROS_ASSERT(m_width_line > 0.0);
 	ROS_ASSERT(m_width_dead > 0.0);
+	ROS_ASSERT(m_width_cutoff > 0);
 	ROS_ASSERT(m_mint.rows == 3 && m_mint.cols == 3);
 	ROS_ASSERT(m_mint.type() == CV_64FC1);
 
@@ -161,17 +163,27 @@ void LineDetectionNode::UpdateCache(void)
 	int prev_dead = INT_MAX;
 	cv::Mat prev_kernel;
 
+	// Just in case we never see the horizon.
+	m_horizon = 0;
+	m_cutoff  = 0;
+
 	for (int r = m_rows - 1; r >= 0; --r) {
 		cv::Point2d middle(m_cols / 2, r);
 		m_cache_line[r] = GetDistSize(middle, m_width_line, m_mint, m_plane);
 		m_cache_dead[r] = GetDistSize(middle, m_width_dead, m_mint, m_plane);
 
-		// Stop processing when the ray from the camera hits is parallel to the
-		// ground (i.e. there is no intersection point).
-		if (m_cache_line[r] < 1.0 || m_cache_line[r] > prev_line
-		                          || m_cache_dead[r] > prev_dead) {
+		// Stop processing when the line is too small to effectively filter. Also
+		// estimate the horizon line by finding where the ray from the camera
+		// is parallel to the ground (i.e. there is no intersection point).
+		bool wrap = m_cache_line[r] > prev_line || m_cache_dead[r] > prev_dead;
+
+		if (wrap || m_cache_line[r] < 1.0) {
 			m_horizon = r + 1;
 			break;
+		}
+
+		if (m_cutoff == 0 && m_cache_line[r] < m_width_cutoff) {
+			m_cutoff = r + 1;
 		}
 
 		// Pre-compute and cache a small filter kernel. Overlay adjacent filters
@@ -179,15 +191,18 @@ void LineDetectionNode::UpdateCache(void)
 		if (m_cache_line[r] == prev_line && m_cache_dead[r] == prev_dead) {
 			m_cache_kernel[r] = prev_kernel;
 		} else {
-			cv::Mat kernel_new;
+			cv::Mat kernel_new = cv::Mat();
 			BuildLineFilter(kernel_new, 0, m_cols, m_cache_line[r], m_cache_dead[r], true);
 			m_cache_kernel[r] = kernel_new;
+			ROS_INFO(">>> width = %d", kernel_new.cols);
 		}
 
 		prev_line   = m_cache_line[r];
 		prev_dead   = m_cache_dead[r];
 		prev_kernel = m_cache_kernel[r];
 	}
+
+	ROS_INFO("horizon = %d, cutoff = %d", m_horizon, m_cutoff);
 
 	m_valid = true;
 }
@@ -286,11 +301,39 @@ void LineDetectionNode::RenderKernel(cv::Mat &dst)
 	dst.create(m_rows, m_cols, CV_64FC1);
 	dst.setTo(0.0);
 
+#if 0
 	for (int r = m_horizon; r < m_rows; ++r) {
+#if 0
 		double width_line = m_cache_line[r];
 		double width_dead = m_cache_dead[r];
 
 		cv::Mat row = dst.row(r);
 		BuildLineFilter(row, m_cols / 2, m_cols, width_line, width_dead, false);
+#else
+		cv::Mat kernel = m_cache_kernel[r];
+		int     size   = kernel.cols;
+
+		int left   = m_cols / 2 - (size + 0) / 2;
+		int right  = m_cols / 2 + (size + 1) / 2;
+
+		if (left >= 0 && r >= 0 && right < m_cols && (r + 1 < m_rows)) {
+			cv::Mat chunk = dst(cv::Range(r, r + 1), cv::Range(left, right));
+			kernel.copyTo(chunk);
+		}
+	}
+#endif
+#endif
+
+	for (int r = m_cutoff; r < m_rows; ++r) {
+		cv::Mat kernel = m_cache_kernel[0]; // <----
+		int     size   = kernel.cols;
+
+		int left   = m_cols / 2 - (size + 0) / 2;
+		int right  = m_cols / 2 + (size + 1) / 2;
+		cv::Mat chunk = dst(cv::Range(r, r + 1), cv::Range(left, right));
+		//kernel.copyTo(chunk);
+		chunk.setTo(255.0);
+
+		ROS_INFO("y = %d ---> width = %d", r, size);
 	}
 }
