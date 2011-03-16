@@ -92,9 +92,9 @@ private:
 	Plane m_plane;
 	cv::Mat m_mint;
 	std::string m_ground_id;
-	std::vector<int>     m_cache_dead;
-	std::vector<int>     m_cache_line;
-	std::vector<cv::Mat> m_cache_kernel; // TODO: Switch to dynamic memory.
+	std::vector<int> m_cache_dead;
+	std::vector<int> m_cache_line;
+	cv::Mat m_cache_kernel;
 
 	ros::NodeHandle                 m_nh;
 	tf::TransformListener           m_tf;

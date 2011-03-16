@@ -78,7 +78,8 @@ void BuildLineFilter(cv::Mat &ker, int x, int dim, int width, int border, bool f
 
 	// Only allocate as much space is necessary.
 	if (fit) {
-		ker.create(1, width + 2 * border, CV_64FC1);
+		ROS_ASSERT(ker.rows == 1 && ker.cols >= width + 2 * border);
+		ROS_ASSERT(ker.type() == CV_64FC1);
 
 		range_lo_l = cv::Range(0, border);
 		range_hi   = cv::Range(border, border + width);

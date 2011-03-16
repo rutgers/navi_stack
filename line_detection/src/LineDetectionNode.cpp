@@ -90,25 +90,28 @@ void LineDetectionNode::MatchedFilter(cv::Mat src, cv::Mat &dst_hor,
 	dst_hor.setTo(-255.0);
 	dst_ver.setTo(-255.0);
 
-	for (int r = m_horizon; r < m_rows; ++r)
+	for (int r = m_cutoff; r < m_rows; ++r)
 	for (int c = 0; c < m_cols; ++c) {
-		cv::Mat kernel = m_cache_kernel[r];
-		int     size   = kernel.cols;
+		int kernel_size = m_cache_line[r] + 2 * m_cache_dead[r];
+		int left   = c - (kernel_size + 0) / 2;
+		int right  = c + (kernel_size + 1) / 2;
+		int top    = r - (kernel_size + 0) / 2;
+		int bottom = r + (kernel_size + 1) / 2;
 
-		int left   = c - (size + 0) / 2;
-		int right  = c + (size + 1) / 2;
-		int top    = r - (size + 0) / 2;
-		int bottom = r + (size + 1) / 2;
+		cv::Range range_row(r, r + 1);
+		cv::Range range_col(c, c + 1);
+
+		cv::Mat kernel = m_cache_kernel(range_row, cv::Range(0, kernel_size));
 
 		// TODO: Shrink the filter instead of ignoring these tricky cases.
 		// TODO: Manually perform the vertical dot product if necessary.
 		if (left >= 0 && r >= 0 && right < m_cols && (r + 1 < m_rows)) {
-			cv::Mat src_hor = src(cv::Range(r, r + 1),  cv::Range(left, right));
+			cv::Mat src_hor = src(range_row,  cv::Range(left, right));
 			dst_hor.at<double>(r, c) = kernel.dot(src_hor);
 		}
 
 		if (c >= 0 && top >= 0 && c + 1 < m_cols && bottom < m_rows) {
-			cv::Mat src_ver = src(cv::Range(top, bottom), cv::Range(c, c + 1));
+			cv::Mat src_ver = src(cv::Range(top, bottom), range_col);
 			dst_ver.at<double>(r, c) = kernel.dot(src_ver.t());
 		}
 	}
@@ -150,18 +153,19 @@ void LineDetectionNode::UpdateCache(void)
 
 	if (m_valid) return;
 
-	ROS_WARN("cached values invalidated");
+	ROS_INFO("rebuilding cache with changed parameters");
 
 	m_cache_line.resize(m_rows);
 	m_cache_dead.resize(m_rows);
-	m_cache_kernel.resize(m_rows);
+
+	m_cache_kernel.create(m_rows, m_cols, CV_64FC1);
+	m_cache_kernel.setTo(0.0);
 
 	// Pre-compute the widths necessary to construct the matched pulse-width
 	// filter. Assume distances to not change along rows in the image (i.e. the
 	// image is rectified).
 	int prev_line = INT_MAX;
 	int prev_dead = INT_MAX;
-	cv::Mat prev_kernel;
 
 	// Just in case we never see the horizon.
 	m_horizon = 0;
@@ -177,33 +181,22 @@ void LineDetectionNode::UpdateCache(void)
 		// is parallel to the ground (i.e. there is no intersection point).
 		bool wrap = m_cache_line[r] > prev_line || m_cache_dead[r] > prev_dead;
 
+		if (m_cutoff == 0 && m_cache_line[r] < m_width_cutoff) {
+			m_cutoff = r + 1;
+		}
+
 		if (wrap || m_cache_line[r] < 1.0) {
 			m_horizon = r + 1;
 			break;
 		}
 
-		if (m_cutoff == 0 && m_cache_line[r] < m_width_cutoff) {
-			m_cutoff = r + 1;
-		}
-
-		// Pre-compute and cache a small filter kernel. Overlay adjacent filters
-		// if they are identical.
-		if (m_cache_line[r] == prev_line && m_cache_dead[r] == prev_dead) {
-			m_cache_kernel[r] = prev_kernel;
-		} else {
-			cv::Mat kernel_new = cv::Mat();
-			BuildLineFilter(kernel_new, 0, m_cols, m_cache_line[r], m_cache_dead[r], true);
-			m_cache_kernel[r] = kernel_new;
-			ROS_INFO(">>> width = %d", kernel_new.cols);
-		}
+		// Pre-compute and cache a small filter kernel.
+		cv::Mat kernel = m_cache_kernel.row(r);
+		BuildLineFilter(kernel, 0, m_cols, m_cache_line[r], m_cache_dead[r], true);
 
 		prev_line   = m_cache_line[r];
 		prev_dead   = m_cache_dead[r];
-		prev_kernel = m_cache_kernel[r];
 	}
-
-	ROS_INFO("horizon = %d, cutoff = %d", m_horizon, m_cutoff);
-
 	m_valid = true;
 }
 
@@ -298,8 +291,7 @@ void LineDetectionNode::ImageCallback(ImageConstPtr const &msg_img,
 
 void LineDetectionNode::RenderKernel(cv::Mat &dst)
 {
-	dst.create(m_rows, m_cols, CV_64FC1);
-	dst.setTo(0.0);
+	m_cache_kernel.copyTo(dst);
 
 #if 0
 	for (int r = m_horizon; r < m_rows; ++r) {
@@ -323,17 +315,4 @@ void LineDetectionNode::RenderKernel(cv::Mat &dst)
 	}
 #endif
 #endif
-
-	for (int r = m_cutoff; r < m_rows; ++r) {
-		cv::Mat kernel = m_cache_kernel[0]; // <----
-		int     size   = kernel.cols;
-
-		int left   = m_cols / 2 - (size + 0) / 2;
-		int right  = m_cols / 2 + (size + 1) / 2;
-		cv::Mat chunk = dst(cv::Range(r, r + 1), cv::Range(left, right));
-		//kernel.copyTo(chunk);
-		chunk.setTo(255.0);
-
-		ROS_INFO("y = %d ---> width = %d", r, size);
-	}
 }
