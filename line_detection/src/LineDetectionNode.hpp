@@ -40,6 +40,7 @@ public:
 
 	void SetDeadWidth(double width);
 	void SetLineWidth(double width);
+	void SetIntrinsics(cv::Mat mint);
 	void SetGroundPlane(Plane plane);
 	void SetResolution(int width, int height);
 	void SetThreshold(double threshold);

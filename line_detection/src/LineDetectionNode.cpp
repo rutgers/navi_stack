@@ -1,5 +1,3 @@
-#include <geometry_msgs/PointStamped.h>
-#include <geometry_msgs/Vector3Stamped.h>
 #include "LineDetectionNode.hpp"
 
 LineDetectionNode::LineDetectionNode(ros::NodeHandle nh, std::string ground_id)
@@ -26,6 +24,21 @@ void LineDetectionNode::SetLineWidth(double width_line)
 
 	m_valid      = m_valid && (width_line == m_width_line);
 	m_width_line = width_line;
+}
+
+void LineDetectionNode::SetIntrinsics(cv::Mat mint)
+{
+	ROS_ASSERT(mint.rows == 3 && mint.cols == 3);
+	ROS_ASSERT(mint.type() == CV_64FC1);
+
+	for (int r = 0; r < mint.rows; ++r)
+	for (int c = 0; c < mint.cols; ++c) {
+		m_valid = m_valid && mint.at<double>(r, c) == m_mint.at<double>(r, c);
+	}
+
+	if (!m_valid) {
+		mint.copyTo(m_mint);
+	}
 }
 
 void LineDetectionNode::SetGroundPlane(Plane plane)
@@ -58,10 +71,7 @@ void LineDetectionNode::MatchedFilter(cv::Mat src, cv::Mat &dst_hor,
                                       cv::Mat &dst_ver)
 {
 	ROS_ASSERT(src.type() == CV_64FC1);
-
-	// Update the cached filters if any algorithmic parameters changed.
-	SetResolution(src.cols, src.rows);
-	UpdateCache();
+	ROS_ASSERT(m_valid);
 
 	cv::Mat ker_row, ker_col;
 	dst_hor.create(src.rows, src.cols, CV_64FC1);
@@ -96,6 +106,7 @@ void LineDetectionNode::NonMaxSupr(cv::Mat src_hor, cv::Mat src_ver,
 {
 	ROS_ASSERT(src_hor.rows == src_ver.rows && src_hor.cols == src_ver.cols);
 	ROS_ASSERT(src_hor.type() == CV_64FC1 && src_ver.type() == CV_64FC1);
+	ROS_ASSERT(m_valid);
 
 	for (int y = 1; y < src_hor.rows - 1; ++y)
 	for (int x = 1; x < src_hor.cols - 1; ++x) {
@@ -124,6 +135,8 @@ void LineDetectionNode::UpdateCache(void)
 	ROS_ASSERT(m_mint.type() == CV_64FC1);
 
 	if (m_valid) return;
+
+	ROS_WARN("cached values invalidated");
 
 	m_cache_line.resize(m_rows);
 	m_cache_dead.resize(m_rows);
@@ -168,9 +181,6 @@ void LineDetectionNode::ImageCallback(ImageConstPtr const &msg_img,
 		return;
 	}
 
-	SetGroundPlane(plane);
-	SetResolution(msg_img->width, msg_img->height);
-
 	// Convert ROS messages to OpenCV data types.
 	cv_bridge::CvImagePtr img_ptr;
 	cv::Mat img_input;
@@ -185,6 +195,12 @@ void LineDetectionNode::ImageCallback(ImageConstPtr const &msg_img,
 
 	img_input = img_ptr->image;
 	CameraInfoToMat(msg_cam, mint);
+
+	// Update pre-computed values that were cached (only if necessary!).
+	SetIntrinsics(mint);
+	SetGroundPlane(plane);
+	SetResolution(msg_img->width, msg_img->height);
+	UpdateCache();
 
 	// Processing...
 	std::list<cv::Point2i> maxima;
