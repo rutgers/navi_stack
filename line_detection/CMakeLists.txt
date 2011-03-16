@@ -19,5 +19,6 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 
 rosbuild_add_executable(line_detection
 	src/line_detection.cpp
+	src/LineDetectionNode.cpp
 	src/util.cpp
 )

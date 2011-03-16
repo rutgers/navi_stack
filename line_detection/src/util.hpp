@@ -5,6 +5,7 @@
 #include <opencv/cv.h>
 #include <sensor_msgs/CameraInfo.h>
 #include <sensor_msgs/Image.h>
+#include <tf/transform_listener.h>
 
 using sensor_msgs::CameraInfoConstPtr;
 using sensor_msgs::ImageConstPtr;
@@ -148,5 +149,8 @@ void FindMaxima(cv::Mat src_hor, cv::Mat src_ver, std::list<cv::Point2i> &dst,
 void LineColorTransform(cv::Mat src, cv::Mat &dst);
 
 void NormalizeSaturation(cv::Mat src, cv::Mat &dst, cv::Size size);
+
+void GuessGroundPlane(tf::TransformListener &tf,
+                      std::string fr_gnd, std::string fr_cam, Plane &plane);
 
 #endif
