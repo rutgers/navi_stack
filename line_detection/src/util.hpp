@@ -101,12 +101,13 @@ void CameraInfoToMat(CameraInfoConstPtr const &msg, cv::Mat &mint);
  * Note that the filter is constructed such that it will have a zero response
  * on regions of solid color (i.e. the kernel elements sum to zero).
  *
+ * \param ker   output parameter for the kernel
  * \param x     filter center
  * \param dim   width of the image to be filtered, in pixels
  * \param width filter width
- * \param ker   output parameter for the kernel
+ * \param fit   kernel is forced to have dim columns if false
  */
-void BuildLineFilter(int x, int dim, int width, int border, cv::Mat &ker);
+void BuildLineFilter(cv::Mat &ker, int x, int dim, int width, int border, bool fit = false);
 
 /**
  * Filter a grayscale image along each row and column using a matched
@@ -121,7 +122,7 @@ void BuildLineFilter(int x, int dim, int width, int border, cv::Mat &ker);
  * \param thick     line thickness in real-world coordinates
  */
 void LineFilter(cv::Mat src, cv::Mat &dst_hor, cv::Mat &dst_ver, cv::Mat mint,
-                Plane plane, double thick, double edge);
+                Plane plane, double thick, double edge, double );
 
 /**
  * Perform non-maximal supression to reduce the amount of superfluous

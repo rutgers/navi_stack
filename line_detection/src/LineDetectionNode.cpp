@@ -86,26 +86,30 @@ void LineDetectionNode::MatchedFilter(cv::Mat src, cv::Mat &dst_hor,
 	dst_ver.create(src.rows, src.cols, CV_64FC1);
 
 	// TODO: Change this to an invalid value (maybe NaN or -INFINITY?).
-	dst_hor.setTo(0.0);
-	dst_ver.setTo(0.0);
+	dst_hor.setTo(-255.0);
+	dst_ver.setTo(-255.0);
 
 	for (int r = m_horizon; r < m_rows; ++r)
 	for (int c = 0; c < m_cols; ++c) {
-		double width_line = m_cache_line[r];
-		double width_dead = m_cache_dead[r];
+		cv::Mat kernel = m_cache_kernel[r];
+		int     size   = kernel.cols;
 
-		cv::Mat row = src.row(r);
-		cv::Mat col = src.col(c);
+		int left   = c - (size + 0) / 2;
+		int right  = c + (size + 1) / 2;
+		int top    = r - (size + 0) / 2;
+		int bottom = r + (size + 1) / 2;
 
-		BuildLineFilter(c, m_cols,   width_line, width_dead, ker_row);
-		BuildLineFilter(r, src.rows, width_line, width_dead, ker_col);
+		// TODO: Shrink the filter instead of ignoring these tricky cases.
+		// TODO: Manually perform the vertical dot product if necessary.
+		if (left >= 0 && r >= 0 && right < m_cols && (r + 1 < m_rows)) {
+			cv::Mat src_hor = src(cv::Range(r, r + 1),  cv::Range(left, right));
+			dst_hor.at<double>(r, c) = kernel.dot(src_hor);
+		}
 
-		// TODO: Replace the dot product of the entire row with a dot product
-		//       of the smallest possible kernel.
-		// TODO: Handle the transposition directly in BuildLineFilter().
-		// TODO: Cache the filter kernels.
-		dst_hor.at<double>(r, c) = ker_row.dot(row);
-		dst_ver.at<double>(r, c) = ker_col.t().dot(col);
+		if (c >= 0 && top >= 0 && c + 1 < m_cols && bottom < m_rows) {
+			cv::Mat src_ver = src(cv::Range(top, bottom), cv::Range(c, c + 1));
+			dst_ver.at<double>(r, c) = kernel.dot(src_ver.t());
+		}
 	}
 }
 
@@ -148,26 +152,41 @@ void LineDetectionNode::UpdateCache(void)
 
 	m_cache_line.resize(m_rows);
 	m_cache_dead.resize(m_rows);
+	m_cache_kernel.resize(m_rows);
 
 	// Pre-compute the widths necessary to construct the matched pulse-width
 	// filter. Assume distances to not change along rows in the image (i.e. the
 	// image is rectified).
-	double width_prev = INFINITY;
+	int prev_line = INT_MAX;
+	int prev_dead = INT_MAX;
+	cv::Mat prev_kernel;
 
 	for (int r = m_rows - 1; r >= 0; --r) {
 		cv::Point2d middle(m_cols / 2, r);
 		m_cache_line[r] = GetDistSize(middle, m_width_line, m_mint, m_plane);
 		m_cache_dead[r] = GetDistSize(middle, m_width_dead, m_mint, m_plane);
 
-		// TODO: Pre-compute and cache a small filter kernel.
-
 		// Stop processing when the ray from the camera hits is parallel to the
 		// ground (i.e. there is no intersection point).
-		if (m_cache_line[r] < 1.0 || m_cache_line[r] > width_prev) {
-			m_horizon = r;
+		if (m_cache_line[r] < 1.0 || m_cache_line[r] > prev_line
+		                          || m_cache_dead[r] > prev_dead) {
+			m_horizon = r + 1;
 			break;
 		}
-		width_prev = m_cache_line[r];
+
+		// Pre-compute and cache a small filter kernel. Overlay adjacent filters
+		// if they are identical.
+		if (m_cache_line[r] == prev_line && m_cache_dead[r] == prev_dead) {
+			m_cache_kernel[r] = prev_kernel;
+		} else {
+			cv::Mat kernel_new;
+			BuildLineFilter(kernel_new, 0, m_cols, m_cache_line[r], m_cache_dead[r], true);
+			m_cache_kernel[r] = kernel_new;
+		}
+
+		prev_line   = m_cache_line[r];
+		prev_dead   = m_cache_dead[r];
+		prev_kernel = m_cache_kernel[r];
 	}
 
 	m_valid = true;
@@ -272,6 +291,6 @@ void LineDetectionNode::RenderKernel(cv::Mat &dst)
 		double width_dead = m_cache_dead[r];
 
 		cv::Mat row = dst.row(r);
-		BuildLineFilter(m_cols / 2, m_cols, width_line, width_dead, row);
+		BuildLineFilter(row, m_cols / 2, m_cols, width_line, width_dead, false);
 	}
 }

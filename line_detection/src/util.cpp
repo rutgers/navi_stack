@@ -66,29 +66,46 @@ void CameraInfoToMat(CameraInfoConstPtr const &msg, cv::Mat &mint)
 	}
 }
 
-void BuildLineFilter(int x, int dim, int width, int border, cv::Mat &ker)
+void BuildLineFilter(cv::Mat &ker, int x, int dim, int width, int border, bool fit)
 {
 	ROS_ASSERT(0 <= x && x < dim);
 	ROS_ASSERT(dim > 0);
 
-	int x1 = MAX(x - (width + 0) / 2 - border, 0);       // falling edge, trough
-	int x2 = MAX(x - (width + 0) / 2,          0);       // rising edge,  peak
-	int x3 = MIN(x + (width + 1) / 2,          dim - 1); // falling edge, peak
-	int x4 = MIN(x + (width + 1) / 2 + border, dim - 1); // rising edge,  trough
+	cv::Range range_rows(0, 1);
+	cv::Range range_lo_l;
+	cv::Range range_lo_r;
+	cv::Range range_hi;
 
-	ker.create(1, dim, CV_64FC1);
-	ker.setTo(0.0);
+	// Only allocate as much space is necessary.
+	if (fit) {
+		ker.create(1, width + 2 * border, CV_64FC1);
 
-	cv::Mat lo_l = ker(cv::Range(0, 1), cv::Range(x1, x2));
-	cv::Mat lo_r = ker(cv::Range(0, 1), cv::Range(x3, x4));
-	cv::Mat hi   = ker(cv::Range(0, 1), cv::Range(x2, x3));
+		range_lo_l = cv::Range(0, border);
+		range_hi   = cv::Range(border + 1, border + width);
+		range_lo_r = cv::Range(border + width + 1, border + width + border);
+	}
+	// Allocate a full row to make the dot multiplication simpler.
+	else {
+		ker.create(1, dim, CV_64FC1);
+		ker.setTo(0.0);
 
-	// Too narrow...
-	if (lo_l.cols < 1 || lo_r.cols < 1 || hi.cols < 1) return;
+		int x1 = MAX(x - (width + 0) / 2 - border, 0);       // falling edge, trough
+		int x2 = MAX(x - (width + 0) / 2,          0);       // rising edge,  peak
+		int x3 = MIN(x + (width + 1) / 2,          dim - 1); // falling edge, peak
+		int x4 = MIN(x + (width + 1) / 2 + border, dim - 1); // rising edge,  trough
+
+		range_lo_l = cv::Range(x1, x2);
+		range_hi   = cv::Range(x2, x3);
+		range_lo_r = cv::Range(x3, x4);
+	}
+
+	cv::Mat lo_l = ker(range_rows, range_lo_l);
+	cv::Mat hi   = ker(range_rows, range_hi);
+	cv::Mat lo_r = ker(range_rows, range_lo_r);
 
 	lo_l.setTo(-0.5 / lo_l.cols);
-	lo_r.setTo(-0.5 / lo_r.cols); 
 	hi.setTo(  +1.0 / hi.cols);
+	lo_r.setTo(-0.5 / lo_r.cols); 
 }
 
 void LineFilter(cv::Mat src, cv::Mat &dst_hor, cv::Mat &dst_ver, cv::Mat mint,
@@ -120,10 +137,10 @@ void LineFilter(cv::Mat src, cv::Mat &dst_hor, cv::Mat &dst_ver, cv::Mat mint,
 		cv::Mat row = src.row(y);
 		cv::Mat col = src.col(x);
 
-		BuildLineFilter(x, src.cols, width, border, ker_row);
+		BuildLineFilter(ker_row, x, src.cols, width, border, false);
 		dst_hor.at<double>(y, x) = ker_row.dot(row);
 
-		BuildLineFilter(y, src.rows, width, border, ker_col);
+		BuildLineFilter(ker_col, src.rows, width, border, false);
 		dst_ver.at<double>(y, x) = ker_col.t().dot(col);
 	}
 }
