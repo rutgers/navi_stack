@@ -77,8 +77,6 @@ public:
 	void ImageCallback(ImageConstPtr const &msg_img, CameraInfoConstPtr const &msg_cam);
 
 private:
-	void RenderKernel(cv::Mat &dst);
-
 	bool m_debug;
 	bool m_valid;
 	int m_rows;

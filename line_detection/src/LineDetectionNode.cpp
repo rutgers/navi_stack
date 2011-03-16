@@ -275,44 +275,13 @@ void LineDetectionNode::ImageCallback(ImageConstPtr const &msg_img,
 	if (m_debug) {
 		// Visualize the matched pulse width kernel.
 		cv::Mat img_kernel;
-		RenderKernel(img_kernel);
-
-		cv::Mat img_kernel_8u;
-		cv::normalize(img_kernel, img_kernel_8u, 0, 255, CV_MINMAX, CV_8UC1);
+		cv::normalize(m_cache_kernel, img_kernel, 0, 255, CV_MINMAX, CV_8UC1);
 
 		cv_bridge::CvImage msg_kernel;
 		msg_kernel.header.stamp    = msg_img->header.stamp;
 		msg_kernel.header.frame_id = msg_img->header.frame_id;
 		msg_kernel.encoding = image_encodings::MONO8;
-		msg_kernel.image    = img_kernel_8u;
+		msg_kernel.image    = img_kernel;
 		m_pub_kernel.publish(msg_kernel.toImageMsg());
 	}
-}
-
-void LineDetectionNode::RenderKernel(cv::Mat &dst)
-{
-	m_cache_kernel.copyTo(dst);
-
-#if 0
-	for (int r = m_horizon; r < m_rows; ++r) {
-#if 0
-		double width_line = m_cache_line[r];
-		double width_dead = m_cache_dead[r];
-
-		cv::Mat row = dst.row(r);
-		BuildLineFilter(row, m_cols / 2, m_cols, width_line, width_dead, false);
-#else
-		cv::Mat kernel = m_cache_kernel[r];
-		int     size   = kernel.cols;
-
-		int left   = m_cols / 2 - (size + 0) / 2;
-		int right  = m_cols / 2 + (size + 1) / 2;
-
-		if (left >= 0 && r >= 0 && right < m_cols && (r + 1 < m_rows)) {
-			cv::Mat chunk = dst(cv::Range(r, r + 1), cv::Range(left, right));
-			kernel.copyTo(chunk);
-		}
-	}
-#endif
-#endif
 }
