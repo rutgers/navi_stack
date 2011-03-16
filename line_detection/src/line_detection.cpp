@@ -24,7 +24,7 @@ int main(int argc, char **argv)
 
 	// XXX: What happens if the node recieves a message before it is fully
 	//      initialized by these function calls?
-	LineDetectionNode node(nh, frame_id);
+	LineDetectionNode node(nh, frame_id, true);
 	node.SetLineWidth(width_line);
 	node.SetDeadWidth(width_dead);
 	node.SetResolution(width, height);

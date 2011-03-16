@@ -35,8 +35,9 @@ public:
 	 *
 	 * \param nh        public node handle
 	 * \param ground_id TF frame id for the ground plane
+	 * \param debug     enable debugging topics
 	 */
-	LineDetectionNode(ros::NodeHandle nh, std::string ground_id);
+	LineDetectionNode(ros::NodeHandle nh, std::string ground_id, bool debug = false);
 
 	void SetDeadWidth(double width);
 	void SetLineWidth(double width);
@@ -75,6 +76,9 @@ public:
 	void ImageCallback(ImageConstPtr const &msg_img, CameraInfoConstPtr const &msg_cam);
 
 private:
+	void RenderKernel(cv::Mat &dst);
+
+	bool m_debug;
 	bool m_valid;
 	int m_rows;
 	int m_cols;
@@ -92,8 +96,9 @@ private:
 	tf::TransformListener           m_tf;
 	image_transport::ImageTransport m_it;
 
-	CameraSubscriber m_sub_cam;
-	ros::Publisher   m_pub_pts;
+	CameraSubscriber           m_sub_cam;
+	ros::Publisher             m_pub_pts;
+	image_transport::Publisher m_pub_kernel;
 };
 
 #endif

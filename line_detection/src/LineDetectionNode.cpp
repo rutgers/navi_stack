@@ -1,13 +1,21 @@
 #include "LineDetectionNode.hpp"
 
-LineDetectionNode::LineDetectionNode(ros::NodeHandle nh, std::string ground_id)
-	: m_valid(false),
+LineDetectionNode::LineDetectionNode(ros::NodeHandle nh, std::string ground_id,
+                                     bool debug)
+	: m_debug(debug),
+	  m_valid(false),
 	  m_ground_id(ground_id),
 	  m_nh(nh),
 	  m_it(nh)
 {
 	m_sub_cam = m_it.subscribeCamera("image", 1, &LineDetectionNode::ImageCallback, this);
 	m_pub_pts = m_nh.advertise<sensor_msgs::PointCloud>("line_points", 10);
+
+	if (m_debug) {
+		ROS_WARN("debugging topics are enabled; performance may be degraded");
+
+		m_pub_kernel = m_it.advertise("line_kernel", 10);
+	}
 }
 
 void LineDetectionNode::SetDeadWidth(double width_dead)
@@ -81,7 +89,7 @@ void LineDetectionNode::MatchedFilter(cv::Mat src, cv::Mat &dst_hor,
 	dst_hor.setTo(0.0);
 	dst_ver.setTo(0.0);
 
-	for (int r = 0; r < m_horizon; ++r)
+	for (int r = m_horizon; r < m_rows; ++r)
 	for (int c = 0; c < m_cols; ++c) {
 		double width_line = m_cache_line[r];
 		double width_dead = m_cache_dead[r];
@@ -159,7 +167,6 @@ void LineDetectionNode::UpdateCache(void)
 			m_horizon = r;
 			break;
 		}
-
 		width_prev = m_cache_line[r];
 	}
 
@@ -237,4 +244,34 @@ void LineDetectionNode::ImageCallback(ImageConstPtr const &msg_img,
 	msg_pts.header.stamp    = msg_img->header.stamp;
 	msg_pts.header.frame_id = msg_img->header.frame_id;
 	m_pub_pts.publish(msg_pts);
+
+	if (m_debug) {
+		// Visualize the matched pulse width kernel.
+		cv::Mat img_kernel;
+		RenderKernel(img_kernel);
+
+		cv::Mat img_kernel_8u;
+		cv::normalize(img_kernel, img_kernel_8u, 0, 255, CV_MINMAX, CV_8UC1);
+
+		cv_bridge::CvImage msg_kernel;
+		msg_kernel.header.stamp    = msg_img->header.stamp;
+		msg_kernel.header.frame_id = msg_img->header.frame_id;
+		msg_kernel.encoding = image_encodings::MONO8;
+		msg_kernel.image    = img_kernel_8u;
+		m_pub_kernel.publish(msg_kernel.toImageMsg());
+	}
+}
+
+void LineDetectionNode::RenderKernel(cv::Mat &dst)
+{
+	dst.create(m_rows, m_cols, CV_64FC1);
+	dst.setTo(0.0);
+
+	for (int r = m_horizon; r < m_rows; ++r) {
+		double width_line = m_cache_line[r];
+		double width_dead = m_cache_dead[r];
+
+		cv::Mat row = dst.row(r);
+		BuildLineFilter(m_cols / 2, m_cols, width_line, width_dead, row);
+	}
 }
