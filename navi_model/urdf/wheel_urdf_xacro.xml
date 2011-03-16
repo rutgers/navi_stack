@@ -23,7 +23,7 @@
                 <rightJoint>${prefix}r_wheel_joint</rightJoint>
                 <wheelSeparation>${wheel_offset_y*2}</wheelSeparation>
                 <wheelDiameter>${wheel_radius*2}</wheelDiameter>
-                <torque>600</torque>
+                <torque>1000</torque>
                 <interface:position name="position_iface_${prefix}"/>
                 <robotNamespace>/</robotNamespace>
                 <topicName>/drive/cmd_vel</topicName>
@@ -89,7 +89,7 @@
 				<!-- rotation because cyl. geom primitive has symmetry axis in +x direction -->
 				<origin xyz="0 0 0" rpy="${M_PI/2} 0 0 " />
 				<geometry>
-					<cylinder radius="${wheel_radius}" length="${wheel_length}" />
+					<cylinder radius="${wheel_radius}" length="${wheel_length-0.5}" />
 				</geometry>
 			</collision>
 		</link>
