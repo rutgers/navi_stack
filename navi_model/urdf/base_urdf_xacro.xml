@@ -14,7 +14,7 @@
 			<inertial>
 				<mass value="46"/>
 				<!-- center of mass (com) is defined w.r.t. link local coordinate system -->
-				<origin xyz="0 0 0"/> 
+				<origin xyz="0 0 -0.2"/> 
 				<inertia  ixx="1.0" ixy="0.0" ixz="0.0" iyy="100.0" iyz="0.0" izz="1.0"/>
 			</inertial>
 			<visual>
@@ -70,5 +70,19 @@
 			<child link="base_link"/>
 			<parent link="base_footprint"/>
 		</joint>
+		
+		  <gazebo>
+    <controller:gazebo_ros_p3d name="base_link_gt" plugin="libgazebo_ros_p3d.so">
+      <alwaysOn>true</alwaysOn>
+      <updateRate>20.0</updateRate>
+      <bodyName>base_link</bodyName>
+      <topicName>/drive/odom</topicName>
+      <gaussianNoise>0.0</gaussianNoise>
+      <frameName>odom</frameName>
+      <interface:position name="my_box_p3d_position_iface" />
+    </controller:gazebo_ros_p3d >
+  </gazebo>
+
+		
 	</xacro:macro>
 </robot>
