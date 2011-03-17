@@ -145,10 +145,10 @@ void BuildLineFilter(int x, int dim, int width, cv::Mat &ker)
 	int x1 = x - width;     // falling edge, trough
 	int x2 = x - width / 2; // rising edge,  peak
 	int x3 = x + width / 2; // falling edge, peak
-	int x4 = y + width;     // rising edge,  trough
+	int x4 = x + width;     // rising edge,  trough
 
-	ker.create(dim, 1, CV_64F);
-	ker.setTo(0);
+	ker.create(dim, 1, CV_64FC1);
+	ker.setTo(0.0);
 
 	// Neglect pixels where the kernel hits the edge of the image.
 	if (x1 >= 0 && x4 < dim) {
@@ -205,10 +205,13 @@ void callback(ImageConstPtr const &msg_img, CameraInfoConstPtr const &msg_cam)
 	cv::cvtColor(img, img_hsv, CV_BGR2HSV);
 	cv::split(img_hsv, img_chan);
 
-	cv::Mat img_sat = 255 - img_hsv[1];
-	cv::Mat img_val = img_hsv[2];
+	cv::Mat img_sat = 255 - img_chan[1];
+	cv::Mat img_val = img_chan[2];
+
 	cv::Mat white;
-	cv::min(img_sat, val, white);
+	cv::Mat white_tmp;
+	cv::min(img_sat, img_val, white_tmp);
+	white_tmp.convertTo(white, CV_64FC1);
 
 	// Create a filter with the below shape:
 	//
@@ -220,19 +223,19 @@ void callback(ImageConstPtr const &msg_img, CameraInfoConstPtr const &msg_cam)
 	//
 	// The peak is the same width as the combination of the two equal-sized
 	// throughs. This is normalized to be zero-centered (i.e. sum to zero).
-	cv::Mat img_hor(img.rows, img.cols, CV_8U);
-	cv::Mat img_ver(img.rows, img.cols, CV_8U);
+	cv::Mat img_hor(img.rows, img.cols, CV_64FC1);
+	cv::Mat img_ver(img.rows, img.cols, CV_64FC1);
 
 	for (int y = 0; y < img.rows; ++y)
-	for (int x = 0; x < img.rows; ++x) {
+	for (int x = 0; x < img.cols; ++x) {
 		double width = GetDistSize(cv::Point2d(x, y), p_thickness, mint, p_plane);
 
 		cv::Mat ker_row, ker_col;
 		BuildLineFilter(x, img.cols, width, ker_row);
-		BuildLineFilter(y, img.rows, height, ker_col);
+		BuildLineFilter(y, img.rows, width, ker_col);
 
-		img_ver.at<uint8_t>(y, x) = (uint8_t)ker_row.dot(img.row(y));
-		img_ver.at<uint8_t>(y, x) = (uint8_t)ker_col.dot(img.col(x));
+		img_hor.at<double>(y, x) = ker_row.t().dot(white.row(y));
+		img_ver.at<double>(y, x) = ker_col.dot(white.col(x));
 	}
 
 	// Perform non-maximal supression in the same direction as the matched pulse-
@@ -248,10 +251,11 @@ void callback(ImageConstPtr const &msg_img, CameraInfoConstPtr const &msg_cam)
 		uint8_t val_t = img_ver.at<uint8_t>(y - 1, x);
 		uint8_t val_b = img_ver.at<uint8_t>(y + 1, x);
 
-		bool is_hor_max = val_m > threshold && val_m > val_l && val_m > val_r;
-		bool is_ver_max = val_m > threshold && val_m > val_t && val_m > val_b;
+		bool is_threshold = val_m > p_threshold;
+		bool is_hor_max   = val_m > val_l && val_m > val_r;
+		bool is_ver_max   = val_m > val_t && val_m > val_b;
 
-		if (is_hor_max || is_ver_max) {
+		if (is_threshold || is_hor_max || is_ver_max) {
 			maxima.push_back(cv::Point2i(x, y));
 		}
 	}
@@ -260,8 +264,8 @@ void callback(ImageConstPtr const &msg_img, CameraInfoConstPtr const &msg_cam)
 	// each maximum's pixel coordinates to camera coordinates using the camera's
 	// intrinsics and knowledge of the ground plane.
 	sensor_msgs::PointCloud pts_msg;
-	pts_msg.header.stamp = msg_img->header.stamp;
-	pts_msg.header.frame = msg_img->header.frame;
+	pts_msg.header.stamp    = msg_img->header.stamp;
+	pts_msg.header.frame_id = msg_img->header.frame_id;
 
 	std::list<cv::Point2i>::const_iterator it;
 
@@ -277,10 +281,10 @@ void callback(ImageConstPtr const &msg_img, CameraInfoConstPtr const &msg_cam)
 		pt_msg.x = (float)pt_world.x;
 		pt_msg.y = (float)pt_world.y;
 		pt_msg.z = (float)pt_world.z;
-		pc_msg.points.push_back(pt_msg);
+		pts_msg.points.push_back(pt_msg);
 	}
 
-	pub_debug.publish(msg_out);
+	//pub_debug.publish(msg_out);
 	pub_pts.publish(pts_msg);
 }
 
