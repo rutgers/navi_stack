@@ -4,19 +4,26 @@ LineDetectionNode::LineDetectionNode(ros::NodeHandle nh, std::string ground_id,
                                      bool debug)
 	: m_debug(debug),
 	  m_valid(false),
-	  m_width_cutoff(3), // TODO: Make this a parameter.
 	  m_ground_id(ground_id),
 	  m_nh(nh),
 	  m_it(nh)
 {
 	m_sub_cam = m_it.subscribeCamera("image", 1, &LineDetectionNode::ImageCallback, this);
-	m_pub_pts = m_nh.advertise<sensor_msgs::PointCloud>("line_points", 10);
+	m_pub_pts = m_nh.advertise<PointNormalCloud>("line_points", 10);
 
 	if (m_debug) {
 		ROS_WARN("debugging topics are enabled; performance may be degraded");
 
 		m_pub_kernel = m_it.advertise("line_kernel", 10);
 	}
+}
+
+void LineDetectionNode::SetCutoffWidth(int width_cutoff)
+{
+	ROS_ASSERT(width_cutoff > 0);
+
+	m_valid        = m_valid && (width_cutoff == m_width_cutoff);
+	m_width_cutoff = width_cutoff;
 }
 
 void LineDetectionNode::SetDeadWidth(double width_dead)
@@ -250,10 +257,18 @@ void LineDetectionNode::ImageCallback(ImageConstPtr const &msg_img,
 	// intrinsics and knowledge of the ground plane.
 	// TODO: Do this directly in NonMaxSupr().
 	// TODO: Precompute the mapping from 2D to 3D.
-	sensor_msgs::PointCloud msg_pts;
-	std::list<cv::Point2i>::const_iterator it;
+	PointNormalCloud::Ptr msg_pts(new PointNormalCloud);
+	std::list<cv::Point2i>::iterator it;
 
-	for (it = maxima.begin(); it != maxima.end(); ++it) {
+	// Use a row vector to store unordered points (as per PCL documentation).
+	msg_pts->header.stamp    = msg_img->header.stamp;
+	msg_pts->header.frame_id = msg_img->header.frame_id;
+	msg_pts->height = 1;
+	msg_pts->width  = maxima.size();
+	msg_pts->points.resize(maxima.size());
+
+	int i;
+	for (it = maxima.begin(), i = 0; it != maxima.end(); ++it, ++i) {
 		cv::Point2i pt_image(*it);
 		cv::Point3d ray, pt_world;
 
@@ -261,15 +276,15 @@ void LineDetectionNode::ImageCallback(ImageConstPtr const &msg_img,
 		GetRayPlaneInt(ray, plane, pt_world);
 
 		// Convert OpenCV cv::Point into a ROS geometry_msgs::Point object.
-		geometry_msgs::Point32 msg_pt;
-		msg_pt.x = (float)pt_world.x;
-		msg_pt.y = (float)pt_world.y;
-		msg_pt.z = (float)pt_world.z;
-		msg_pts.points.push_back(msg_pt);
+		pcl::PointNormal &pt = msg_pts->points[i];
+		pt.x = pt_world.x;
+		pt.y = pt_world.y;
+		pt.z = pt_world.z;
+		pt.normal[0] = 0.0;
+		pt.normal[1] = 0.0;
+		pt.normal[2] = 1.0;
 	}
 
-	msg_pts.header.stamp    = msg_img->header.stamp;
-	msg_pts.header.frame_id = msg_img->header.frame_id;
 	m_pub_pts.publish(msg_pts);
 
 	if (m_debug) {

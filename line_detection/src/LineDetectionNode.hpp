@@ -5,15 +5,18 @@
 #include <cmath>
 #include <string>
 #include <vector>
+
 #include <opencv/cv.h>
 #include <ros/console.h>
 #include <ros/ros.h>
 #include <cv_bridge/cv_bridge.h>
+#include <pcl_ros/point_cloud.h>
+#include <pcl/point_types.h>
 #include <image_geometry/pinhole_camera_model.h>
 #include <image_transport/image_transport.h>
 #include <sensor_msgs/CameraInfo.h>
 #include <sensor_msgs/Image.h>
-#include <sensor_msgs/PointCloud.h>
+#include <sensor_msgs/PointCloud2.h>
 #include <sensor_msgs/image_encodings.h>
 #include <tf/transform_listener.h>
 #include "util.hpp"
@@ -25,6 +28,8 @@ using sensor_msgs::CameraInfoConstPtr;
 using sensor_msgs::ImageConstPtr;
 using sensor_msgs::CameraInfo;
 using sensor_msgs::Image;
+
+typedef pcl::PointCloud<pcl::PointNormal> PointNormalCloud;
 
 class LineDetectionNode
 {
@@ -40,6 +45,7 @@ public:
 	 */
 	LineDetectionNode(ros::NodeHandle nh, std::string ground_id, bool debug = false);
 
+	void SetCutoffWidth(int  width);
 	void SetDeadWidth(double width);
 	void SetLineWidth(double width);
 	void SetIntrinsics(cv::Mat mint);

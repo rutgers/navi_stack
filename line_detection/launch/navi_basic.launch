@@ -3,7 +3,8 @@
 		<node pkg="line_detection" type="line_detection" name="line_detection">
 			<param name="thickness" value="0.0726"/>
 			<param name="border"    value="0.1452"/>
-			<param name="threshold" value="40.0"/>
+			<param name="threshold" value="30"/>
+			<param name="cutoff"    value="2"/>
 			<param name="frame"     value="base_footprint"/>
 			<param name="debug"     value="true"/>
 			<remap from="image" to="narrow/left/image_rect_color"/>
