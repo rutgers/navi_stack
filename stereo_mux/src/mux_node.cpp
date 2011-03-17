@@ -30,8 +30,12 @@ static bool            narrow = false;
 void recieve(ImageConstPtr const &msg_left, ImageConstPtr const &msg_middle,
              ImageConstPtr const &msg_right)
 {
+	ROS_ASSERT(msg_middle->header.frame_id == msg_left->header.frame_id);
+	ROS_ASSERT(msg_middle->header.frame_id == msg_right->header.frame_id);
+
 	// Limit the publishing rate to a maximum sample rate.
-	ros::Time now = msg_left->header.stamp;
+	ros::Time   now      = msg_left->header.stamp;
+	std::string frame_id = msg_left->header.frame_id;
 	if (now - latest < step) return;
 
 	CameraInfo info_nl = man_nl->getCameraInfo();
@@ -44,10 +48,10 @@ void recieve(ImageConstPtr const &msg_left, ImageConstPtr const &msg_middle,
 	info_nr.header.stamp = now;
 	info_wl.header.stamp = now;
 	info_wr.header.stamp = now;
-	info_nl.header.frame_id = "stereo_link";
-	info_nr.header.frame_id = "stereo_link";
-	info_wl.header.frame_id = "stereo_link";
-	info_wr.header.frame_id = "stereo_link";
+	info_nl.header.frame_id = frame_id;
+	info_nr.header.frame_id = frame_id;
+	info_wl.header.frame_id = frame_id;
+	info_wr.header.frame_id = frame_id;
 
 	// Duplicate the left camera with two sets of calibration parameters.
 	pub_nl.publish(*msg_left,   info_nl);

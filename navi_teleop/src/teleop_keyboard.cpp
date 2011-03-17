@@ -64,7 +64,7 @@
 
 // press down a key and you will initially go
 double trans_vel = 0.3; // m/second
-double angular_vel = 0.1*M_PI/180.0; // rad/second
+double angular_vel = 0.5*M_PI/180.0; // rad/second
 // should we continuously send commands?
 bool always_command = false;
 
@@ -99,15 +99,15 @@ int
 main(int argc, char** argv)
 {
   ros::init(argc,argv,"tbk", ros::init_options::AnonymousName | ros::init_options::NoSigintHandler);
-  TBK_Node tbk;
   
 
   
-  ros::NodeHandle n_;
+  ros::NodeHandle nh_("~");
   nh_.param("trans_vel", trans_vel, trans_vel);
   nh_.param("angular_vel", angular_vel, angular_vel);
   nh_.param("always_command", always_command, always_command);
 
+  TBK_Node tbk;
 
   boost::thread t = boost::thread::thread(boost::bind(&TBK_Node::keyboardLoop, &tbk));
   

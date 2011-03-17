@@ -13,22 +13,29 @@
 	<property name="camera_x" value="0.43815"/>
 	<property name="camera_y" value="0.079121"/>
 	<property name="camera_z" value="0.0127"/>
+	<property name="camera_roll"  value="1.57079633"/>
+	<property name="camera_pitch" value="3.14159265"/>
+	<property name="camera_yaw"   value="1.57079633"/>
 
-	<!-- Dimensions of each camera for visualization -->
-	<property name="camera_width"    value="0.030"/>
-	<property name="camera_length"   value="0.030"/>
-	<property name="camera_height"   value="0.068"/>
+	<!-- Dimensions of the camera mount for visualization -->
+	<property name="camera_width"  value="0.30"/>
+	<property name="camera_length" value="0.05"/>
+	<property name="camera_height" value="0.05"/>
+	<property name="camera_offset" value="0.08"/>
+
+	<property name="camera_radius" value="0.02"/>
+	<property name="camera_depth"  value="0.04"/>
 
 	<!-- TODO: Modify camera intrinsics to match a PS3 Eye -->
 	<property name="image_width"  value="320"/>
 	<property name="image_height" value="240"/>
 	<property name="focal_length" value="640"/>
-	<property name="hfov"         value="90.0"/>
+	<property name="hfov"         value="120.0"/>
 	<property name="fps"          value="10.0"/>
 
 	<joint name="camera_joint" type="fixed">
 		<axis xyz="0 0 0"/>
-		<origin xyz="${camera_x} ${camera_y} ${camera_z}" rpy="0 0 0"/>
+		<origin xyz="${camera_x} ${camera_y} ${camera_z}" rpy="${camera_roll} ${camera_pitch} ${camera_yaw}"/>
 		<parent link="base_link"/>
 		<child link="camera_link"/>
 	</joint>
@@ -41,25 +48,24 @@
 					 iyy="0.015218160428" iyz="-0.000004273467" izz="0.011763977943"/>
 		</inertial>
 		<visual>
-			<origin xyz=" 0 0 0" rpy="0 0 0"/>
+			<origin xyz="${camera_offset} 0 0" rpy="0 0 0"/>
 				<geometry name="base_link_visual_geom">
-					<box size=".2 .05 0.05"/>
+					<box size="${camera_width} ${camera_length} ${camera_height}"/>
 				</geometry>
-			<material name="Blue"/> 
+			<material name="White"/> 
 		</visual>
 		<collision>
-			<origin xyz=" 0 0 0" rpy="0 0 0"/>
+			<origin xyz="0 0 0" rpy="0 0 0"/>
 			<geometry name="base_link_collision_geom">
-				<box size=".2 .05 0.05"/>
+				<box size="${camera_width} ${camera_length} ${camera_height}"/>
 			</geometry>
 		</collision>
 	</link>
 	 
 	<!-- Monocular Camera -->
-	<xacro:macro name="camera" params="prefix topic y baseline">
+	<xacro:macro name="camera" params="prefix topic x baseline">
 		<joint name="${prefix}_camera_joint" type="fixed">
-			<axis xyz="0 0 0"/>
-			<origin xyz="0 ${y} 0" rpy="0 0 0"/>
+			<origin xyz="${x} 0 0" rpy="1.5707963267948966 -1.5707963267948966 0"/>
 			<parent link="camera_link"/>
 			<child link="${prefix}_camera_link"/>
 		</joint>
@@ -67,10 +73,23 @@
 		<link name="${prefix}_camera_link">
 			<inertial>
 				<mass value="0.044036"/>
-				<origin xyz="0 ${y} 0"/>
+				<origin xyz="0 0 0"/>
 				<inertia ixx="0.012411765597" ixy="-0.000711733678" ixz="0.00050272983"
 				         iyy="0.015218160428" iyz="-0.000004273467" izz="0.011763977943"/>
 			</inertial>
+			<visual>
+				<origin xyz="${camera_depth} 0 0" rpy="0 1.5707963267948966 0"/>
+				<geometry name="${prefix}_camera_joint_visual_geom">
+					<cylinder radius="${camera_radius}" length="${camera_depth}"/>
+				</geometry>
+				<material name="Grey"/> 
+			</visual>
+			<collision>
+				<origin xyz="${camera_depth} 0 0" rpy="1.5707963267948966 0 0"/>
+				<geometry name="${prefix}_camera_link_collision_geom">
+					<cylinder radius="${camera_radius}" length="${camera_depth}"/>
+				</geometry>
+			</collision>
 		</link>
 		 
 		<gazebo reference="${prefix}_camera_link">
@@ -109,7 +128,7 @@
 
 	<!-- Stereo Camera: Pair of monocular cameras -->
 	<xacro:macro name="stereo-camera" params="prefix topic baseline">
-		<camera prefix="${prefix}_left"  topic="${topic}/left"  y="0.0"         baseline="0.0"/>
-		<camera prefix="${prefix}_right" topic="${topic}/right" y="${baseline}" baseline="${baseline}"/>
+		<camera prefix="${prefix}_left"  topic="${topic}/left"  x="0.0"         baseline="0.0"/>
+		<camera prefix="${prefix}_right" topic="${topic}/right" x="${baseline}" baseline="${baseline}"/>
 	</xacro:macro>
 </robot>

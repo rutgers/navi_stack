@@ -1,7 +1,7 @@
 <launch>
 	<group ns="vision">
 		<node pkg="line_detection" type="line_detection" name="line_detection">
-			<remap from="image" to="narrow/right/image_raw"/>
+			<remap from="image" to="narrow/left/image_rect_color"/>
 		</node>
 	</group>
 </launch>
