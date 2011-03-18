@@ -7,6 +7,9 @@
        xmlns:sensor="http://playerstage.sourceforge.net/gazebo/xmlschema/#sensor" 
        xmlns:xacro="http://ros.org/wiki/xacro">
  
+	<material name="Black">
+		<color rgba="0.0 0.0 0.0 1.0"/>
+	</material>
 	<material name="Blue">
 		<color rgba="0.0 0.0 0.8 1.0"/>
 	</material>

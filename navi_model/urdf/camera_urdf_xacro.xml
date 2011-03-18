@@ -23,8 +23,8 @@
 	<property name="camera_height" value="0.05"/>
 	<property name="camera_offset" value="0.08"/>
 
-	<property name="camera_radius" value="0.02"/>
-	<property name="camera_depth"  value="0.04"/>
+	<property name="camera_radius" value="0.010"/>
+	<property name="camera_depth"  value="0.001"/>
 
 	<!-- TODO: Modify camera intrinsics to match a PS3 Eye -->
 	<property name="image_width"  value="320"/>
@@ -48,14 +48,14 @@
 					 iyy="0.015218160428" iyz="-0.000004273467" izz="0.011763977943"/>
 		</inertial>
 		<visual>
-			<origin xyz="${camera_offset} 0 0" rpy="0 0 0"/>
+			<origin xyz="${camera_offset} 0 ${-camera_height/2 - camera_depth/2}" rpy="0 0 0"/>
 				<geometry name="base_link_visual_geom">
 					<box size="${camera_width} ${camera_length} ${camera_height}"/>
 				</geometry>
-			<material name="White"/> 
+			<material name="Grey"/> 
 		</visual>
 		<collision>
-			<origin xyz="0 0 0" rpy="0 0 0"/>
+			<origin xyz="0 0 ${-camera_height/2 - camera_depth/2}" rpy="0 0 0"/>
 			<geometry name="base_link_collision_geom">
 				<box size="${camera_width} ${camera_length} ${camera_height}"/>
 			</geometry>
@@ -78,14 +78,14 @@
 				         iyy="0.015218160428" iyz="-0.000004273467" izz="0.011763977943"/>
 			</inertial>
 			<visual>
-				<origin xyz="${camera_depth} 0 0" rpy="0 1.5707963267948966 0"/>
+				<origin xyz="0 0 0" rpy="0 1.5707963267948966 0"/>
 				<geometry name="${prefix}_camera_joint_visual_geom">
 					<cylinder radius="${camera_radius}" length="${camera_depth}"/>
 				</geometry>
-				<material name="Grey"/> 
+				<material name="Black"/> 
 			</visual>
 			<collision>
-				<origin xyz="${camera_depth} 0 0" rpy="1.5707963267948966 0 0"/>
+				<origin xyz="0 0 0" rpy="1.5707963267948966 0 0"/>
 				<geometry name="${prefix}_camera_link_collision_geom">
 					<cylinder radius="${camera_radius}" length="${camera_depth}"/>
 				</geometry>
@@ -93,7 +93,7 @@
 		</link>
 		 
 		<gazebo reference="${prefix}_camera_link">
-			<material>Gazebo/Grey</material>
+			<material>Gazebo/Black</material>
 
 			<sensor:camera name="${prefix}_camera_sensor">
 				<imageSize>${image_width} ${image_height}</imageSize>
