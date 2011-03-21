@@ -53,6 +53,8 @@ public:
 	void SetResolution(int width, int height);
 	void SetThreshold(double threshold);
 
+	void EstimateNormal(cv::Mat src, cv::Point2d &normal, cv::Point2i pt);
+
 	/**
 	 * Use a matched pulse-width filter to search for lines of the appropriate
 	 * width in the image. This the output of this is an image with the same
@@ -90,6 +92,7 @@ private:
 	int m_cutoff;
 	int m_horizon;
 	int m_width_cutoff;
+	size_t m_num_prev;
 	double m_width_line;
 	double m_width_dead;
 	double m_threshold;
@@ -106,6 +109,9 @@ private:
 
 	CameraSubscriber           m_sub_cam;
 	ros::Publisher             m_pub_pts;
+
+	// Debug topics; only enabled if m_debug is true.
+	ros::Publisher             m_pub_normal;
 	image_transport::Publisher m_pub_kernel;
 };
 

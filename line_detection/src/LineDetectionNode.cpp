@@ -1,9 +1,20 @@
+#include <tf/transform_datatypes.h>
+#include <visualization_msgs/Marker.h>
+#include <visualization_msgs/MarkerArray.h>
 #include "LineDetectionNode.hpp"
+
+using visualization_msgs::Marker;
+using visualization_msgs::MarkerArray;
+
+// TODO: Convert the direction of principal curvature to real-world coordinates.
+// TODO: Compute a seperate filter kernel for the vertical direction using a
+//         a vertical direction sampling vector.
 
 LineDetectionNode::LineDetectionNode(ros::NodeHandle nh, std::string ground_id,
                                      bool debug)
 	: m_debug(debug),
 	  m_valid(false),
+	  m_num_prev(0),
 	  m_ground_id(ground_id),
 	  m_nh(nh),
 	  m_it(nh)
@@ -15,6 +26,7 @@ LineDetectionNode::LineDetectionNode(ros::NodeHandle nh, std::string ground_id,
 		ROS_WARN("debugging topics are enabled; performance may be degraded");
 
 		m_pub_kernel = m_it.advertise("line_kernel", 10);
+		m_pub_normal = m_nh.advertise<MarkerArray>("/visualization_marker_array", 10);
 	}
 }
 
@@ -267,6 +279,12 @@ void LineDetectionNode::ImageCallback(ImageConstPtr const &msg_img,
 	msg_pts->width  = maxima.size();
 	msg_pts->points.resize(maxima.size());
 
+	// Calculate second-order partials to compute the Hessian matrix.
+	cv::Mat dxx, dxy, dyy;
+	cv::Sobel(img_pre, dxx, CV_64FC1, 2, 0);
+	cv::Sobel(img_pre, dxy, CV_64FC1, 1, 1);
+	cv::Sobel(img_pre, dyy, CV_64FC1, 0, 2);
+
 	int i;
 	for (it = maxima.begin(), i = 0; it != maxima.end(); ++it, ++i) {
 		cv::Point2i pt_image(*it);
@@ -275,19 +293,37 @@ void LineDetectionNode::ImageCallback(ImageConstPtr const &msg_img,
 		GetPixelRay(mint, pt_image, ray);
 		GetRayPlaneInt(ray, plane, pt_world);
 
+		// Calculate a vector that is normal to the direction of the line by
+		// finding the principle eigenvector of the Hessian matrix centered
+		// on this pixel.
+		// TODO: Convert distances in the image to distances in real life. I am
+		//       not sure if I should do this before or after finding the
+		//       Hessian matrix.
+		cv::Mat hessian(2, 2, CV_64FC1);
+		hessian.at<double>(0, 0) = dxx.at<double>(it->y, it->x);
+		hessian.at<double>(0, 1) = dxy.at<double>(it->y, it->x);
+		hessian.at<double>(1, 0) = dxy.at<double>(it->y, it->x);
+		hessian.at<double>(1, 1) = dyy.at<double>(it->y, it->x);
+
+		cv::Mat eigen_vec;
+		cv::Mat eigen_val;
+		cv::eigen(hessian, eigen_val, eigen_vec); //, 0, 0);
+
 		// Convert OpenCV cv::Point into a ROS geometry_msgs::Point object.
 		pcl::PointNormal &pt = msg_pts->points[i];
 		pt.x = pt_world.x;
 		pt.y = pt_world.y;
 		pt.z = pt_world.z;
 		pt.normal[0] = 0.0;
-		pt.normal[1] = 0.0;
-		pt.normal[2] = 1.0;
+		pt.normal[1] =  eigen_vec.at<double>(0, 0);
+		pt.normal[2] = -eigen_vec.at<double>(0, 1);
 	}
 
 	m_pub_pts.publish(msg_pts);
 
 	if (m_debug) {
+		size_t num = msg_pts->points.size();
+
 		// Visualize the matched pulse width kernel.
 		cv::Mat img_kernel;
 		cv::normalize(m_cache_kernel, img_kernel, 0, 255, CV_MINMAX, CV_8UC1);
@@ -298,5 +334,55 @@ void LineDetectionNode::ImageCallback(ImageConstPtr const &msg_img,
 		msg_kernel.encoding = image_encodings::MONO8;
 		msg_kernel.image    = img_kernel;
 		m_pub_kernel.publish(msg_kernel.toImageMsg());
+
+		// Render normal vectors as lines that can be visualized in RViz.
+		// TODO: Fetch .ns from the current node's __name.
+		MarkerArray msg_normal;
+		msg_normal.markers.resize(MAX(num, m_num_prev));
+
+		for (size_t i = 0; i < num; ++i) {
+			Marker &marker = msg_normal.markers[i];
+			marker.header.stamp    = msg_img->header.stamp;
+			marker.header.frame_id = msg_img->header.frame_id;
+			marker.ns     = "line_detection";
+			marker.id     = i;
+			marker.type   = Marker::ARROW;
+			marker.action = Marker::ADD;
+
+			// Tail of the vector is on the detected point.
+			geometry_msgs::Point &pos = marker.pose.position;
+			pos.x = msg_pts->points[i].x;
+			pos.y = msg_pts->points[i].y;
+			pos.z = msg_pts->points[i].z;
+
+			// TODO: Are the signs/order correct?
+			double yaw = -atan2(msg_pts->points[i].normal[2], msg_pts->points[i].normal[1]);
+			marker.pose.orientation = tf::createQuaternionMsgFromRollPitchYaw(0.0, yaw, 0.0);
+
+			geometry_msgs::Vector3 &scale = marker.scale;
+			scale.x = 0.5;
+			scale.y = 1.0;
+			scale.z = 1.0;
+
+			std_msgs::ColorRGBA &color = marker.color;
+			color.r = 1.0;
+			color.g = 0.0;
+			color.b = 0.0;
+			color.a = 1.0;
+		}
+
+		// Clear the old markers if they were not already modified. Old markers
+		// will linger until they are modified without this hack.
+		for (size_t i = num; i < m_num_prev; ++i) {
+			Marker &marker = msg_normal.markers[i];
+			marker.header.stamp    = msg_img->header.stamp;
+			marker.header.frame_id = msg_img->header.frame_id;
+			marker.ns     = "line_detection";
+			marker.id     = i;
+			marker.action = Marker::DELETE;
+		}
+
+		m_pub_normal.publish(msg_normal);
+		m_num_prev = num;
 	}
 }
