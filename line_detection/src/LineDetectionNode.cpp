@@ -272,6 +272,7 @@ void LineDetectionNode::ImageCallback(ImageConstPtr const &msg_img,
 	// Publish a three-dimensional point cloud in the camera frame by converting
 	// each maximum's pixel coordinates to camera coordinates using the camera's
 	// intrinsics and knowledge of the ground plane.
+	// TODO: Scrap the std::list middleman.
 	// TODO: Do this directly in NonMaxSupr().
 	// TODO: Precompute the mapping from 2D to 3D.
 	PointNormalCloud::Ptr msg_pts(new PointNormalCloud);
@@ -314,14 +315,25 @@ void LineDetectionNode::ImageCallback(ImageConstPtr const &msg_img,
 		cv::Mat eigen_val;
 		cv::eigen(hessian, eigen_val, eigen_vec); //, 0, 0);
 
+		// Convert image coordinates to real-world coordinates on the ground
+		// plane. This is especially important since a small change in 
+		double normal_x =  eigen_vec.at<double>(0, 0);
+		double normal_y = -eigen_vec.at<double>(0, 1);
+
+		// TODO: Replace this hack with a Taylor approximation.
+		cv::Point2d dx(normal_x, 0);
+		cv::Point2d dy(0, normal_y);
+		double ground_x = GetPixSize(*it, dx, m_mint, m_plane);
+		double ground_y = GetPixSize(*it, dy, m_mint, m_plane);
+
 		// Convert OpenCV cv::Point into a ROS geometry_msgs::Point object.
 		pcl::PointNormal &pt = msg_pts->points[i];
 		pt.x = pt_world.x;
 		pt.y = pt_world.y;
 		pt.z = pt_world.z;
 		pt.normal[0] = 0.0;
-		pt.normal[1] =  eigen_vec.at<double>(0, 0);
-		pt.normal[2] = -eigen_vec.at<double>(0, 1);
+		pt.normal[1] = ground_x;
+		pt.normal[2] = ground_y;
 	}
 
 	m_pub_pts.publish(msg_pts);
@@ -342,6 +354,7 @@ void LineDetectionNode::ImageCallback(ImageConstPtr const &msg_img,
 
 		// Render normal vectors as lines that can be visualized in RViz.
 		// TODO: Fetch .ns from the current node's __name.
+		// TODO: Extract most of this to a helper function.
 		MarkerArray msg_normal;
 		msg_normal.markers.resize(MAX(num, m_num_prev));
 
@@ -361,7 +374,9 @@ void LineDetectionNode::ImageCallback(ImageConstPtr const &msg_img,
 			pos.z = msg_pts->points[i].z;
 
 			// TODO: Are the signs/order correct?
-			double yaw = -atan2(msg_pts->points[i].normal[2], msg_pts->points[i].normal[1]);
+			double normal_x = msg_pts->points[i].normal[1];
+			double normal_y = msg_pts->points[i].normal[2];
+			double yaw = -atan2(normal_y, normal_x);
 			marker.pose.orientation = tf::createQuaternionMsgFromRollPitchYaw(0.0, yaw, 0.0);
 
 			geometry_msgs::Vector3 &scale = marker.scale;

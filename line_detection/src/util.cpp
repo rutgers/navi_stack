@@ -56,6 +56,20 @@ double GetDistSize(cv::Point2d pt0, cv::Point3d dist, cv::Mat mint, Plane plane)
 	return sqrt(offset.dot(offset));
 }
 
+double GetPixSize(cv::Point2d pt0, cv::Point2d dist, cv::Mat mint, Plane plane)
+{
+	cv::Point3d ray0, ray1;
+	GetPixelRay(mint, pt0,        ray0);
+	GetPixelRay(mint, pt0 + dist, ray1);
+
+	cv::Point3d pt0_world, pt1_world;
+	GetRayPlaneInt(ray0, plane, pt0_world);
+	GetRayPlaneInt(ray1, plane, pt1_world);
+
+	cv::Point3d offset = pt1_world - pt0_world;
+	return sqrt(offset.dot(offset));
+}
+
 void CameraInfoToMat(CameraInfoConstPtr const &msg, cv::Mat &mint)
 {
 	mint.create(3, 3, CV_64FC1);
