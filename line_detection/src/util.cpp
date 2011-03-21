@@ -28,7 +28,7 @@ void GetRayPlaneInt(cv::Point3d ray, Plane plane, cv::Point3d &dst)
 	dst = (plane.normal.dot(plane.point) / plane.normal.dot(ray)) * ray;
 }
 
-double GetDistSize(cv::Point2d pt0, double dist, cv::Mat mint, Plane plane)
+double GetDistSize(cv::Point2d pt0, cv::Point3d dist, cv::Mat mint, Plane plane)
 {
 	ROS_ASSERT(mint.rows == 3 && mint.cols == 3);
 	ROS_ASSERT(mint.type() == CV_64FC1);
@@ -42,9 +42,9 @@ double GetDistSize(cv::Point2d pt0, double dist, cv::Mat mint, Plane plane)
 	// Calculate the image coordinates of a world point offset by the
 	// appropriate number of pixels in the plane (using the cross product).
 	cv::Mat pt1_world(3, 1, CV_64FC1);
-	pt1_world.at<double>(0, 0) = pt0_world.x + dist;
-	pt1_world.at<double>(1, 0) = pt0_world.y;
-	pt1_world.at<double>(2, 0) = pt0_world.z;
+	pt1_world.at<double>(0, 0) = pt0_world.x + dist.x;
+	pt1_world.at<double>(1, 0) = pt0_world.y + dist.y;
+	pt1_world.at<double>(2, 0) = pt0_world.z + dist.z;
 	cv::Mat pt1_mat = mint * pt1_world;
 
 	// Project this offset point into the image.

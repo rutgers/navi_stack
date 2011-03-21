@@ -191,9 +191,14 @@ void LineDetectionNode::UpdateCache(void)
 	m_cutoff  = 0;
 
 	for (int r = m_rows - 1; r >= 0; --r) {
+		// TODO: Calculate separate distances for row and column filters.
+		// TODO: Use a Taylor approximation to simplify the width calculation.
 		cv::Point2d middle(m_cols / 2, r);
-		m_cache_line[r] = GetDistSize(middle, m_width_line, m_mint, m_plane);
-		m_cache_dead[r] = GetDistSize(middle, m_width_dead, m_mint, m_plane);
+		cv::Point3d delta_line(m_width_line, 0.0, 0.0);
+		cv::Point3d delta_dead(m_width_dead, 0.0, 0.0);
+
+		m_cache_line[r] = GetDistSize(middle, delta_line, m_mint, m_plane);
+		m_cache_dead[r] = GetDistSize(middle, delta_dead, m_mint, m_plane);
 
 		// Stop processing when the line is too small to effectively filter. Also
 		// estimate the horizon line by finding where the ray from the camera

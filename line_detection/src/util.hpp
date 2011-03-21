@@ -66,7 +66,7 @@ void GetRayPlaneInt(cv::Point3d ray, Plane plane, cv::Point3d &dst);
  * \param plane expressed in the camera coordinate frame
  * \return corresponding distance in image coordinates
  */
-double GetDistSize(cv::Point2d pt0, double dist, cv::Mat mint, Plane plane);
+double GetDistSize(cv::Point2d pt0, cv::Point3d dist, cv::Mat mint, Plane plane);
 
 /**
  * Extracts the intrinsic matrix from a ROS CameraInfo message into an OpenCV
