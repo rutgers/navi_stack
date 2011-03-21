@@ -111,68 +111,6 @@ void BuildLineFilter(cv::Mat &ker, int x, int dim, int width, int border, bool f
 	ROS_INFO("width = %d", ker.cols);
 }
 
-void LineFilter(cv::Mat src, cv::Mat &dst_hor, cv::Mat &dst_ver, cv::Mat mint,
-                Plane plane, double thick, double edge)
-{
-	ROS_ASSERT(mint.rows == 3 && mint.cols == 3);
-	ROS_ASSERT(mint.type() == CV_64FC1);
-	ROS_ASSERT(src.type() == CV_64FC1);
-	ROS_ASSERT(thick > 0);
-
-	cv::Mat ker_row, ker_col;
-
-	dst_hor.create(src.rows, src.cols, CV_64FC1);
-	dst_ver.create(src.rows, src.cols, CV_64FC1);
-	dst_hor.setTo(-255);
-	dst_ver.setTo(-255);
-
-	double width_prev = INFINITY;
-
-	for (int y = src.rows - 1; y >= 0; --y)
-	for (int x = src.cols - 1; x >= 0; --x) {
-		double width  = GetDistSize(cv::Point2d(x, y), thick, mint, plane);
-		double border = GetDistSize(cv::Point2d(x, y), edge,  mint, plane);
-
-		// Stop processing at the horizon.
-		if (width > width_prev) return;
-		width_prev = width;
-
-		cv::Mat row = src.row(y);
-		cv::Mat col = src.col(x);
-
-		BuildLineFilter(ker_row, x, src.cols, width, border, false);
-		dst_hor.at<double>(y, x) = ker_row.dot(row);
-
-		BuildLineFilter(ker_col, src.rows, width, border, false);
-		dst_ver.at<double>(y, x) = ker_col.t().dot(col);
-	}
-}
-
-void FindMaxima(cv::Mat src_hor, cv::Mat src_ver, std::list<cv::Point2i> &dst,
-                double threshold)
-{
-	ROS_ASSERT(src_hor.rows == src_ver.rows && src_hor.cols == src_ver.cols);
-	ROS_ASSERT(src_hor.type() == CV_64FC1 && src_ver.type() == CV_64FC1);
-
-	for (int y = 1; y < src_hor.rows - 1; ++y)
-	for (int x = 1; x < src_hor.cols - 1; ++x) {
-		double val_hor   = src_hor.at<double>(y, x);
-		double val_left  = src_hor.at<double>(y, x - 1);
-		double val_right = src_hor.at<double>(y, x + 1);
-
-		double val_ver = src_ver.at<double>(y + 0, x);
-		double val_top = src_ver.at<double>(y - 1, x);
-		double val_bot = src_ver.at<double>(y + 1, x);
-
-		bool is_hor = val_hor > val_left && val_hor > val_right && val_hor > threshold;
-		bool is_ver = val_ver > val_top  && val_ver > val_bot   && val_ver > threshold;
-
-		if (is_hor || is_ver) {
-			dst.push_back(cv::Point2i(x, y));
-		}
-	}
-}
-
 void LineColorTransform(cv::Mat src, cv::Mat &dst)
 {
 	ROS_ASSERT(src.type() == CV_8UC3);
