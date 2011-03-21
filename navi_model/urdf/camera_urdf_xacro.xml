@@ -26,11 +26,12 @@
 	<property name="camera_radius" value="0.010"/>
 	<property name="camera_depth"  value="0.001"/>
 
-	<!-- TODO: Modify camera intrinsics to match a PS3 Eye -->
+	<!-- Modify camera intrinsics to match a PS3 Eye -->
+	<!-- TODO: What units is the focal length in!? -->
 	<property name="image_width"  value="320"/>
 	<property name="image_height" value="240"/>
-	<property name="focal_length" value="640"/>
-	<property name="hfov"         value="120.0"/>
+	<property name="focal_length" value="315"/>
+	<property name="hfov"         value="75"/>
 	<property name="fps"          value="10.0"/>
 
 	<joint name="camera_joint" type="fixed">
