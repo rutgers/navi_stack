@@ -26,7 +26,8 @@ LineDetectionNode::LineDetectionNode(ros::NodeHandle nh, std::string ground_id,
 		ROS_WARN("debugging topics are enabled; performance may be degraded");
 
 		m_pub_kernel = m_it.advertise("line_kernel", 10);
-		m_pub_normal = m_nh.advertise<MarkerArray>("/visualization_marker_array", 10);
+		m_pub_normal = m_it.advertise("line_normal", 10);
+		m_pub_visual = m_nh.advertise<MarkerArray>("/visualization_marker_array", 1);
 	}
 }
 
@@ -332,8 +333,8 @@ void LineDetectionNode::ImageCallback(ImageConstPtr const &msg_img,
 		pt.y = pt_world.y;
 		pt.z = pt_world.z;
 		pt.normal[0] = 0.0;
-		pt.normal[1] = ground_x;
-		pt.normal[2] = ground_y;
+		pt.normal[1] = normal_x; // TODO: change to ground_x
+		pt.normal[2] = normal_y; // TODO: change to ground_y
 	}
 
 	m_pub_pts.publish(msg_pts);
@@ -352,14 +353,36 @@ void LineDetectionNode::ImageCallback(ImageConstPtr const &msg_img,
 		msg_kernel.image    = img_kernel;
 		m_pub_kernel.publish(msg_kernel.toImageMsg());
 
+		// Visualize normal vectors on the image.
+		cv::Mat img_normal = img_input.clone();
+
+		for (it = maxima.begin(), i = 0; it != maxima.end(); ++it, ++i) {
+			double normal_x = msg_pts->points[i].normal[1];
+			double normal_y = msg_pts->points[i].normal[2];
+
+			cv::Point2d point(it->x, it->y);
+			cv::Point2d normal(normal_x, normal_y);
+			double scale = 10.0 / sqrt(pow(normal_x, 2) + pow(normal_y, 2));
+			normal = normal * scale;
+
+			cv::line(img_normal, point, point + normal, cv::Scalar(0, 0, 255));
+		}
+
+		cv_bridge::CvImage msg_normal;
+		msg_normal.header.stamp    = msg_img->header.stamp;
+		msg_normal.header.frame_id = msg_img->header.frame_id;
+		msg_normal.encoding = image_encodings::BGR8;
+		msg_normal.image    = img_normal;
+		m_pub_normal.publish(msg_normal.toImageMsg());
+
 		// Render normal vectors as lines that can be visualized in RViz.
 		// TODO: Fetch .ns from the current node's __name.
 		// TODO: Extract most of this to a helper function.
-		MarkerArray msg_normal;
-		msg_normal.markers.resize(MAX(num, m_num_prev));
+		MarkerArray msg_visual;
+		msg_visual.markers.resize(MAX(num, m_num_prev));
 
 		for (size_t i = 0; i < num; ++i) {
-			Marker &marker = msg_normal.markers[i];
+			Marker &marker = msg_visual.markers[i];
 			marker.header.stamp    = msg_img->header.stamp;
 			marker.header.frame_id = msg_img->header.frame_id;
 			marker.ns     = "line_detection";
@@ -394,7 +417,7 @@ void LineDetectionNode::ImageCallback(ImageConstPtr const &msg_img,
 		// Clear the old markers if they were not already modified. Old markers
 		// will linger until they are modified without this hack.
 		for (size_t i = num; i < m_num_prev; ++i) {
-			Marker &marker = msg_normal.markers[i];
+			Marker &marker = msg_visual.markers[i];
 			marker.header.stamp    = msg_img->header.stamp;
 			marker.header.frame_id = msg_img->header.frame_id;
 			marker.ns     = "line_detection";
@@ -402,7 +425,7 @@ void LineDetectionNode::ImageCallback(ImageConstPtr const &msg_img,
 			marker.action = Marker::DELETE;
 		}
 
-		m_pub_normal.publish(msg_normal);
+		m_pub_visual.publish(msg_visual);
 		m_num_prev = num;
 	}
 }

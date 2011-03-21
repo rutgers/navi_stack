@@ -111,7 +111,8 @@ private:
 	ros::Publisher             m_pub_pts;
 
 	// Debug topics; only enabled if m_debug is true.
-	ros::Publisher             m_pub_normal;
+	ros::Publisher             m_pub_visual;
+	image_transport::Publisher m_pub_normal;
 	image_transport::Publisher m_pub_kernel;
 };
 
