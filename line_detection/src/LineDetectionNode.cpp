@@ -20,6 +20,7 @@ LineDetectionNode::LineDetectionNode(ros::NodeHandle nh, std::string ground_id,
 	  m_it(nh)
 {
 	m_sub_cam = m_it.subscribeCamera("image", 1, &LineDetectionNode::ImageCallback, this);
+	m_pub_max = m_it.advertise("line_maxima", 10);
 	m_pub_pts = m_nh.advertise<PointNormalCloud>("line_points", 10);
 
 	if (m_debug) {
@@ -333,12 +334,26 @@ void LineDetectionNode::ImageCallback(ImageConstPtr const &msg_img,
 		pt.y = pt_world.y;
 		pt.z = pt_world.z;
 		pt.normal[0] = 0.0;
-		pt.normal[1] = normal_x; // TODO: change to ground_x
-		pt.normal[2] = normal_y; // TODO: change to ground_y
+		pt.normal[1] = ground_x;
+		pt.normal[2] = ground_y;
 	}
 
 	m_pub_pts.publish(msg_pts);
 
+
+	// Two dimensional local maxima as a binary image. Detected line pixels are
+	// white (255) and all other pixels are black (0).
+	cv::Mat img_max(img_input.rows, img_input.cols, CV_8U, cv::Scalar(0));
+	for (it = maxima.begin(); it != maxima.end(); ++it) {
+		img_max.at<uint8_t>(it->y, it->x) = 255;
+	}
+
+	cv_bridge::CvImage msg_max;
+	msg_max.header.stamp    = msg_img->header.stamp;
+	msg_max.header.frame_id = msg_img->header.frame_id;
+	msg_max.encoding = image_encodings::MONO8;
+	msg_max.image    = img_max;
+	m_pub_max.publish(msg_max.toImageMsg());
 	if (m_debug) {
 		size_t num = msg_pts->points.size();
 
@@ -353,7 +368,8 @@ void LineDetectionNode::ImageCallback(ImageConstPtr const &msg_img,
 		msg_kernel.image    = img_kernel;
 		m_pub_kernel.publish(msg_kernel.toImageMsg());
 
-		// Visualize normal vectors on the image.
+		// Visualize normal vectors on the image. Also render the horizon and
+		// cut-off lines for debugging purposes.
 		cv::Mat img_normal = img_input.clone();
 
 		for (it = maxima.begin(), i = 0; it != maxima.end(); ++it, ++i) {
@@ -362,16 +378,23 @@ void LineDetectionNode::ImageCallback(ImageConstPtr const &msg_img,
 
 			cv::Point2d point(it->x, it->y);
 			cv::Point2d normal(normal_x, normal_y);
-			double scale = 10.0 / sqrt(pow(normal_x, 2) + pow(normal_y, 2));
+			double scale = 25 / sqrt(pow(normal_x, 2) + pow(normal_y, 2));
 			normal = normal * scale;
 
-			cv::line(img_normal, point, point + normal, cv::Scalar(0, 0, 255));
+			cv::line(img_normal, point, point + normal, cv::Scalar(255, 0, 0));
 		}
+
+		std::cout << "horizon = " << m_horizon << ", cutoff = " << m_cutoff << std::endl;
+
+		cv::Point2d pt_hor_l(0.0, m_horizon), pt_hor_r(img_input.cols, m_horizon);
+		cv::Point2d pt_cut_l(0.0, m_cutoff),  pt_cut_r(img_input.cols, m_cutoff);
+		cv::line(img_normal, pt_hor_l, pt_hor_r, cv::Scalar(255, 0, 0));
+		cv::line(img_normal, pt_cut_l, pt_cut_r, cv::Scalar(0, 255, 0));
 
 		cv_bridge::CvImage msg_normal;
 		msg_normal.header.stamp    = msg_img->header.stamp;
 		msg_normal.header.frame_id = msg_img->header.frame_id;
-		msg_normal.encoding = image_encodings::BGR8;
+		msg_normal.encoding = image_encodings::RGB8;
 		msg_normal.image    = img_normal;
 		m_pub_normal.publish(msg_normal.toImageMsg());
 
