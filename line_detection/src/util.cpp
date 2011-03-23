@@ -28,7 +28,7 @@ void GetRayPlaneInt(cv::Point3d ray, Plane plane, cv::Point3d &dst)
 	dst = (plane.normal.dot(plane.point) / plane.normal.dot(ray)) * ray;
 }
 
-double GetDistSize(cv::Point2d pt0, double dist, cv::Mat mint, Plane plane)
+double GetDistSize(cv::Point2d pt0, cv::Point3d dist, cv::Mat mint, Plane plane)
 {
 	ROS_ASSERT(mint.rows == 3 && mint.cols == 3);
 	ROS_ASSERT(mint.type() == CV_64FC1);
@@ -42,9 +42,9 @@ double GetDistSize(cv::Point2d pt0, double dist, cv::Mat mint, Plane plane)
 	// Calculate the image coordinates of a world point offset by the
 	// appropriate number of pixels in the plane (using the cross product).
 	cv::Mat pt1_world(3, 1, CV_64FC1);
-	pt1_world.at<double>(0, 0) = pt0_world.x + dist;
-	pt1_world.at<double>(1, 0) = pt0_world.y;
-	pt1_world.at<double>(2, 0) = pt0_world.z;
+	pt1_world.at<double>(0, 0) = pt0_world.x + dist.x;
+	pt1_world.at<double>(1, 0) = pt0_world.y + dist.y;
+	pt1_world.at<double>(2, 0) = pt0_world.z + dist.z;
 	cv::Mat pt1_mat = mint * pt1_world;
 
 	// Project this offset point into the image.
@@ -53,6 +53,20 @@ double GetDistSize(cv::Point2d pt0, double dist, cv::Mat mint, Plane plane)
 
 	// Find the distance from the offset point to the original point.
 	cv::Point2d offset = pt1 - pt0;
+	return sqrt(offset.dot(offset));
+}
+
+double GetPixSize(cv::Point2d pt0, cv::Point2d dist, cv::Mat mint, Plane plane)
+{
+	cv::Point3d ray0, ray1;
+	GetPixelRay(mint, pt0,        ray0);
+	GetPixelRay(mint, pt0 + dist, ray1);
+
+	cv::Point3d pt0_world, pt1_world;
+	GetRayPlaneInt(ray0, plane, pt0_world);
+	GetRayPlaneInt(ray1, plane, pt1_world);
+
+	cv::Point3d offset = pt1_world - pt0_world;
 	return sqrt(offset.dot(offset));
 }
 
@@ -109,68 +123,6 @@ void BuildLineFilter(cv::Mat &ker, int x, int dim, int width, int border, bool f
 	lo_r.setTo(-0.5 / lo_r.cols); 
 
 	ROS_INFO("width = %d", ker.cols);
-}
-
-void LineFilter(cv::Mat src, cv::Mat &dst_hor, cv::Mat &dst_ver, cv::Mat mint,
-                Plane plane, double thick, double edge)
-{
-	ROS_ASSERT(mint.rows == 3 && mint.cols == 3);
-	ROS_ASSERT(mint.type() == CV_64FC1);
-	ROS_ASSERT(src.type() == CV_64FC1);
-	ROS_ASSERT(thick > 0);
-
-	cv::Mat ker_row, ker_col;
-
-	dst_hor.create(src.rows, src.cols, CV_64FC1);
-	dst_ver.create(src.rows, src.cols, CV_64FC1);
-	dst_hor.setTo(-255);
-	dst_ver.setTo(-255);
-
-	double width_prev = INFINITY;
-
-	for (int y = src.rows - 1; y >= 0; --y)
-	for (int x = src.cols - 1; x >= 0; --x) {
-		double width  = GetDistSize(cv::Point2d(x, y), thick, mint, plane);
-		double border = GetDistSize(cv::Point2d(x, y), edge,  mint, plane);
-
-		// Stop processing at the horizon.
-		if (width > width_prev) return;
-		width_prev = width;
-
-		cv::Mat row = src.row(y);
-		cv::Mat col = src.col(x);
-
-		BuildLineFilter(ker_row, x, src.cols, width, border, false);
-		dst_hor.at<double>(y, x) = ker_row.dot(row);
-
-		BuildLineFilter(ker_col, src.rows, width, border, false);
-		dst_ver.at<double>(y, x) = ker_col.t().dot(col);
-	}
-}
-
-void FindMaxima(cv::Mat src_hor, cv::Mat src_ver, std::list<cv::Point2i> &dst,
-                double threshold)
-{
-	ROS_ASSERT(src_hor.rows == src_ver.rows && src_hor.cols == src_ver.cols);
-	ROS_ASSERT(src_hor.type() == CV_64FC1 && src_ver.type() == CV_64FC1);
-
-	for (int y = 1; y < src_hor.rows - 1; ++y)
-	for (int x = 1; x < src_hor.cols - 1; ++x) {
-		double val_hor   = src_hor.at<double>(y, x);
-		double val_left  = src_hor.at<double>(y, x - 1);
-		double val_right = src_hor.at<double>(y, x + 1);
-
-		double val_ver = src_ver.at<double>(y + 0, x);
-		double val_top = src_ver.at<double>(y - 1, x);
-		double val_bot = src_ver.at<double>(y + 1, x);
-
-		bool is_hor = val_hor > val_left && val_hor > val_right && val_hor > threshold;
-		bool is_ver = val_ver > val_top  && val_ver > val_bot   && val_ver > threshold;
-
-		if (is_hor || is_ver) {
-			dst.push_back(cv::Point2i(x, y));
-		}
-	}
 }
 
 void LineColorTransform(cv::Mat src, cv::Mat &dst)

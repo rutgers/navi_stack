@@ -1,22 +1,42 @@
+#include <tf/transform_datatypes.h>
+#include <visualization_msgs/Marker.h>
+#include <visualization_msgs/MarkerArray.h>
 #include "LineDetectionNode.hpp"
+
+using visualization_msgs::Marker;
+using visualization_msgs::MarkerArray;
+
+// TODO: Convert the direction of principal curvature to real-world coordinates.
+// TODO: Compute a seperate filter kernel for the vertical direction using a
+//         a vertical direction sampling vector.
 
 LineDetectionNode::LineDetectionNode(ros::NodeHandle nh, std::string ground_id,
                                      bool debug)
 	: m_debug(debug),
 	  m_valid(false),
-	  m_width_cutoff(3), // TODO: Make this a parameter.
+	  m_num_prev(0),
 	  m_ground_id(ground_id),
 	  m_nh(nh),
 	  m_it(nh)
 {
 	m_sub_cam = m_it.subscribeCamera("image", 1, &LineDetectionNode::ImageCallback, this);
-	m_pub_pts = m_nh.advertise<sensor_msgs::PointCloud>("line_points", 10);
+	m_pub_pts = m_nh.advertise<PointNormalCloud>("line_points", 10);
 
 	if (m_debug) {
 		ROS_WARN("debugging topics are enabled; performance may be degraded");
 
 		m_pub_kernel = m_it.advertise("line_kernel", 10);
+		m_pub_normal = m_it.advertise("line_normal", 10);
+		m_pub_visual = m_nh.advertise<MarkerArray>("/visualization_marker_array", 1);
 	}
+}
+
+void LineDetectionNode::SetCutoffWidth(int width_cutoff)
+{
+	ROS_ASSERT(width_cutoff > 0);
+
+	m_valid        = m_valid && (width_cutoff == m_width_cutoff);
+	m_width_cutoff = width_cutoff;
 }
 
 void LineDetectionNode::SetDeadWidth(double width_dead)
@@ -172,9 +192,14 @@ void LineDetectionNode::UpdateCache(void)
 	m_cutoff  = 0;
 
 	for (int r = m_rows - 1; r >= 0; --r) {
+		// TODO: Calculate separate distances for row and column filters.
+		// TODO: Use a Taylor approximation to simplify the width calculation.
 		cv::Point2d middle(m_cols / 2, r);
-		m_cache_line[r] = GetDistSize(middle, m_width_line, m_mint, m_plane);
-		m_cache_dead[r] = GetDistSize(middle, m_width_dead, m_mint, m_plane);
+		cv::Point3d delta_line(m_width_line, 0.0, 0.0);
+		cv::Point3d delta_dead(m_width_dead, 0.0, 0.0);
+
+		m_cache_line[r] = GetDistSize(middle, delta_line, m_mint, m_plane);
+		m_cache_dead[r] = GetDistSize(middle, delta_dead, m_mint, m_plane);
 
 		// Stop processing when the line is too small to effectively filter. Also
 		// estimate the horizon line by finding where the ray from the camera
@@ -248,71 +273,159 @@ void LineDetectionNode::ImageCallback(ImageConstPtr const &msg_img,
 	// Publish a three-dimensional point cloud in the camera frame by converting
 	// each maximum's pixel coordinates to camera coordinates using the camera's
 	// intrinsics and knowledge of the ground plane.
+	// TODO: Scrap the std::list middleman.
 	// TODO: Do this directly in NonMaxSupr().
 	// TODO: Precompute the mapping from 2D to 3D.
-	sensor_msgs::PointCloud msg_pts;
-	std::list<cv::Point2i>::const_iterator it;
+	PointNormalCloud::Ptr msg_pts(new PointNormalCloud);
+	std::list<cv::Point2i>::iterator it;
 
-	for (it = maxima.begin(); it != maxima.end(); ++it) {
+	// Use a row vector to store unordered points (as per PCL documentation).
+	msg_pts->header.stamp    = msg_img->header.stamp;
+	msg_pts->header.frame_id = msg_img->header.frame_id;
+	msg_pts->height = 1;
+	msg_pts->width  = maxima.size();
+	msg_pts->points.resize(maxima.size());
+
+	// Calculate second-order partials to compute the Hessian matrix.
+	cv::Mat dxx, dxy, dyy;
+	cv::Sobel(img_pre, dxx, CV_64FC1, 2, 0);
+	cv::Sobel(img_pre, dxy, CV_64FC1, 1, 1);
+	cv::Sobel(img_pre, dyy, CV_64FC1, 0, 2);
+
+	int i;
+	for (it = maxima.begin(), i = 0; it != maxima.end(); ++it, ++i) {
 		cv::Point2i pt_image(*it);
 		cv::Point3d ray, pt_world;
 
 		GetPixelRay(mint, pt_image, ray);
 		GetRayPlaneInt(ray, plane, pt_world);
 
+		// Calculate a vector that is normal to the direction of the line by
+		// finding the principle eigenvector of the Hessian matrix centered
+		// on this pixel.
+		// TODO: Convert distances in the image to distances in real life. I am
+		//       not sure if I should do this before or after finding the
+		//       Hessian matrix.
+		cv::Mat hessian(2, 2, CV_64FC1);
+		hessian.at<double>(0, 0) = dxx.at<double>(it->y, it->x);
+		hessian.at<double>(0, 1) = dxy.at<double>(it->y, it->x);
+		hessian.at<double>(1, 0) = dxy.at<double>(it->y, it->x);
+		hessian.at<double>(1, 1) = dyy.at<double>(it->y, it->x);
+
+		cv::Mat eigen_vec;
+		cv::Mat eigen_val;
+		cv::eigen(hessian, eigen_val, eigen_vec); //, 0, 0);
+
+		// Convert image coordinates to real-world coordinates on the ground
+		// plane. This is especially important since a small change in 
+		double normal_x =  eigen_vec.at<double>(0, 0);
+		double normal_y = -eigen_vec.at<double>(0, 1);
+
+		// TODO: Replace this hack with a Taylor approximation.
+		cv::Point2d dx(normal_x, 0);
+		cv::Point2d dy(0, normal_y);
+		double ground_x = GetPixSize(*it, dx, m_mint, m_plane);
+		double ground_y = GetPixSize(*it, dy, m_mint, m_plane);
+
 		// Convert OpenCV cv::Point into a ROS geometry_msgs::Point object.
-		geometry_msgs::Point32 msg_pt;
-		msg_pt.x = (float)pt_world.x;
-		msg_pt.y = (float)pt_world.y;
-		msg_pt.z = (float)pt_world.z;
-		msg_pts.points.push_back(msg_pt);
+		pcl::PointNormal &pt = msg_pts->points[i];
+		pt.x = pt_world.x;
+		pt.y = pt_world.y;
+		pt.z = pt_world.z;
+		pt.normal[0] = 0.0;
+		pt.normal[1] = normal_x; // TODO: change to ground_x
+		pt.normal[2] = normal_y; // TODO: change to ground_y
 	}
 
-	msg_pts.header.stamp    = msg_img->header.stamp;
-	msg_pts.header.frame_id = msg_img->header.frame_id;
 	m_pub_pts.publish(msg_pts);
 
 	if (m_debug) {
+		size_t num = msg_pts->points.size();
+
 		// Visualize the matched pulse width kernel.
 		cv::Mat img_kernel;
-		RenderKernel(img_kernel);
-
-		cv::Mat img_kernel_8u;
-		cv::normalize(img_kernel, img_kernel_8u, 0, 255, CV_MINMAX, CV_8UC1);
+		cv::normalize(m_cache_kernel, img_kernel, 0, 255, CV_MINMAX, CV_8UC1);
 
 		cv_bridge::CvImage msg_kernel;
 		msg_kernel.header.stamp    = msg_img->header.stamp;
 		msg_kernel.header.frame_id = msg_img->header.frame_id;
 		msg_kernel.encoding = image_encodings::MONO8;
-		msg_kernel.image    = img_kernel_8u;
+		msg_kernel.image    = img_kernel;
 		m_pub_kernel.publish(msg_kernel.toImageMsg());
-	}
-}
 
-void LineDetectionNode::RenderKernel(cv::Mat &dst)
-{
-	m_cache_kernel.copyTo(dst);
+		// Visualize normal vectors on the image.
+		cv::Mat img_normal = img_input.clone();
 
-#if 0
-	for (int r = m_horizon; r < m_rows; ++r) {
-#if 0
-		double width_line = m_cache_line[r];
-		double width_dead = m_cache_dead[r];
+		for (it = maxima.begin(), i = 0; it != maxima.end(); ++it, ++i) {
+			double normal_x = msg_pts->points[i].normal[1];
+			double normal_y = msg_pts->points[i].normal[2];
 
-		cv::Mat row = dst.row(r);
-		BuildLineFilter(row, m_cols / 2, m_cols, width_line, width_dead, false);
-#else
-		cv::Mat kernel = m_cache_kernel[r];
-		int     size   = kernel.cols;
+			cv::Point2d point(it->x, it->y);
+			cv::Point2d normal(normal_x, normal_y);
+			double scale = 10.0 / sqrt(pow(normal_x, 2) + pow(normal_y, 2));
+			normal = normal * scale;
 
-		int left   = m_cols / 2 - (size + 0) / 2;
-		int right  = m_cols / 2 + (size + 1) / 2;
-
-		if (left >= 0 && r >= 0 && right < m_cols && (r + 1 < m_rows)) {
-			cv::Mat chunk = dst(cv::Range(r, r + 1), cv::Range(left, right));
-			kernel.copyTo(chunk);
+			cv::line(img_normal, point, point + normal, cv::Scalar(0, 0, 255));
 		}
+
+		cv_bridge::CvImage msg_normal;
+		msg_normal.header.stamp    = msg_img->header.stamp;
+		msg_normal.header.frame_id = msg_img->header.frame_id;
+		msg_normal.encoding = image_encodings::BGR8;
+		msg_normal.image    = img_normal;
+		m_pub_normal.publish(msg_normal.toImageMsg());
+
+		// Render normal vectors as lines that can be visualized in RViz.
+		// TODO: Fetch .ns from the current node's __name.
+		// TODO: Extract most of this to a helper function.
+		MarkerArray msg_visual;
+		msg_visual.markers.resize(MAX(num, m_num_prev));
+
+		for (size_t i = 0; i < num; ++i) {
+			Marker &marker = msg_visual.markers[i];
+			marker.header.stamp    = msg_img->header.stamp;
+			marker.header.frame_id = msg_img->header.frame_id;
+			marker.ns     = "line_detection";
+			marker.id     = i;
+			marker.type   = Marker::ARROW;
+			marker.action = Marker::ADD;
+
+			// Tail of the vector is on the detected point.
+			geometry_msgs::Point &pos = marker.pose.position;
+			pos.x = msg_pts->points[i].x;
+			pos.y = msg_pts->points[i].y;
+			pos.z = msg_pts->points[i].z;
+
+			// TODO: Are the signs/order correct?
+			double normal_x = msg_pts->points[i].normal[1];
+			double normal_y = msg_pts->points[i].normal[2];
+			double yaw = -atan2(normal_y, normal_x);
+			marker.pose.orientation = tf::createQuaternionMsgFromRollPitchYaw(0.0, yaw, 0.0);
+
+			geometry_msgs::Vector3 &scale = marker.scale;
+			scale.x = 0.5;
+			scale.y = 1.0;
+			scale.z = 1.0;
+
+			std_msgs::ColorRGBA &color = marker.color;
+			color.r = 1.0;
+			color.g = 0.0;
+			color.b = 0.0;
+			color.a = 1.0;
+		}
+
+		// Clear the old markers if they were not already modified. Old markers
+		// will linger until they are modified without this hack.
+		for (size_t i = num; i < m_num_prev; ++i) {
+			Marker &marker = msg_visual.markers[i];
+			marker.header.stamp    = msg_img->header.stamp;
+			marker.header.frame_id = msg_img->header.frame_id;
+			marker.ns     = "line_detection";
+			marker.id     = i;
+			marker.action = Marker::DELETE;
+		}
+
+		m_pub_visual.publish(msg_visual);
+		m_num_prev = num;
 	}
-#endif
-#endif
 }

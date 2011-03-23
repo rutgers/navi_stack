@@ -66,7 +66,8 @@ void GetRayPlaneInt(cv::Point3d ray, Plane plane, cv::Point3d &dst);
  * \param plane expressed in the camera coordinate frame
  * \return corresponding distance in image coordinates
  */
-double GetDistSize(cv::Point2d pt0, double dist, cv::Mat mint, Plane plane);
+double GetDistSize(cv::Point2d pt0, cv::Point3d dist, cv::Mat mint, Plane plane);
+double GetPixSize(cv::Point2d pt0, cv::Point2d dist, cv::Mat mint, Plane plane);
 
 /**
  * Extracts the intrinsic matrix from a ROS CameraInfo message into an OpenCV
@@ -108,37 +109,6 @@ void CameraInfoToMat(CameraInfoConstPtr const &msg, cv::Mat &mint);
  * \param fit   kernel is forced to have dim columns if false
  */
 void BuildLineFilter(cv::Mat &ker, int x, int dim, int width, int border, bool fit = false);
-
-/**
- * Filter a grayscale image along each row and column using a matched
- * pulse-width filter centered at each pixel. See BuildLineFilter() for an
- * in-depth description of the pulse-width filter.
- *
- * \param src input grayscale image
- * \param dst_hor   horizontally filtered output image
- * \param dst_ver   vertically filtered output image
- * \param mint      intrinsic camera matrix
- * \param plane     ground plane in the camera's coordinate frame
- * \param thick     line thickness in real-world coordinates
- */
-void LineFilter(cv::Mat src, cv::Mat &dst_hor, cv::Mat &dst_ver, cv::Mat mint,
-                Plane plane, double thick, double edge, double );
-
-/**
- * Perform non-maximal supression to reduce the amount of superfluous
- * information in a grayscale image. This simulaneously performs non-maximal
- * supression on horizontally and vertically filtered images to avoid duplicate
- * maxima. Designed to directly accept the output of LineFilter() with no
- * modifications.
- *
- * \param src_hor   horizontally filtered image
- * \param src_ver   vertically filtered image
- * \param dst       output parameter; list of local maxima
-
- * \param threshold minimum value acceptable for a maximum
- */
-void FindMaxima(cv::Mat src_hor, cv::Mat src_ver, std::list<cv::Point2i> &dst,
-                double threshold);
 
 /**
  * Transform a color 8-bit BGR image into a grayscale image where regions of

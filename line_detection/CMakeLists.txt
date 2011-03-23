@@ -22,3 +22,7 @@ rosbuild_add_executable(line_detection
 	src/LineDetectionNode.cpp
 	src/util.cpp
 )
+rosbuild_add_executable(line_tracker
+	src/line_tracker.cpp
+	src/LineTrackerNode.cpp
+)

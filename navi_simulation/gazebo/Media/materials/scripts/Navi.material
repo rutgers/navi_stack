@@ -26,6 +26,8 @@ material Navi/nav_field
 			texture_unit
 			{
 				texture nav_field.jpg
+				filtering anisotropic
+				max_anisotropy 16
 			}
 		}
 	}

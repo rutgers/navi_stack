@@ -5,15 +5,18 @@
 #include <cmath>
 #include <string>
 #include <vector>
+
 #include <opencv/cv.h>
 #include <ros/console.h>
 #include <ros/ros.h>
 #include <cv_bridge/cv_bridge.h>
+#include <pcl_ros/point_cloud.h>
+#include <pcl/point_types.h>
 #include <image_geometry/pinhole_camera_model.h>
 #include <image_transport/image_transport.h>
 #include <sensor_msgs/CameraInfo.h>
 #include <sensor_msgs/Image.h>
-#include <sensor_msgs/PointCloud.h>
+#include <sensor_msgs/PointCloud2.h>
 #include <sensor_msgs/image_encodings.h>
 #include <tf/transform_listener.h>
 #include "util.hpp"
@@ -25,6 +28,8 @@ using sensor_msgs::CameraInfoConstPtr;
 using sensor_msgs::ImageConstPtr;
 using sensor_msgs::CameraInfo;
 using sensor_msgs::Image;
+
+typedef pcl::PointCloud<pcl::PointNormal> PointNormalCloud;
 
 class LineDetectionNode
 {
@@ -40,12 +45,15 @@ public:
 	 */
 	LineDetectionNode(ros::NodeHandle nh, std::string ground_id, bool debug = false);
 
+	void SetCutoffWidth(int  width);
 	void SetDeadWidth(double width);
 	void SetLineWidth(double width);
 	void SetIntrinsics(cv::Mat mint);
 	void SetGroundPlane(Plane plane);
 	void SetResolution(int width, int height);
 	void SetThreshold(double threshold);
+
+	void EstimateNormal(cv::Mat src, cv::Point2d &normal, cv::Point2i pt);
 
 	/**
 	 * Use a matched pulse-width filter to search for lines of the appropriate
@@ -77,8 +85,6 @@ public:
 	void ImageCallback(ImageConstPtr const &msg_img, CameraInfoConstPtr const &msg_cam);
 
 private:
-	void RenderKernel(cv::Mat &dst);
-
 	bool m_debug;
 	bool m_valid;
 	int m_rows;
@@ -86,6 +92,7 @@ private:
 	int m_cutoff;
 	int m_horizon;
 	int m_width_cutoff;
+	size_t m_num_prev;
 	double m_width_line;
 	double m_width_dead;
 	double m_threshold;
@@ -102,6 +109,10 @@ private:
 
 	CameraSubscriber           m_sub_cam;
 	ros::Publisher             m_pub_pts;
+
+	// Debug topics; only enabled if m_debug is true.
+	ros::Publisher             m_pub_visual;
+	image_transport::Publisher m_pub_normal;
 	image_transport::Publisher m_pub_kernel;
 };
 
