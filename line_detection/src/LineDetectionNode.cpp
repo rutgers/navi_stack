@@ -108,8 +108,8 @@ void LineDetectionNode::MatchedFilter(cv::Mat src, cv::Mat &dst_hor,
 	dst_ver.create(src.rows, src.cols, CV_64FC1);
 
 	// TODO: Shrink the filter instead of ignoring these tricky cases.
-	for (int r = 0; r < m_rows; ++r)
-	for (int c = 0; c < m_cols; ++c) {
+	for (int r = m_rows - 1; r >= 0; --r)
+	for (int c = m_cols - 1; c >= 0; --c) {
 		if (r >= m_cutoff_hor && r >= m_cutoff_ver) return;
 
 		// Horizontal filter.
