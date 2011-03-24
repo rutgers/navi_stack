@@ -90,8 +90,9 @@ private:
 	int m_rows;
 	int m_cols;
 	size_t m_num_prev;
-	double m_width_line;
+	double m_width_cutoff;
 	double m_width_dead;
+	double m_width_line;
 	double m_threshold;
 	Plane m_plane;
 	cv::Mat m_mint;
