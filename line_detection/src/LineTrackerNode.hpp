@@ -1,8 +1,11 @@
 #ifndef LINE_TRACKER_NODE_HPP_
 #define LINE_TRACKER_NODE_HPP_
 
+#include <pcl_ros/point_cloud.h>
+#include <pcl/point_types.h>
 #include <ros/ros.h>
 
+typedef pcl::PointCloud<pcl::PointXYZ> PointCloud;
 typedef pcl::PointCloud<pcl::PointNormal> PointNormalCloud;
 
 class LineTrackerNode {

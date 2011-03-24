@@ -20,6 +20,7 @@ LineDetectionNode::LineDetectionNode(ros::NodeHandle nh, std::string ground_id,
 	  m_it(nh)
 {
 	m_sub_cam = m_it.subscribeCamera("image", 1, &LineDetectionNode::ImageCallback, this);
+	m_pub_max = m_it.advertise("line_maxima", 10);
 	m_pub_pts = m_nh.advertise<PointNormalCloud>("line_points", 10);
 
 	if (m_debug) {
@@ -106,33 +107,37 @@ void LineDetectionNode::MatchedFilter(cv::Mat src, cv::Mat &dst_hor,
 	dst_hor.create(src.rows, src.cols, CV_64FC1);
 	dst_ver.create(src.rows, src.cols, CV_64FC1);
 
-	// TODO: Change this to an invalid value (maybe NaN or -INFINITY?).
-	dst_hor.setTo(-255.0);
-	dst_ver.setTo(-255.0);
+	// TODO: Shrink the filter instead of ignoring these tricky cases.
+	for (int r = m_rows - 1; r >= 0; --r)
+	for (int c = m_cols - 1; c >= 0; --c) {
+		if (r >= m_cutoff_hor && r >= m_cutoff_ver) return;
 
-	for (int r = m_cutoff; r < m_rows; ++r)
-	for (int c = 0; c < m_cols; ++c) {
-		int kernel_size = m_cache_line[r] + 2 * m_cache_dead[r];
-		int left   = c - (kernel_size + 0) / 2;
-		int right  = c + (kernel_size + 1) / 2;
-		int top    = r - (kernel_size + 0) / 2;
-		int bottom = r + (kernel_size + 1) / 2;
+		// Horizontal filter.
+		int width = m_line_hor[r] + 2 * m_dead_hor[r];
+		int left  = c - (width + 0) / 2;
+		int right = c + (width + 1) / 2;
 
-		cv::Range range_row(r, r + 1);
-		cv::Range range_col(c, c + 1);
-
-		cv::Mat kernel = m_cache_kernel(range_row, cv::Range(0, kernel_size));
-
-		// TODO: Shrink the filter instead of ignoring these tricky cases.
-		// TODO: Manually perform the vertical dot product if necessary.
-		if (left >= 0 && r >= 0 && right < m_cols && (r + 1 < m_rows)) {
-			cv::Mat src_hor = src(range_row,  cv::Range(left, right));
-			dst_hor.at<double>(r, c) = kernel.dot(src_hor);
+		if (r < m_cutoff_hor && left >= 0 && right < m_cols && r + 1 < m_rows) {
+			cv::Mat ker = m_cache_hor(cv::Range(r, r + 1), cv::Range(0, width));
+			cv::Mat reg = src(cv::Range(r, r + 1),  cv::Range(left, right));
+			dst_hor.at<double>(r, c) = kernel.dot(reg);
+		} else {
+			// TODO: Change this to an invalid value (maybe NaN or -INFINITY?).
+			dst_hor.at<double>(r, c) = -255.0;
 		}
 
-		if (c >= 0 && top >= 0 && c + 1 < m_cols && bottom < m_rows) {
-			cv::Mat src_ver = src(cv::Range(top, bottom), range_col);
-			dst_ver.at<double>(r, c) = kernel.dot(src_ver.t());
+		// Vertical filter.
+		int height = m_line_ver[r] + 2 * m_dead_ver[r];
+		int top    = r - (height + 0) / 2;
+		int bottom = r + (height + 1) / 2;
+
+		if (r < m_cutoff_ver && top >= 0 && bottom < m_rows && c + 1 < m_cols) {
+			cv::Mat ker = m_cache_ver(cv::Range(r, r + 1), cv::Range(0, height));
+			cv::Mat reg = src(cv::Range(top, bottom), cv::Range(c, c + 1));
+			dst_ver.at<double>(r, c) = ker.dot(reg.t());
+		} else {
+			// TODO: Change this to an invalid value (maybe NaN or -INFINITY?).
+			dst_ver.at<double>(r, c) = -255.0;
 		}
 	}
 }
@@ -175,52 +180,53 @@ void LineDetectionNode::UpdateCache(void)
 
 	ROS_INFO("rebuilding cache with changed parameters");
 
-	m_cache_line.resize(m_rows);
-	m_cache_dead.resize(m_rows);
+	m_cache_ver.create(m_rows, m_cols, CV_64FC1);
+	m_cache_hor.create(m_rows, m_cols, CV_64FC1);
+	m_cache_ver.setTo(0.0);
+	m_cache_hor.setTo(0.0);
+	m_size_ver.resize(m_rows);
+	m_size_hor.resize(m_cols);
 
-	m_cache_kernel.create(m_rows, m_cols, CV_64FC1);
-	m_cache_kernel.setTo(0.0);
+	m_cutoff_hor = 0;
+	m_cutoff_ver = 0;
 
 	// Pre-compute the widths necessary to construct the matched pulse-width
 	// filter. Assume distances to not change along rows in the image (i.e. the
 	// image is rectified).
-	int prev_line = INT_MAX;
-	int prev_dead = INT_MAX;
-
-	// Just in case we never see the horizon.
-	m_horizon = 0;
-	m_cutoff  = 0;
-
 	for (int r = m_rows - 1; r >= 0; --r) {
 		// TODO: Calculate separate distances for row and column filters.
 		// TODO: Use a Taylor approximation to simplify the width calculation.
 		cv::Point2d middle(m_cols / 2, r);
-		cv::Point3d delta_line(m_width_line, 0.0, 0.0);
-		cv::Point3d delta_dead(m_width_dead, 0.0, 0.0);
+		cv::Point3d delta_line_hor(m_width_line, 0.0, 0.0);
+		cv::Point3d delta_line_ver(0.0, m_width_line, 0.0);
+		cv::Point3d delta_dead_hor(m_width_dead, 0.0, 0.0);
+		cv::Point3d delta_dead_ver(0.0, m_width_dead, 0.0);
 
-		m_cache_line[r] = GetDistSize(middle, delta_line, m_mint, m_plane);
-		m_cache_dead[r] = GetDistSize(middle, delta_dead, m_mint, m_plane);
+		// Horizontal pulse-width filter (i.e. dw = <1, 0, 0>).
+		double width_line_hor = GetDistSize(middle, delta_line_hor, m_mint, m_plane);
+		double width_line_ver = GetDistSize(middle, delta_line_ver, m_mint, m_plane);
+		double width_min_hor  = std::min(width_line_hor, width_dead_hor);
 
-		// Stop processing when the line is too small to effectively filter. Also
-		// estimate the horizon line by finding where the ray from the camera
-		// is parallel to the ground (i.e. there is no intersection point).
-		bool wrap = m_cache_line[r] > prev_line || m_cache_dead[r] > prev_dead;
-
-		if (m_cutoff == 0 && m_cache_line[r] < m_width_cutoff) {
-			m_cutoff = r + 1;
+		if (m_cutoff_hor == 0 && width_min_hor < m_cutoff_hor) {
+			m_cutoff_hor = r + 1;
+		} else {
+			cv::Mat kernel = m_cache_kernel.row(r);
+			BuildLineFilter(kernel, 0, m_cols, width_line_hor, width_dead_hor, true);
 		}
 
-		if (wrap || m_cache_line[r] < 1.0) {
-			m_horizon = r + 1;
-			break;
+		// Vertical pulse-width filter (i.e. dw = <0, 0, 1>). Note that this
+		// will be slightly narrower than the horizontal pulse-width filter.
+		double width_dead_hor = GetDistSize(middle, delta_dead_hor, m_mint, m_plane);
+		double width_dead_ver = GetDistSize(middle, delta_dead_ver, m_mint, m_plane);
+		double width_min_ver  = std::min(width_line_ver, width_dead_ver);
+
+		if (m_cutoff_ver == 0 && width_min_ver < m_cutoff_ver) {
+			m_cutoff_hor = r + 1;
+		} else {
+			// TODO: Modify BuildLineFilter() to create a column filter.
+			cv::Mat kernel = m_cache_kernel.row(r);
+			BuildLineFilter(kernel, 0, m_cols, width_line_ver, width_dead_ver, true);
 		}
-
-		// Pre-compute and cache a small filter kernel.
-		cv::Mat kernel = m_cache_kernel.row(r);
-		BuildLineFilter(kernel, 0, m_cols, m_cache_line[r], m_cache_dead[r], true);
-
-		prev_line   = m_cache_line[r];
-		prev_dead   = m_cache_dead[r];
 	}
 	m_valid = true;
 }
@@ -333,12 +339,26 @@ void LineDetectionNode::ImageCallback(ImageConstPtr const &msg_img,
 		pt.y = pt_world.y;
 		pt.z = pt_world.z;
 		pt.normal[0] = 0.0;
-		pt.normal[1] = normal_x; // TODO: change to ground_x
-		pt.normal[2] = normal_y; // TODO: change to ground_y
+		pt.normal[1] = ground_x;
+		pt.normal[2] = ground_y;
 	}
 
 	m_pub_pts.publish(msg_pts);
 
+
+	// Two dimensional local maxima as a binary image. Detected line pixels are
+	// white (255) and all other pixels are black (0).
+	cv::Mat img_max(img_input.rows, img_input.cols, CV_8U, cv::Scalar(0));
+	for (it = maxima.begin(); it != maxima.end(); ++it) {
+		img_max.at<uint8_t>(it->y, it->x) = 255;
+	}
+
+	cv_bridge::CvImage msg_max;
+	msg_max.header.stamp    = msg_img->header.stamp;
+	msg_max.header.frame_id = msg_img->header.frame_id;
+	msg_max.encoding = image_encodings::MONO8;
+	msg_max.image    = img_max;
+	m_pub_max.publish(msg_max.toImageMsg());
 	if (m_debug) {
 		size_t num = msg_pts->points.size();
 
@@ -353,7 +373,8 @@ void LineDetectionNode::ImageCallback(ImageConstPtr const &msg_img,
 		msg_kernel.image    = img_kernel;
 		m_pub_kernel.publish(msg_kernel.toImageMsg());
 
-		// Visualize normal vectors on the image.
+		// Visualize normal vectors on the image. Also render the horizon and
+		// cut-off lines for debugging purposes.
 		cv::Mat img_normal = img_input.clone();
 
 		for (it = maxima.begin(), i = 0; it != maxima.end(); ++it, ++i) {
@@ -362,16 +383,23 @@ void LineDetectionNode::ImageCallback(ImageConstPtr const &msg_img,
 
 			cv::Point2d point(it->x, it->y);
 			cv::Point2d normal(normal_x, normal_y);
-			double scale = 10.0 / sqrt(pow(normal_x, 2) + pow(normal_y, 2));
+			double scale = 25 / sqrt(pow(normal_x, 2) + pow(normal_y, 2));
 			normal = normal * scale;
 
-			cv::line(img_normal, point, point + normal, cv::Scalar(0, 0, 255));
+			cv::line(img_normal, point, point + normal, cv::Scalar(255, 0, 0));
 		}
+
+		std::cout << "horizon = " << m_horizon << ", cutoff = " << m_cutoff << std::endl;
+
+		cv::Point2d pt_hor_l(0.0, m_horizon), pt_hor_r(img_input.cols, m_horizon);
+		cv::Point2d pt_cut_l(0.0, m_cutoff),  pt_cut_r(img_input.cols, m_cutoff);
+		cv::line(img_normal, pt_hor_l, pt_hor_r, cv::Scalar(255, 0, 0));
+		cv::line(img_normal, pt_cut_l, pt_cut_r, cv::Scalar(0, 255, 0));
 
 		cv_bridge::CvImage msg_normal;
 		msg_normal.header.stamp    = msg_img->header.stamp;
 		msg_normal.header.frame_id = msg_img->header.frame_id;
-		msg_normal.encoding = image_encodings::BGR8;
+		msg_normal.encoding = image_encodings::RGB8;
 		msg_normal.image    = img_normal;
 		m_pub_normal.publish(msg_normal.toImageMsg());
 
@@ -426,6 +454,5 @@ void LineDetectionNode::ImageCallback(ImageConstPtr const &msg_img,
 		}
 
 		m_pub_visual.publish(msg_visual);
-		m_num_prev = num;
 	}
 }

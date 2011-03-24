@@ -89,9 +89,6 @@ private:
 	bool m_valid;
 	int m_rows;
 	int m_cols;
-	int m_cutoff;
-	int m_horizon;
-	int m_width_cutoff;
 	size_t m_num_prev;
 	double m_width_line;
 	double m_width_dead;
@@ -99,21 +96,23 @@ private:
 	Plane m_plane;
 	cv::Mat m_mint;
 	std::string m_ground_id;
-	std::vector<int> m_cache_dead;
-	std::vector<int> m_cache_line;
-	cv::Mat m_cache_kernel;
+
+	int              m_cutoff_ver, m_cutoff_hor;
+	cv::Mat          m_cache_ver,  m_cache_hor;
+	std::vector<int> m_size_ver,   m_size_hor;
 
 	ros::NodeHandle                 m_nh;
 	tf::TransformListener           m_tf;
 	image_transport::ImageTransport m_it;
 
 	CameraSubscriber           m_sub_cam;
+	image_transport::Publisher m_pub_max;
 	ros::Publisher             m_pub_pts;
 
 	// Debug topics; only enabled if m_debug is true.
-	ros::Publisher             m_pub_visual;
 	image_transport::Publisher m_pub_normal;
 	image_transport::Publisher m_pub_kernel;
+	ros::Publisher             m_pub_visual;
 };
 
 #endif
