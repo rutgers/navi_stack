@@ -45,11 +45,30 @@ void LineTrackerNode::PointCloudCallback(PointNormalCloud::ConstPtr const &msg_p
 		if (inliers.indices.size() < 5) break;
 		++fits;
 
-		// TODO: Remove the inliers for the next fit.
+		// Remove the inliers for the next fit.
+		std::vector<pcl::PointXYZ> outliers;
+		for (size_t i = 0; i < msg_pts.points.size(); ++i) {
+			bool is_inlier = false;
+			for (size_t j = 0; j < inliers.indices.size(); ++j) {
+				if ((int)i == inliers.indices[j]) {
+					is_inlier = true;
+					break;
+				}
+			}
 
-		int n = msg_pts->points.size();
-		ROS_INFO("Fit %d lines to %d points.", fits, n);
+			if (!is_inlier) {
+				outliers.push_back(msg_pts.points[i]);
+			}
+		}
+
+		// Update the faux message used to satisfy PCL.
+		// TODO: This really should not be necessary.
+		msg_pts.points.clear();
+		for (size_t i = 0; i < outliers.size(); ++i) {
+			msg_pts.points.push_back(outliers[i]);
+		}
 	}
+	ROS_INFO("Fit %d lines to points.", fits);
 
 	// TODO: Publish the PWL fit as visualization markers.
 }
