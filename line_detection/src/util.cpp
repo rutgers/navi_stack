@@ -120,9 +120,7 @@ void BuildLineFilter(cv::Mat &ker, int x, int dim, int width, int border, bool f
 
 	lo_l.setTo(-0.5 / lo_l.cols);
 	hi.setTo(  +1.0 / hi.cols);
-	lo_r.setTo(-0.5 / lo_r.cols); 
-
-	ROS_INFO("width = %d", ker.cols);
+	lo_r.setTo(-0.5 / lo_r.cols);
 }
 
 void LineColorTransform(cv::Mat src, cv::Mat &dst)
