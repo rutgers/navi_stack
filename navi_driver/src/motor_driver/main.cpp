@@ -9,10 +9,9 @@
 #include <avr/interrupt.h>
 #include <avr/delay.h>
 #include "encoder_setup.h"
+#include "pd_setup.h"
 
-//#include "motor_control.h"
- extern "C" {
-   // Get declaration for f(int i, char c, float x)
+extern "C" {
 #include "motor_shb.h"
  }
 
@@ -26,9 +25,11 @@ ros::Publisher pub_enc;
 navi_driver::Encoder encoder_msg;
 navi_driver::Current current_msg;
 navi_driver::MotorCmd cmd_msg;
+static char update=0;
 
 
-static PDMotorController left_motor(2,1, 512,20), right_motor(2,1, 512,20);
+
+static PDMotorController left_motor(4,5, 32000,30), right_motor(4,5 , 32000,30);
 
 void toggle()
 { //toggle an led to debug the program
@@ -42,19 +43,33 @@ void toggle()
     }
 }
 
-
-
-
 void motor_cmd_cb(const ros::Msg* msg){
-	mshb_set(0,  cmd_msg.left);
-	mshb_set(1,  cmd_msg.right);
 	toggle();
+
+	left_motor.setVelocity(cmd_msg.left);
+	right_motor.setVelocity(cmd_msg.right);
 }
+
+//PID ISR
+ISR(TIMER2_OVF_vect)   // feed back loop interrupt
+{
+	TCNT2 = 0;
+	if (update){
+		TCNT2 = 0;      // Compare time set to ~32 millisecs by setting TCNT2 to 0
+		left_motor.PIDUpdate();
+		right_motor.PIDUpdate();
+		mshb_set(0, left_motor.motorCMD());
+		mshb_set(1, right_motor.motorCMD());
+		update =0;
+	}
+	else update =1;
+
+}
+
 
 
 //Encoder ISR
 ISR(PCINT1_vect){
-	//toggle();
 	left_motor.encoderUpdate(bit_is_set(PINC,PIN2), bit_is_set(PINC, PIN3));
 	right_motor.encoderUpdate(bit_is_set(PINC, PIN5), bit_is_set(PINC,PIN4));
 }
@@ -74,10 +89,11 @@ void setup()
     mshb_init();
     mshb_enable(0);
     mshb_enable(1);
-    //initMotorDriver();
+    left_motor.setVelocity(0);
+    right_motor.setVelocity(0);
 
     //Set up PD control loop timer
-
+    initPIDTimer();
 
     pub_current = node.advertise("current");
     pub_enc = node.advertise("encoder");
@@ -100,7 +116,7 @@ void loop()
 		left_motor.clearEncoder();
 		right_motor.clearEncoder();
 		node.publish(pub_enc, &encoder_msg);
-		encoder_update_timer = millis()+80;
+		encoder_update_timer = millis()+100;
 	}
 
 	if (read_current_timer < millis()){
@@ -118,6 +134,4 @@ void loop()
 	}
 
 	_delay_ms(1);
-
-	//for(int i =0; i< 1000; i++);
 }

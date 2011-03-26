@@ -1,7 +1,7 @@
 
 #include <stdint.h>
-#include "muc/muc.h"
-#include "muc/timer.h"
+#include "penny.h"
+#include "muc_timer.h"
 
 
 struct pin {
