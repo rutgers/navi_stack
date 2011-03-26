@@ -9,14 +9,20 @@
 #define PD_SETUP_H_
 #include <avr/interrupt.h>
 
-void setup_control_loop(){
+void initPIDTimer(){
 	cli();
-		 // Choose system as clock source with 1/64 prescaler
-	TCCR3B = 0b00000011;
-	TCNT3 = 0xFFFF - 12500;      // Compare time set to 50 millisecs by setting TCNT3 to 64563-40,000
-	TIMSK3 = _BV(TOIE3);  // Set interrupt on compare match
 
+	//This timer sets the clock to overflow
+	//The period is 0.016384 seconds.
+	//This the interrupt occurs 61 a second
+
+		 // Choose system as clock source with 1024 prescaler
+	TCCR2B = 0b00000101;
+	TCNT2 = 0;      // Compare time set to 20 millisecs by setting TCNT3 to 64563-40,000
+	TIMSK2 = _BV(TOIE2);  // Set interrupt on compare match
 	sei();
 }
+
+
 
 #endif /* PD_SETUP_H_ */
