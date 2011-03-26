@@ -207,9 +207,10 @@ void LineDetectionNode::UpdateCache(void)
 		double width_line_hor = GetDistSize(middle, delta_line_hor, m_mint, m_plane);
 		double width_min_hor  = std::min(width_line_hor, width_dead_hor);
 
-		if (m_cutoff_hor == 0 && width_min_hor < m_cutoff_hor) {
+		if (m_cutoff_hor == 0 && width_min_hor < m_width_cutoff) {
 			m_cutoff_hor = r + 1;
-		} else {
+			ROS_INFO("Horizontal Cutoff = %d", m_cutoff_hor);
+		} else if (m_cutoff_hor == 0) {
 			cv::Mat ker = m_cache_hor.row(r);
 			BuildLineFilter(ker, 0, m_cols, width_line_hor, width_dead_hor, true);
 		}
@@ -220,9 +221,10 @@ void LineDetectionNode::UpdateCache(void)
 		double width_line_ver = GetDistSize(middle, delta_line_ver, m_mint, m_plane);
 		double width_min_ver  = std::min(width_line_ver, width_dead_ver);
 
-		if (m_cutoff_ver == 0 && width_min_ver < m_cutoff_ver) {
-			m_cutoff_hor = r + 1;
-		} else {
+		if (m_cutoff_ver == 0 && width_min_ver < m_width_cutoff) {
+			m_cutoff_ver = r + 1;
+			ROS_INFO("Vertical Cutoff = %d", m_cutoff_ver);
+		} else if (m_cutoff_ver == 0) {
 			// TODO: Modify BuildLineFilter() to create a column filter.
 			cv::Mat ker = m_cache_ver.row(r);
 			BuildLineFilter(ker, 0, m_cols, width_line_ver, width_dead_ver, true);
