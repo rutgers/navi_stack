@@ -113,21 +113,21 @@ void LineDetectionNode::MatchedFilter(cv::Mat src, cv::Mat &dst_hor,
 		if (r >= m_cutoff_hor && r >= m_cutoff_ver) return;
 
 		// Horizontal filter.
-		int width = m_line_hor[r] + 2 * m_dead_hor[r];
+		int width = m_size_hor[r] + 2 * m_size_hor[r];
 		int left  = c - (width + 0) / 2;
 		int right = c + (width + 1) / 2;
 
 		if (r < m_cutoff_hor && left >= 0 && right < m_cols && r + 1 < m_rows) {
 			cv::Mat ker = m_cache_hor(cv::Range(r, r + 1), cv::Range(0, width));
 			cv::Mat reg = src(cv::Range(r, r + 1),  cv::Range(left, right));
-			dst_hor.at<double>(r, c) = kernel.dot(reg);
+			dst_hor.at<double>(r, c) = ker.dot(reg);
 		} else {
 			// TODO: Change this to an invalid value (maybe NaN or -INFINITY?).
 			dst_hor.at<double>(r, c) = -255.0;
 		}
 
 		// Vertical filter.
-		int height = m_line_ver[r] + 2 * m_dead_ver[r];
+		int height = m_size_ver[r] + 2 * m_size_ver[r];
 		int top    = r - (height + 0) / 2;
 		int bottom = r + (height + 1) / 2;
 
@@ -203,29 +203,29 @@ void LineDetectionNode::UpdateCache(void)
 		cv::Point3d delta_dead_ver(0.0, m_width_dead, 0.0);
 
 		// Horizontal pulse-width filter (i.e. dw = <1, 0, 0>).
+		double width_dead_hor = GetDistSize(middle, delta_dead_hor, m_mint, m_plane);
 		double width_line_hor = GetDistSize(middle, delta_line_hor, m_mint, m_plane);
-		double width_line_ver = GetDistSize(middle, delta_line_ver, m_mint, m_plane);
 		double width_min_hor  = std::min(width_line_hor, width_dead_hor);
 
 		if (m_cutoff_hor == 0 && width_min_hor < m_cutoff_hor) {
 			m_cutoff_hor = r + 1;
 		} else {
-			cv::Mat kernel = m_cache_kernel.row(r);
-			BuildLineFilter(kernel, 0, m_cols, width_line_hor, width_dead_hor, true);
+			cv::Mat ker = m_cache_hor.row(r);
+			BuildLineFilter(ker, 0, m_cols, width_line_hor, width_dead_hor, true);
 		}
 
 		// Vertical pulse-width filter (i.e. dw = <0, 0, 1>). Note that this
 		// will be slightly narrower than the horizontal pulse-width filter.
-		double width_dead_hor = GetDistSize(middle, delta_dead_hor, m_mint, m_plane);
 		double width_dead_ver = GetDistSize(middle, delta_dead_ver, m_mint, m_plane);
+		double width_line_ver = GetDistSize(middle, delta_line_ver, m_mint, m_plane);
 		double width_min_ver  = std::min(width_line_ver, width_dead_ver);
 
 		if (m_cutoff_ver == 0 && width_min_ver < m_cutoff_ver) {
 			m_cutoff_hor = r + 1;
 		} else {
 			// TODO: Modify BuildLineFilter() to create a column filter.
-			cv::Mat kernel = m_cache_kernel.row(r);
-			BuildLineFilter(kernel, 0, m_cols, width_line_ver, width_dead_ver, true);
+			cv::Mat ker = m_cache_ver.row(r);
+			BuildLineFilter(ker, 0, m_cols, width_line_ver, width_dead_ver, true);
 		}
 	}
 	m_valid = true;
@@ -364,7 +364,7 @@ void LineDetectionNode::ImageCallback(ImageConstPtr const &msg_img,
 
 		// Visualize the matched pulse width kernel.
 		cv::Mat img_kernel;
-		cv::normalize(m_cache_kernel, img_kernel, 0, 255, CV_MINMAX, CV_8UC1);
+		cv::normalize(m_cache_hor, img_kernel, 0, 255, CV_MINMAX, CV_8UC1);
 
 		cv_bridge::CvImage msg_kernel;
 		msg_kernel.header.stamp    = msg_img->header.stamp;
@@ -388,13 +388,6 @@ void LineDetectionNode::ImageCallback(ImageConstPtr const &msg_img,
 
 			cv::line(img_normal, point, point + normal, cv::Scalar(255, 0, 0));
 		}
-
-		std::cout << "horizon = " << m_horizon << ", cutoff = " << m_cutoff << std::endl;
-
-		cv::Point2d pt_hor_l(0.0, m_horizon), pt_hor_r(img_input.cols, m_horizon);
-		cv::Point2d pt_cut_l(0.0, m_cutoff),  pt_cut_r(img_input.cols, m_cutoff);
-		cv::line(img_normal, pt_hor_l, pt_hor_r, cv::Scalar(255, 0, 0));
-		cv::line(img_normal, pt_cut_l, pt_cut_r, cv::Scalar(0, 255, 0));
 
 		cv_bridge::CvImage msg_normal;
 		msg_normal.header.stamp    = msg_img->header.stamp;
