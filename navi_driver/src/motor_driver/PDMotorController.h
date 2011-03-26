@@ -9,7 +9,6 @@
 #define PDMotorController_H_
 #include "Encoder.h"
 #include <avr/interrupt.h>
-#include "WProgram.h"
 
 
 class PDMotorController {
@@ -18,17 +17,17 @@ public:
 	// PID constants K and D
 	// what is the PID update frequency
 
-	PDMotorController(int16_t p_k, int16_t p_d,
-			int16_t pwm_max);
+	PDMotorController(int p_k, int p_d,
+					int pwm_max, int update_frequency);
 	~PDMotorController(){};
 	//encoder counts per second
-	int16_t getVelocity();
+	int getVelocity();
 
 	//motor cmd output from PD controller
-	int16_t motorCMD();
+	int motorCMD();
 
 	//set the set point velocity for the PD controller
-	void setVelocity(int16_t encoders_per_second);
+	void setVelocity(int encoders_per_second);
 
 	//Must be called during an timer interrupt
 	void PIDUpdate(); //compute closed loop update
@@ -46,14 +45,14 @@ public:
 
 private:
 	Encoder encoder;
-	int16_t update_freqency;
-	int16_t prior_encoder_count;
-	int16_t enc_vel;
-	int16_t commanded_vel;
-	int16_t pwm_max;
-	int16_t error_p;
-	int16_t p_k;
-	int16_t p_d;
+	int update_freqency;
+	int prior_encoder_count;
+	int enc_vel;
+	int commanded_vel;
+	int pwm_max;
+	int error_p;
+	int p_k;
+	int p_d;
 };
 
 #endif /* PDMotorController_H_ */

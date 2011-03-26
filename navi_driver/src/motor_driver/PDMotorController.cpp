@@ -8,7 +8,9 @@
 #include "PDMotorController.h"
 #include "WProgram.h"
 
-PDMotorController::PDMotorController(int16_t p_k, int16_t p_d, int16_t pwm_max){
+PDMotorController::PDMotorController(int p_k, int p_d,
+				int pwm_max, int update_frequency){
+	this->update_freqency = update_frequency;
 	this->p_k = p_k;
 	this->p_d = p_d;
 	this->pwm_max = pwm_max;
@@ -16,11 +18,11 @@ PDMotorController::PDMotorController(int16_t p_k, int16_t p_d, int16_t pwm_max){
 	this->enc_vel=0;
 }
 
-int16_t PDMotorController::getVelocity(){
-	return this->enc_vel;
+int PDMotorController::getVelocity(){
+	return this->enc_vel*update_freqency;
 }
 
-int16_t PDMotorController::motorCMD(){
+int PDMotorController::motorCMD(){
 	return pwm;
 }
 
@@ -33,9 +35,10 @@ void PDMotorController::PIDUpdate(){
 	this->prior_encoder_count = encoder.count();
 
 	//compute error amount
-	int error = this->enc_vel-this->commanded_vel;
+	int error = this->enc_vel * update_freqency- this->commanded_vel;
 
-	this->pwm =this->pwm -  p_k* error ;//p_d* (error-error_p);
+	this->pwm =this->pwm -  p_k* error - p_d* (error-error_p);
+	//this->pwm= commanded_vel;
 	this->error_p = error;
 
 	if (pwm >= pwm_max) pwm = pwm_max;

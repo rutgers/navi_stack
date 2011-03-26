@@ -29,7 +29,7 @@ static char update=0;
 
 
 
-static PDMotorController left_motor(4,5, 30000), right_motor(4,5 , 30000);
+static PDMotorController left_motor(4,5, 32000,30), right_motor(4,5 , 32000,30);
 
 void toggle()
 { //toggle an led to debug the program
@@ -46,11 +46,8 @@ void toggle()
 void motor_cmd_cb(const ros::Msg* msg){
 	toggle();
 
-	mshb_set(0, cmd_msg.left);
-	mshb_set(1, cmd_msg.right);
-
-	//left_motor.setVelocity(cmd_msg.left);
-	//right_motor.setVelocity(cmd_msg.right);
+	left_motor.setVelocity(cmd_msg.left);
+	right_motor.setVelocity(cmd_msg.right);
 }
 
 //PID ISR
@@ -58,7 +55,7 @@ ISR(TIMER2_OVF_vect)   // feed back loop interrupt
 {
 	TCNT2 = 0;
 	if (update){
-		     // Compare time set to ~32 millisecs by setting TCNT2 to 0
+		TCNT2 = 0;      // Compare time set to ~32 millisecs by setting TCNT2 to 0
 		left_motor.PIDUpdate();
 		right_motor.PIDUpdate();
 		mshb_set(0, left_motor.motorCMD());
@@ -96,7 +93,7 @@ void setup()
     right_motor.setVelocity(0);
 
     //Set up PD control loop timer
-    //initPIDTimer();  //NOT WORKING
+    initPIDTimer();
 
     pub_current = node.advertise("current");
     pub_enc = node.advertise("encoder");
@@ -104,8 +101,6 @@ void setup()
 }
 
 
-
-//Timers for triggering actions in main loop
 unsigned long encoder_update_timer =0;
 unsigned long current_update_timer =0;
 unsigned long read_current_timer=0;
