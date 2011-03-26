@@ -45,9 +45,11 @@ void toggle()
 
 void motor_cmd_cb(const ros::Msg* msg){
 	toggle();
-
-	left_motor.setVelocity(cmd_msg.left);
-	right_motor.setVelocity(cmd_msg.right);
+	mshb_set(0, cmd_msg.left);
+	mshb_set(1, cmd_msg.right);
+	
+	//left_motor.setVelocity(cmd_msg.left);
+	//right_motor.setVelocity(cmd_msg.right);
 }
 
 //PID ISR
@@ -93,7 +95,7 @@ void setup()
     right_motor.setVelocity(0);
 
     //Set up PD control loop timer
-    initPIDTimer();
+   // initPIDTimer(); NOT WORKING
 
     pub_current = node.advertise("current");
     pub_enc = node.advertise("encoder");
