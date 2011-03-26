@@ -89,6 +89,7 @@ void mshb_init(void)
 	for (i = 0; i < ARRAY_SIZE(mshb_d); i++) {
 		MSHB_INIT(mshb_d[i]);
 	}
+
 }
 
 void mshb_enable(uint8_t i)

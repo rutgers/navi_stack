@@ -235,7 +235,7 @@ void DiffDrivePlugin::UpdateChild()
   }
 
   write_position_data();
-  publish_odometry();
+  //publish_odometry();
 
   //myIface->Unlock();
 }

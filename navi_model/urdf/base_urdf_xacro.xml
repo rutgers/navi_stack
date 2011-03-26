@@ -71,7 +71,7 @@
 			<parent link="base_footprint"/>
 		</joint>
 		
-		  <gazebo>
+	<gazebo>
     <controller:gazebo_ros_p3d name="base_link_gt" plugin="libgazebo_ros_p3d.so">
       <alwaysOn>true</alwaysOn>
       <updateRate>20.0</updateRate>
