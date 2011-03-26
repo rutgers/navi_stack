@@ -209,7 +209,6 @@ void LineDetectionNode::UpdateCache(void)
 
 		if (m_cutoff_hor == 0 && width_min_hor < m_width_cutoff) {
 			m_cutoff_hor = r + 1;
-			ROS_INFO("Horizontal Cutoff = %d", m_cutoff_hor);
 		} else if (m_cutoff_hor == 0) {
 			cv::Mat ker = m_cache_hor.row(r);
 			BuildLineFilter(ker, 0, m_cols, width_line_hor, width_dead_hor, true);
@@ -223,7 +222,6 @@ void LineDetectionNode::UpdateCache(void)
 
 		if (m_cutoff_ver == 0 && width_min_ver < m_width_cutoff) {
 			m_cutoff_ver = r + 1;
-			ROS_INFO("Vertical Cutoff = %d", m_cutoff_ver);
 		} else if (m_cutoff_ver == 0) {
 			// TODO: Modify BuildLineFilter() to create a column filter.
 			cv::Mat ker = m_cache_ver.row(r);
@@ -324,8 +322,7 @@ void LineDetectionNode::ImageCallback(ImageConstPtr const &msg_img,
 		cv::Mat eigen_val;
 		cv::eigen(hessian, eigen_val, eigen_vec); //, 0, 0);
 
-		// Convert image coordinates to real-world coordinates on the ground
-		// plane. This is especially important since a small change in 
+		// Convert image coordinates to real-world coordinates on the ground plane.
 		double normal_x =  eigen_vec.at<double>(0, 0);
 		double normal_y = -eigen_vec.at<double>(0, 1);
 
@@ -375,8 +372,8 @@ void LineDetectionNode::ImageCallback(ImageConstPtr const &msg_img,
 		msg_kernel.image    = img_kernel;
 		m_pub_kernel.publish(msg_kernel.toImageMsg());
 
-		// Visualize normal vectors on the image. Also render the horizon and
-		// cut-off lines for debugging purposes.
+		// Visualize normal vectors on the image. Also render the cut-off lines
+		// for debugging purposes.
 		cv::Mat img_normal = img_input.clone();
 
 		for (it = maxima.begin(), i = 0; it != maxima.end(); ++it, ++i) {
@@ -390,6 +387,10 @@ void LineDetectionNode::ImageCallback(ImageConstPtr const &msg_img,
 
 			cv::line(img_normal, point, point + normal, cv::Scalar(255, 0, 0));
 		}
+
+		cv::Point pt_cutoff_left(0, img_normal.rows / 2);
+		cv::Point pt_cutoff_right(img_normal.cols, img_normal.rows / 2);
+		cv::line(img_normal, pt_cutoff_left, pt_cutoff_right, cv::Scalar(255, 0, 0));
 
 		cv_bridge::CvImage msg_normal;
 		msg_normal.header.stamp    = msg_img->header.stamp;
