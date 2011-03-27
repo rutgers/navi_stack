@@ -42,17 +42,26 @@ double GetDistSize(cv::Point2d pt0, cv::Point3d dist, cv::Mat mint, Plane plane)
 	// Calculate the image coordinates of a world point offset by the
 	// appropriate number of pixels in the plane (using the cross product).
 	cv::Mat pt1_world(3, 1, CV_64FC1);
-	pt1_world.at<double>(0, 0) = pt0_world.x + dist.x;
-	pt1_world.at<double>(1, 0) = pt0_world.y + dist.y;
-	pt1_world.at<double>(2, 0) = pt0_world.z + dist.z;
+	pt1_world.at<double>(0, 0) = pt0_world.x - 0.5 * dist.x;
+	pt1_world.at<double>(1, 0) = pt0_world.y - 0.5 * dist.y;
+	pt1_world.at<double>(2, 0) = pt0_world.z - 0.5 * dist.z;
 	cv::Mat pt1_mat = mint * pt1_world;
+
+	cv::Mat pt2_world(3, 1, CV_64FC1);
+	pt2_world.at<double>(0, 0) = pt0_world.x + 0.5 * dist.x;
+	pt2_world.at<double>(1, 0) = pt0_world.y + 0.5 * dist.y;
+	pt2_world.at<double>(2, 0) = pt0_world.z + 0.5 * dist.z;
+	cv::Mat pt2_mat = mint * pt2_world;
 
 	// Project this offset point into the image.
 	cv::Point2d pt1(pt1_mat.at<double>(0, 0), pt1_mat.at<double>(1, 0));
 	pt1 *= 1.0 / pt1_mat.at<double>(2, 0);
 
+	cv::Point2d pt2(pt2_mat.at<double>(0, 0), pt2_mat.at<double>(1, 0));
+	pt2 *= 1.0 / pt2_mat.at<double>(2, 0);
+
 	// Find the distance from the offset point to the original point.
-	cv::Point2d offset = pt1 - pt0;
+	cv::Point2d offset = pt2 - pt1;
 	return sqrt(offset.dot(offset));
 }
 
@@ -80,7 +89,7 @@ void CameraInfoToMat(CameraInfoConstPtr const &msg, cv::Mat &mint)
 	}
 }
 
-void BuildLineFilter(cv::Mat &ker, int x, int dim, int width, int border, bool fit)
+void BuildLineFilter(cv::Mat &ker, int x, int dim, int width, int border, int &fwidth, bool fit)
 {
 	ROS_ASSERT(0 <= x && x < dim);
 	ROS_ASSERT(dim > 0);
@@ -89,6 +98,8 @@ void BuildLineFilter(cv::Mat &ker, int x, int dim, int width, int border, bool f
 	cv::Range range_lo_l;
 	cv::Range range_lo_r;
 	cv::Range range_hi;
+
+	fwidth = border + width + border;
 
 	// Only allocate as much space is necessary.
 	if (fit) {

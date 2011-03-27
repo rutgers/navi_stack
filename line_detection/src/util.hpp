@@ -108,7 +108,7 @@ void CameraInfoToMat(CameraInfoConstPtr const &msg, cv::Mat &mint);
  * \param width filter width
  * \param fit   kernel is forced to have dim columns if false
  */
-void BuildLineFilter(cv::Mat &ker, int x, int dim, int width, int border, bool fit = false);
+void BuildLineFilter(cv::Mat &ker, int x, int dim, int width, int border, int &fwidth, bool fit = false);
 
 /**
  * Transform a color 8-bit BGR image into a grayscale image where regions of
