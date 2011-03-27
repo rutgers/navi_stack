@@ -26,9 +26,10 @@ LineDetectionNode::LineDetectionNode(ros::NodeHandle nh, std::string ground_id,
 	if (m_debug) {
 		ROS_WARN("debugging topics are enabled; performance may be degraded");
 
-		m_pub_kernel = m_it.advertise("line_kernel", 10);
-		m_pub_normal = m_it.advertise("line_normal", 10);
-		m_pub_visual = m_nh.advertise<MarkerArray>("/visualization_marker_array", 1);
+		m_pub_ker_hor = m_it.advertise("line_kernel_hor", 10);
+		m_pub_ker_ver = m_it.advertise("line_kernel_ver", 10);
+		m_pub_normal  = m_it.advertise("line_normal", 10);
+		m_pub_visual  = m_nh.advertise<MarkerArray>("/visualization_marker_array", 1);
 	}
 }
 
@@ -115,7 +116,7 @@ void LineDetectionNode::MatchedFilter(cv::Mat src, cv::Mat &dst_hor,
 		if (r < m_cutoff_hor && r < m_cutoff_ver) return;
 
 		// Horizontal filter.
-		int width = m_size_hor[r] + 2 * m_size_hor[r];
+		int width = m_size_hor[r];
 		int left  = c - (width + 0) / 2;
 		int right = c + (width + 1) / 2;
 
@@ -129,7 +130,7 @@ void LineDetectionNode::MatchedFilter(cv::Mat src, cv::Mat &dst_hor,
 		}
 
 		// Vertical filter.
-		int height = m_size_ver[r] + 2 * m_size_ver[r];
+		int height = m_size_ver[r];
 		int top    = r - (height + 0) / 2;
 		int bottom = r + (height + 1) / 2;
 
@@ -207,9 +208,9 @@ void LineDetectionNode::UpdateCache(void)
 		// TODO: Use a Taylor approximation to simplify the width calculation.
 		cv::Point2d middle(m_cols / 2, r);
 		cv::Point3d delta_line_hor(m_width_line, 0.0, 0.0);
-		cv::Point3d delta_line_ver(0.0, 0.0, m_width_line);
+		cv::Point3d delta_line_ver(m_width_line, 0.0, 0.0); // FIXME
 		cv::Point3d delta_dead_hor(m_width_dead, 0.0, 0.0);
-		cv::Point3d delta_dead_ver(0.0, 0.0, m_width_dead);
+		cv::Point3d delta_dead_ver(m_width_dead, 0.0, 0.0); // FIXME
 
 		// Horizontal pulse-width filter (i.e. dw = <1, 0, 0>).
 		double width_dead_hor = GetDistSize(middle, delta_dead_hor, m_mint, m_plane);
@@ -220,8 +221,7 @@ void LineDetectionNode::UpdateCache(void)
 			m_cutoff_hor = r + 1;
 		} else if (m_cutoff_hor == 0) {
 			cv::Mat ker = m_cache_hor.row(r);
-			BuildLineFilter(ker, 0, m_cols, width_line_hor, width_dead_hor, true);
-			m_size_hor[r] = width_dead_hor + width_line_hor;
+			BuildLineFilter(ker, 0, m_cols, width_line_hor, width_dead_hor, m_size_hor[r], true);
 		}
 
 		// Vertical pulse-width filter (i.e. dw = <0, 0, 1>). Note that this
@@ -235,8 +235,7 @@ void LineDetectionNode::UpdateCache(void)
 		} else if (m_cutoff_ver == 0) {
 			// TODO: Modify BuildLineFilter() to create a column filter.
 			cv::Mat ker = m_cache_ver.row(r);
-			BuildLineFilter(ker, 0, m_cols, width_line_ver, width_dead_ver, true);
-			m_size_ver[r] = width_dead_ver + width_line_ver;
+			BuildLineFilter(ker, 0, m_cols, width_line_ver, width_dead_ver, m_size_ver[r], true);
 		}
 
 		std::cout << "H(" << m_size_hor[r] << ") ?= V(" << m_size_ver[r] << ")" << std::endl;
@@ -376,16 +375,26 @@ void LineDetectionNode::ImageCallback(ImageConstPtr const &msg_img,
 	if (m_debug) {
 		size_t num = msg_pts->points.size();
 
-		// Visualize the matched pulse width kernel.
-		cv::Mat img_kernel;
-		cv::normalize(m_cache_hor, img_kernel, 0, 255, CV_MINMAX, CV_8UC1);
+		// Visualize the matched pulse width kernels.
+		cv::Mat img_ker_hor;
+		cv::normalize(m_cache_hor, img_ker_hor, 0, 255, CV_MINMAX, CV_8UC1);
 
-		cv_bridge::CvImage msg_kernel;
-		msg_kernel.header.stamp    = msg_img->header.stamp;
-		msg_kernel.header.frame_id = msg_img->header.frame_id;
-		msg_kernel.encoding = image_encodings::MONO8;
-		msg_kernel.image    = img_kernel;
-		m_pub_kernel.publish(msg_kernel.toImageMsg());
+		cv_bridge::CvImage msg_ker_hor;
+		msg_ker_hor.header.stamp    = msg_img->header.stamp;
+		msg_ker_hor.header.frame_id = msg_img->header.frame_id;
+		msg_ker_hor.encoding = image_encodings::MONO8;
+		msg_ker_hor.image    = img_ker_hor;
+		m_pub_ker_hor.publish(msg_ker_hor.toImageMsg());
+
+		cv::Mat img_ker_ver;
+		cv::normalize(m_cache_ver, img_ker_ver, 0, 255, CV_MINMAX, CV_8UC1);
+
+		cv_bridge::CvImage msg_ker_ver;
+		msg_ker_ver.header.stamp    = msg_img->header.stamp;
+		msg_ker_ver.header.frame_id = msg_img->header.frame_id;
+		msg_ker_ver.encoding = image_encodings::MONO8;
+		msg_ker_ver.image    = img_ker_ver;
+		m_pub_ker_ver.publish(msg_ker_ver.toImageMsg());
 
 		// Visualize normal vectors on the image. Also render the cut-off lines
 		// for debugging purposes.
