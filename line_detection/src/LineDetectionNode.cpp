@@ -403,9 +403,13 @@ void LineDetectionNode::ImageCallback(ImageConstPtr const &msg_img,
 			cv::line(img_normal, point, point + normal, cv::Scalar(255, 0, 0));
 		}
 
-		cv::Point pt_cutoff_left(0, img_normal.rows / 2);
-		cv::Point pt_cutoff_right(img_normal.cols, img_normal.rows / 2);
-		cv::line(img_normal, pt_cutoff_left, pt_cutoff_right, cv::Scalar(255, 0, 0));
+		cv::Point pt_hor0(0,               m_cutoff_hor);
+		cv::Point pt_hor1(img_normal.cols, m_cutoff_hor);
+		cv::line(img_normal, pt_hor0, pt_hor1, cv::Scalar(255, 0, 0));
+
+		cv::Point pt_ver0(0,               m_cutoff_ver);
+		cv::Point pt_ver1(img_normal.cols, m_cutoff_ver);
+		cv::line(img_normal, pt_ver0, pt_ver1, cv::Scalar(255, 0, 0));
 
 		cv_bridge::CvImage msg_normal;
 		msg_normal.header.stamp    = msg_img->header.stamp;
