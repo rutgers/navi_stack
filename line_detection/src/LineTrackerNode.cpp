@@ -6,10 +6,12 @@
 #include <pcl/segmentation/sac_segmentation.h>
 #include <pcl_ros/point_cloud.h>
 
-LineTrackerNode::LineTrackerNode(ros::NodeHandle nh)
+LineTrackerNode::LineTrackerNode(ros::NodeHandle nh, int inliers)
 	: m_nh(nh)
 {
-	m_sub_pts = nh.subscribe<PointNormalCloud>("line_points", 1, &LineTrackerNode::PointCloudCallback, this);
+	m_inliers = inliers;
+	m_sub_pts     = nh.subscribe<PointNormalCloud>("line_points", 1, &LineTrackerNode::PointCloudCallback, this);
+	m_pub_inliers = m_nh.advertise<PointCloud>("line_inliers", 10);
 }
 
 void LineTrackerNode::PointCloudCallback(PointNormalCloud::ConstPtr const &msg_ptsn)
@@ -28,8 +30,23 @@ void LineTrackerNode::PointCloudCallback(PointNormalCloud::ConstPtr const &msg_p
 	}
 
 	// Use RANSAC to fit as many linear models as possible.
+	std::vector<pcl::PointXYZ> pts_inliers;
+	std::vector<pcl::PointXYZ> pts_outliers;
+
+	for (size_t i = 0; i < msg_pts.points.size(); ++i) {
+		pts_outliers.push_back(msg_pts.points[i]);
+	}
+
 	int fits = 0;
 	for (;;) {
+		// Update the faux message used to satisfy PCL.
+		// TODO: This really should not be necessary.
+		msg_pts.points.clear();
+		for (size_t i = 0; i < pts_outliers.size(); ++i) {
+			msg_pts.points.push_back(pts_outliers[i]);
+		}
+
+		// Fit another linear model to the remaining outliers.
 		pcl::SACSegmentation<pcl::PointXYZ> seg;
 		seg.setOptimizeCoefficients(true);
 		seg.setModelType(pcl::SACMODEL_LINE);
@@ -41,34 +58,44 @@ void LineTrackerNode::PointCloudCallback(PointNormalCloud::ConstPtr const &msg_p
 		pcl::PointIndices inliers;
 		seg.segment(inliers, coefficients);
 
-		// Stop fitting linear models when we run out of points.
-		if (inliers.indices.size() < 5) break;
-		++fits;
+		// Update the inlier and outlier sets for the next fit.
+		pts_outliers.clear();
 
-		// Remove the inliers for the next fit.
-		std::vector<pcl::PointXYZ> outliers;
-		for (size_t i = 0; i < msg_pts.points.size(); ++i) {
-			bool is_inlier = false;
-			for (size_t j = 0; j < inliers.indices.size(); ++j) {
-				if ((int)i == inliers.indices[j]) {
-					is_inlier = true;
-					break;
+		if ((int)inliers.indices.size() >= m_inliers) {
+			// TODO: Do something with the model.
+			++fits;
+
+			for (size_t i = 0; i < msg_pts.points.size(); ++i) {
+				bool is_inlier = false;
+				for (size_t j = 0; j < inliers.indices.size(); ++j) {
+					if ((int)i == inliers.indices[j]) {
+						is_inlier = true;
+						break;
+					}
+				}
+
+				if (is_inlier) {
+					pts_inliers.push_back(msg_pts.points[i]);
+				} else {
+					pts_outliers.push_back(msg_pts.points[i]);
 				}
 			}
-
-			if (!is_inlier) {
-				outliers.push_back(msg_pts.points[i]);
-			}
-		}
-
-		// Update the faux message used to satisfy PCL.
-		// TODO: This really should not be necessary.
-		msg_pts.points.clear();
-		for (size_t i = 0; i < outliers.size(); ++i) {
-			msg_pts.points.push_back(outliers[i]);
-		}
+		} else break;
 	}
-	ROS_INFO("Fit %d lines to points.", fits);
+
+	// Publish the inliers.
+	PointCloud::Ptr msg_inliers(new PointCloud);
+	msg_inliers->header.stamp    = msg_ptsn->header.stamp;
+	msg_inliers->header.frame_id = msg_ptsn->header.frame_id;
+	msg_inliers->height = 1;
+	msg_inliers->width  = pts_inliers.size();
+
+	for (size_t i = 0; i < pts_inliers.size(); ++i) {
+		msg_inliers->points.push_back(pts_inliers[i]);
+	}
+
+	m_pub_inliers.publish(msg_inliers);
+	ROS_INFO("Fit %d lines to %d inliers.", fits, (int)msg_inliers->points.size());
 
 	// TODO: Publish the PWL fit as visualization markers.
 }
