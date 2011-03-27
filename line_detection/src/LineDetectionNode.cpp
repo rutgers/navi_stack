@@ -106,6 +106,8 @@ void LineDetectionNode::MatchedFilter(cv::Mat src, cv::Mat &dst_hor,
 	cv::Mat ker_row, ker_col;
 	dst_hor.create(src.rows, src.cols, CV_64FC1);
 	dst_ver.create(src.rows, src.cols, CV_64FC1);
+	dst_hor.setTo(-255);
+	dst_ver.setTo(-255);
 
 	// TODO: Shrink the filter instead of ignoring these tricky cases.
 	for (int r = m_rows - 2; r >= 0; --r)
@@ -192,11 +194,15 @@ void LineDetectionNode::UpdateCache(void)
 
 	m_cutoff_hor = 0;
 	m_cutoff_ver = 0;
+	int prev_hor = INT_MAX;
+	int prev_ver = INT_MAX;
 
 	// Pre-compute the widths necessary to construct the matched pulse-width
 	// filter. Assume distances to not change along rows in the image (i.e. the
 	// image is rectified).
 	for (int r = m_rows - 1; r >= 0; --r) {
+		if (m_cutoff_hor && m_cutoff_ver) break;
+
 		// TODO: Calculate separate distances for row and column filters.
 		// TODO: Use a Taylor approximation to simplify the width calculation.
 		cv::Point2d middle(m_cols / 2, r);
@@ -233,9 +239,10 @@ void LineDetectionNode::UpdateCache(void)
 			m_size_ver[r] = width_dead_ver + width_line_ver;
 		}
 
-		std::cout << "H(" << width_line_hor << ", " << width_dead_hor << ")"
-		          << "V(" << width_line_ver << ", " << width_dead_ver << ")" << std::endl;
+		std::cout << "H(" << m_size_hor[r] << ") ?= V(" << m_size_ver[r] << ")" << std::endl;
 	}
+	std::cout << "CUTOFF @ H = " << m_cutoff_hor << ", "
+	          <<          "V = " << m_cutoff_ver << std::endl;
 	m_valid = true;
 }
 
