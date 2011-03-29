@@ -10,13 +10,16 @@ typedef pcl::PointCloud<pcl::PointNormal> PointNormalCloud;
 
 class LineTrackerNode {
 public:
-	LineTrackerNode(ros::NodeHandle nh);
+	LineTrackerNode(ros::NodeHandle nh, int inliers);
 	void PointCloudCallback(PointNormalCloud::ConstPtr const &msg_pts);
 
 private:
+	int m_inliers;
+	std::vector<PointNormalCloud::ConstPtr> m_pts;
+
 	ros::NodeHandle m_nh;
 	ros::Subscriber m_sub_pts;
-	std::vector<PointNormalCloud::ConstPtr> m_pts;
+	ros::Publisher  m_pub_inliers;
 };
 
 #endif

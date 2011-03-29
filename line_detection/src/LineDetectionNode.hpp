@@ -112,7 +112,8 @@ private:
 
 	// Debug topics; only enabled if m_debug is true.
 	image_transport::Publisher m_pub_normal;
-	image_transport::Publisher m_pub_kernel;
+	image_transport::Publisher m_pub_ker_hor;
+	image_transport::Publisher m_pub_ker_ver;
 	ros::Publisher             m_pub_visual;
 };
 
