@@ -195,8 +195,6 @@ void LineDetectionNode::UpdateCache(void)
 
 	m_cutoff_hor = 0;
 	m_cutoff_ver = 0;
-	int prev_hor = INT_MAX;
-	int prev_ver = INT_MAX;
 
 	// Pre-compute the widths necessary to construct the matched pulse-width
 	// filter. Assume distances to not change along rows in the image (i.e. the
@@ -208,13 +206,13 @@ void LineDetectionNode::UpdateCache(void)
 		// TODO: Use a Taylor approximation to simplify the width calculation.
 		cv::Point2d middle(m_cols / 2, r);
 		cv::Point3d delta_line_hor(m_width_line, 0.0, 0.0);
-		cv::Point3d delta_line_ver(m_width_line, 0.0, 0.0); // FIXME
+		cv::Point3d delta_line_ver(0.0, 0.0, m_width_line);
 		cv::Point3d delta_dead_hor(m_width_dead, 0.0, 0.0);
-		cv::Point3d delta_dead_ver(m_width_dead, 0.0, 0.0); // FIXME
+		cv::Point3d delta_dead_ver(0.0, 0.0, m_width_dead);
 
 		// Horizontal pulse-width filter (i.e. dw = <1, 0, 0>).
-		double width_dead_hor = GetDistSize(middle, delta_dead_hor, m_mint, m_plane);
-		double width_line_hor = GetDistSize(middle, delta_line_hor, m_mint, m_plane);
+		double width_dead_hor = ReprojectDistance(middle, delta_dead_hor);
+		double width_line_hor = ReprojectDistance(middle, delta_line_hor);
 		double width_min_hor  = std::min(width_line_hor, width_dead_hor);
 
 		if (m_cutoff_hor == 0 && width_min_hor < m_width_cutoff) {
@@ -226,8 +224,8 @@ void LineDetectionNode::UpdateCache(void)
 
 		// Vertical pulse-width filter (i.e. dw = <0, 0, 1>). Note that this
 		// will be slightly narrower than the horizontal pulse-width filter.
-		double width_dead_ver = GetDistSize(middle, delta_dead_ver, m_mint, m_plane);
-		double width_line_ver = GetDistSize(middle, delta_line_ver, m_mint, m_plane);
+		double width_dead_ver = ReprojectDistance(middle, delta_dead_ver);
+		double width_line_ver = ReprojectDistance(middle, delta_line_ver);
 		double width_min_ver  = std::min(width_line_ver, width_dead_ver);
 
 		if (m_cutoff_ver == 0 && width_min_ver < m_width_cutoff) {
@@ -272,8 +270,9 @@ void LineDetectionNode::ImageCallback(ImageConstPtr const &msg_img,
 		return;
 	}
 
+	// FIXME: Flush the cache when camerainfo changes.
+	m_model.fromCameraInfo(msg_cam);
 	img_input = img_ptr->image;
-	CameraInfoToMat(msg_cam, mint);
 
 	// Update pre-computed values that were cached (only if necessary!).
 	SetIntrinsics(mint);
@@ -479,4 +478,24 @@ void LineDetectionNode::ImageCallback(ImageConstPtr const &msg_img,
 
 		m_pub_visual.publish(msg_visual);
 	}
+}
+
+double LineDetectionNode::ReprojectDistance(cv::Point2d pt, cv::Point3d offset)
+{
+	cv::Point3d ray     = m_model.projectPixelTo3dRay(pt);
+	cv::Point3d &normal = m_plane.normal;
+	cv::Point3d &plane  = m_plane.point;
+
+	// Find the expected edges of the line in the camera frame.
+	cv::Point3d P  = (plane.dot(normal) / ray.dot(normal)) * ray;
+	cv::Point3d P1 = P - 0.5 * offset;
+	cv::Point3d P2 = P + 0.5 * offset;
+
+	// Project the expected edge points back into the image.
+	cv::Point2d p1 = m_model.project3dToPixel(P1);
+	cv::Point2d p2 = m_model.project3dToPixel(P2);
+
+	// Find the distance between the reprojected points.
+	cv::Point2d diff = p2 - p1;
+	return sqrt(diff.dot(diff));
 }

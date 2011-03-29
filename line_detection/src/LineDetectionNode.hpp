@@ -84,6 +84,9 @@ public:
 
 	void ImageCallback(ImageConstPtr const &msg_img, CameraInfoConstPtr const &msg_cam);
 
+protected:
+	double ReprojectDistance(cv::Point2d pt, cv::Point3d offset);
+
 private:
 	bool m_debug;
 	bool m_valid;
@@ -102,9 +105,10 @@ private:
 	cv::Mat          m_cache_ver,  m_cache_hor;
 	std::vector<int> m_size_ver,   m_size_hor;
 
-	ros::NodeHandle                 m_nh;
-	tf::TransformListener           m_tf;
-	image_transport::ImageTransport m_it;
+	ros::NodeHandle                    m_nh;
+	tf::TransformListener              m_tf;
+	image_transport::ImageTransport    m_it;
+	image_geometry::PinholeCameraModel m_model;
 
 	CameraSubscriber           m_sub_cam;
 	image_transport::Publisher m_pub_max;
