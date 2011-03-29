@@ -120,12 +120,13 @@ void LineDetectionNode::UpdateCache(void)
 
 	if (!m_valid) {
 		ROS_INFO("rebuilding cache with changed parameters");
-		m_horizon_hor = GeneratePulseFilter(dhor, m_kernel_hor, m_offset_hor);
-		m_horizon_ver = GeneratePulseFilter(dver, m_kernel_ver, m_offset_ver);
 
+		m_horizon_hor = GeneratePulseFilter(dhor, m_kernel_hor, m_offset_hor);
 		ROS_INFO("horizontal: [ %d x %d ] with horizon = %d",
 			m_kernel_hor.cols, m_kernel_hor.rows, m_horizon_hor
 		);
+
+		m_horizon_ver = GeneratePulseFilter(dver, m_kernel_ver, m_offset_ver);
 		ROS_INFO("vertical:   [ %d x %d ] with horizon = %d",
 			m_kernel_ver.cols, m_kernel_ver.rows, m_horizon_ver
 		);
@@ -390,9 +391,17 @@ double LineDetectionNode::ReprojectDistance(cv::Point2d pt, cv::Point2d offset)
 
 int LineDetectionNode::GeneratePulseFilter(cv::Point3d dw, cv::Mat &kernel, std::vector<Offset> &offsets)
 {
+	static Offset const offset_template = { 0, 0 };
+
+	ROS_ASSERT(m_rows > 0 && m_cols > 0);
+	ROS_ASSERT(m_width_line > 0.0);
+	ROS_ASSERT(m_width_dead > 0.0);
+
 	kernel.create(m_rows, m_cols, CV_64FC1);
 	kernel.setTo(0.0);
-	offsets.resize(m_rows);
+
+	offsets.clear();
+	offsets.resize(m_rows, offset_template);
 
 	int width_prev = INT_MAX;
 	int horizon    = m_rows - 1;
@@ -401,8 +410,8 @@ int LineDetectionNode::GeneratePulseFilter(cv::Point3d dw, cv::Mat &kernel, std:
 		cv::Point2d middle(m_cols / 2, r);
 		int offs_line_neg = ProjectDistance(middle, -0.5 * m_width_line * dw);
 		int offs_line_pos = ProjectDistance(middle, +0.5 * m_width_line * dw);
-		int offs_both_neg = ProjectDistance(middle, -0.5 * (m_width_line + m_width_dead) * dw);
-		int offs_both_pos = ProjectDistance(middle, +0.5 * (m_width_line + m_width_dead) * dw);
+		int offs_both_neg = ProjectDistance(middle, -0.5 * (m_width_line + 2.0 * m_width_dead) * dw);
+		int offs_both_pos = ProjectDistance(middle, +0.5 * (m_width_line + 2.0 * m_width_dead) * dw);
 
 		int width_line = offs_line_neg + offs_line_pos;
 		int width_both = offs_both_neg + offs_both_pos;
@@ -412,31 +421,32 @@ int LineDetectionNode::GeneratePulseFilter(cv::Point3d dw, cv::Mat &kernel, std:
 		// Only generate a kernel when both the filter's pulse and supports are
 		// larger than the cutoff size. This guarantees that the filter is not
 		// degenerate and will sum to zero.
-		if (m_width_cutoff >= width_min && width_prev >= width_min) {
+		if (m_width_cutoff <= width_min && width_prev >= width_min) {
 			cv::Range row(r, r + 1);
 
 			// TODO: Clip these ranges at the image's borders.
-			cv::Mat left   = kernel(row, cv::Range(0, offs_both_neg - offs_line_neg));
-			cv::Mat center = kernel(row, cv::Range(0, offs_both_neg - offs_line_pos));
-			cv::Mat right  = kernel(row, cv::Range(0, offs_both_neg + offs_both_pos));
+			cv::Mat left   = kernel(row, cv::Range(0,                             offs_both_neg - offs_line_neg));
+			cv::Mat center = kernel(row, cv::Range(offs_both_neg - offs_line_neg, offs_both_neg + offs_line_pos));
+			cv::Mat right  = kernel(row, cv::Range(offs_both_neg + offs_line_pos, offs_both_neg + offs_both_pos));
 
-			double ratio_left  = (double)left.cols  / (left.cols + right.cols);
-			double ratio_right = (double)right.cols / (left.cols + right.cols);
+			double value_left   = left.cols  * -1.0 / (left.cols + right.cols);
+			double value_center = +1.0 / center.cols;
+			double value_right  = right.cols * -1.0 / (left.cols + right.cols);
 
-			left.setTo(-ratio_left);
-			center.setTo(+1.0);
-			right.setTo(-ratio_right);
+			left.setTo(-value_left);
+			center.setTo(value_center);
+			right.setTo(-value_right);
 
 			offsets[r].neg = offs_both_neg;
 			offsets[r].pos = offs_both_pos;
 			horizon        = r;
+
 		} else {
-			offsets[r].neg = 0;
-			offsets[r].pos = 0;
+			return horizon + 1;
 		}
 		width_prev = width_min;
 	}
-	return horizon;
+	return 0;
 }
 
 void LineDetectionNode::PulseFilter(cv::Mat src, cv::Mat &dst, cv::Mat ker,
@@ -482,7 +492,7 @@ void LineDetectionNode::PulseFilter(cv::Mat src, cv::Mat &dst, cv::Mat ker,
 				cv::Range src_rows(r - offset.neg, r + offset.pos);
 				cv::Range src_cols(c, c + 1);
 
-				if (src_cols.start >= 0 && src_cols.end <= m_cols) {
+				if (src_rows.start >= 0 && src_rows.end <= m_rows) {
 					src_chunk = src(src_rows, src_cols).t();
 				} else {
 					continue;
