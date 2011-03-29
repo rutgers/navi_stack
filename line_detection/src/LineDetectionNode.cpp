@@ -26,10 +26,13 @@ LineDetectionNode::LineDetectionNode(ros::NodeHandle nh, std::string ground_id,
 	if (m_debug) {
 		ROS_WARN("debugging topics are enabled; performance may be degraded");
 
-		m_pub_ker_hor = m_it.advertise("line_kernel_hor", 10);
-		m_pub_ker_ver = m_it.advertise("line_kernel_ver", 10);
-		m_pub_normal  = m_it.advertise("line_normal", 10);
-		m_pub_visual  = m_nh.advertise<MarkerArray>("/visualization_marker_array", 1);
+		m_pub_distance   = m_it.advertise("line_distance",   10);
+		m_pub_ker_hor    = m_it.advertise("line_kernel_hor", 10);
+		m_pub_ker_ver    = m_it.advertise("line_kernel_ver", 10);
+		m_pub_filter_hor = m_it.advertise("line_filter_hor", 10);
+		m_pub_filter_ver = m_it.advertise("line_filter_ver", 10);
+		m_pub_normal     = m_it.advertise("line_normal", 10);
+		m_pub_visual     = m_nh.advertise<MarkerArray>("/visualization_marker_array", 1);
 	}
 }
 
@@ -120,6 +123,10 @@ void LineDetectionNode::UpdateCache(void)
 
 	if (!m_valid) {
 		ROS_INFO("rebuilding cache with changed parameters");
+		ROS_INFO("ground plane P(%4f, %4f, %4f) N(%4f, %f, %f)",
+			m_plane.point.x,  m_plane.point.y,  m_plane.point.z,
+			m_plane.normal.x, m_plane.normal.y, m_plane.normal.z
+		);
 
 		m_horizon_hor = GeneratePulseFilter(dhor, m_kernel_hor, m_offset_hor);
 		ROS_INFO("horizontal: [ %d x %d ] with horizon = %d",
@@ -253,6 +260,22 @@ void LineDetectionNode::ImageCallback(ImageConstPtr const &msg_img,
 	if (m_debug) {
 		size_t num = msg_pts->points.size();
 
+		// Project a line down the center of the image.
+		cv::Mat img_distance = img_input.clone();
+
+		for (int r = m_rows - 1; r >= 0; --r) {
+			cv::Point2d pt1( m_cols / 2 - m_offset_hor[r].neg, r);
+			cv::Point2d pt2( m_cols / 2 + m_offset_hor[r].pos, r);
+			cv::line(img_distance, pt1, pt2, cv::Scalar(255, 0, 0), 1);
+		}
+
+		cv_bridge::CvImage msg_distance;
+		msg_distance.header.stamp    = msg_img->header.stamp;
+		msg_distance.header.frame_id = msg_img->header.frame_id;
+		msg_distance.encoding = image_encodings::RGB8;
+		msg_distance.image    = img_distance;
+		m_pub_distance.publish(msg_distance.toImageMsg());
+
 		// Visualize the matched pulse width kernels.
 		cv::Mat img_ker_hor;
 		cv::normalize(m_kernel_hor, img_ker_hor, 0, 255, CV_MINMAX, CV_8UC1);
@@ -273,6 +296,27 @@ void LineDetectionNode::ImageCallback(ImageConstPtr const &msg_img,
 		msg_ker_ver.encoding = image_encodings::MONO8;
 		msg_ker_ver.image    = img_ker_ver;
 		m_pub_ker_ver.publish(msg_ker_ver.toImageMsg());
+
+		// Visualize the raw filter responses.
+		cv::Mat img_filter_hor;
+		cv::normalize(img_hor, img_filter_hor, 0, 255, CV_MINMAX, CV_8UC1);
+
+		cv_bridge::CvImage msg_filter_hor;
+		msg_filter_hor.header.stamp    = msg_img->header.stamp;
+		msg_filter_hor.header.frame_id = msg_img->header.frame_id;
+		msg_filter_hor.encoding = image_encodings::MONO8;
+		msg_filter_hor.image    = img_filter_hor;
+		m_pub_filter_hor.publish(msg_filter_hor.toImageMsg());
+
+		cv::Mat img_filter_ver;
+		cv::normalize(img_ver, img_filter_ver, 0, 255, CV_MINMAX, CV_8UC1);
+
+		cv_bridge::CvImage msg_filter_ver;
+		msg_filter_ver.header.stamp    = msg_img->header.stamp;
+		msg_filter_ver.header.frame_id = msg_img->header.frame_id;
+		msg_filter_ver.encoding = image_encodings::MONO8;
+		msg_filter_ver.image    = img_filter_ver;
+		m_pub_filter_ver.publish(msg_filter_ver.toImageMsg());
 
 		// Visualize normal vectors on the image. Also render the cut-off lines
 		// for debugging purposes.
@@ -433,9 +477,9 @@ int LineDetectionNode::GeneratePulseFilter(cv::Point3d dw, cv::Mat &kernel, std:
 			double value_center = +1.0 / center.cols;
 			double value_right  = right.cols * -1.0 / (left.cols + right.cols);
 
-			left.setTo(-value_left);
+			left.setTo(value_left);
 			center.setTo(value_center);
-			right.setTo(-value_right);
+			right.setTo(value_right);
 
 			offsets[r].neg = offs_both_neg;
 			offsets[r].pos = offs_both_pos;
