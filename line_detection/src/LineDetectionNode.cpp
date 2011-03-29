@@ -57,21 +57,6 @@ void LineDetectionNode::SetLineWidth(double width_line)
 	m_width_line = width_line;
 }
 
-void LineDetectionNode::SetIntrinsics(cv::Mat mint)
-{
-	ROS_ASSERT(mint.rows == 3 && mint.cols == 3);
-	ROS_ASSERT(mint.type() == CV_64FC1);
-
-	for (int r = 0; r < mint.rows; ++r)
-	for (int c = 0; c < mint.cols; ++c) {
-		m_valid = m_valid && mint.at<double>(r, c) == m_mint.at<double>(r, c);
-	}
-
-	if (!m_valid) {
-		mint.copyTo(m_mint);
-	}
-}
-
 void LineDetectionNode::SetGroundPlane(Plane plane)
 {
 	m_valid = m_valid && (plane.point.x == m_plane.point.x)
@@ -176,8 +161,6 @@ void LineDetectionNode::UpdateCache(void)
 	ROS_ASSERT(m_width_line > 0.0);
 	ROS_ASSERT(m_width_dead > 0.0);
 	ROS_ASSERT(m_width_cutoff > 0);
-	ROS_ASSERT(m_mint.rows == 3 && m_mint.cols == 3);
-	ROS_ASSERT(m_mint.type() == CV_64FC1);
 
 	if (m_valid) return;
 
@@ -211,8 +194,8 @@ void LineDetectionNode::UpdateCache(void)
 		cv::Point3d delta_dead_ver(0.0, 0.0, m_width_dead);
 
 		// Horizontal pulse-width filter (i.e. dw = <1, 0, 0>).
-		double width_dead_hor = ReprojectDistance(middle, delta_dead_hor);
-		double width_line_hor = ReprojectDistance(middle, delta_line_hor);
+		double width_dead_hor = ProjectDistance(middle, delta_dead_hor, true);
+		double width_line_hor = ProjectDistance(middle, delta_line_hor, true);
 		double width_min_hor  = std::min(width_line_hor, width_dead_hor);
 
 		if (m_cutoff_hor == 0 && width_min_hor < m_width_cutoff) {
@@ -224,8 +207,8 @@ void LineDetectionNode::UpdateCache(void)
 
 		// Vertical pulse-width filter (i.e. dw = <0, 0, 1>). Note that this
 		// will be slightly narrower than the horizontal pulse-width filter.
-		double width_dead_ver = ReprojectDistance(middle, delta_dead_ver);
-		double width_line_ver = ReprojectDistance(middle, delta_line_ver);
+		double width_dead_ver = ProjectDistance(middle, delta_dead_ver, true);
+		double width_line_ver = ProjectDistance(middle, delta_line_ver, true);
 		double width_min_ver  = std::min(width_line_ver, width_dead_ver);
 
 		if (m_cutoff_ver == 0 && width_min_ver < m_width_cutoff) {
@@ -261,7 +244,6 @@ void LineDetectionNode::ImageCallback(ImageConstPtr const &msg_img,
 	// Convert ROS messages to OpenCV data types.
 	cv_bridge::CvImagePtr img_ptr;
 	cv::Mat img_input;
-	cv::Mat mint;
 
 	try {
 		img_ptr = cv_bridge::toCvCopy(msg_img, image_encodings::BGR8);
@@ -275,7 +257,6 @@ void LineDetectionNode::ImageCallback(ImageConstPtr const &msg_img,
 	img_input = img_ptr->image;
 
 	// Update pre-computed values that were cached (only if necessary!).
-	SetIntrinsics(mint);
 	SetGroundPlane(plane);
 	SetResolution(msg_img->width, msg_img->height);
 	UpdateCache();
@@ -313,46 +294,35 @@ void LineDetectionNode::ImageCallback(ImageConstPtr const &msg_img,
 
 	int i;
 	for (it = maxima.begin(), i = 0; it != maxima.end(); ++it, ++i) {
-		cv::Point2i pt_image(*it);
-		cv::Point3d ray, pt_world;
-
-		GetPixelRay(mint, pt_image, ray);
-		GetRayPlaneInt(ray, plane, pt_world);
+		cv::Point2i pt_image = *it;
+		cv::Point3d pt_world = GetGroundPoint(*it);
 
 		// Calculate a vector that is normal to the direction of the line by
 		// finding the principle eigenvector of the Hessian matrix centered
 		// on this pixel.
-		// TODO: Convert distances in the image to distances in real life. I am
-		//       not sure if I should do this before or after finding the
-		//       Hessian matrix.
 		cv::Mat hessian(2, 2, CV_64FC1);
-		hessian.at<double>(0, 0) = dxx.at<double>(it->y, it->x);
-		hessian.at<double>(0, 1) = dxy.at<double>(it->y, it->x);
-		hessian.at<double>(1, 0) = dxy.at<double>(it->y, it->x);
-		hessian.at<double>(1, 1) = dyy.at<double>(it->y, it->x);
+		hessian.at<double>(0, 0) = dxx.at<double>(pt_image.y, pt_image.x);
+		hessian.at<double>(0, 1) = dxy.at<double>(pt_image.y, pt_image.x);
+		hessian.at<double>(1, 0) = dxy.at<double>(pt_image.y, pt_image.x);
+		hessian.at<double>(1, 1) = dyy.at<double>(pt_image.y, pt_image.x);
 
 		cv::Mat eigen_vec;
 		cv::Mat eigen_val;
-		cv::eigen(hessian, eigen_val, eigen_vec); //, 0, 0);
+		cv::eigen(hessian, eigen_val, eigen_vec, 0, 0);
 
 		// Convert image coordinates to real-world coordinates on the ground plane.
 		double normal_x =  eigen_vec.at<double>(0, 0);
 		double normal_y = -eigen_vec.at<double>(0, 1);
 
-		// TODO: Replace this hack with a Taylor approximation.
-		cv::Point2d dx(normal_x, 0);
-		cv::Point2d dy(0, normal_y);
-		double ground_x = GetPixSize(*it, dx, m_mint, m_plane);
-		double ground_y = GetPixSize(*it, dy, m_mint, m_plane);
-
 		// Convert OpenCV cv::Point into a ROS geometry_msgs::Point object.
+		// XXX: Normal vector is always postive; does not have the correct signs.
 		pcl::PointNormal &pt = msg_pts->points[i];
 		pt.x = pt_world.x;
 		pt.y = pt_world.y;
 		pt.z = pt_world.z;
 		pt.normal[0] = 0.0;
-		pt.normal[1] = ground_x;
-		pt.normal[2] = ground_y;
+		pt.normal[1] = ReprojectDistance(pt_image, cv::Point2d(normal_x, 0.0));
+		pt.normal[2] = ReprojectDistance(pt_image, cv::Point2d(0.0, normal_y));
 	}
 
 	m_pub_pts.publish(msg_pts);
@@ -399,6 +369,7 @@ void LineDetectionNode::ImageCallback(ImageConstPtr const &msg_img,
 		// for debugging purposes.
 		cv::Mat img_normal = img_input.clone();
 
+		int i = 0;
 		for (it = maxima.begin(), i = 0; it != maxima.end(); ++it, ++i) {
 			double normal_x = msg_pts->points[i].normal[1];
 			double normal_y = msg_pts->points[i].normal[2];
@@ -480,16 +451,30 @@ void LineDetectionNode::ImageCallback(ImageConstPtr const &msg_img,
 	}
 }
 
-double LineDetectionNode::ReprojectDistance(cv::Point2d pt, cv::Point3d offset)
+cv::Point3d LineDetectionNode::GetGroundPoint(cv::Point2d pt)
 {
 	cv::Point3d ray     = m_model.projectPixelTo3dRay(pt);
 	cv::Point3d &normal = m_plane.normal;
 	cv::Point3d &plane  = m_plane.point;
+	return (plane.dot(normal) / ray.dot(normal)) * ray;
+}
 
-	// Find the expected edges of the line in the camera frame.
-	cv::Point3d P  = (plane.dot(normal) / ray.dot(normal)) * ray;
-	cv::Point3d P1 = P - 0.5 * offset;
-	cv::Point3d P2 = P + 0.5 * offset;
+double LineDetectionNode::ProjectDistance(cv::Point2d pt, cv::Point3d offset,
+                                          bool center)
+{
+	cv::Point3d P1, P2;
+
+	// Center difference estimate.
+	if (center) {
+		cv::Point3d P = GetGroundPoint(pt);
+		P1 = P - 0.5 * offset;
+		P2 = P + 0.5 * offset;
+	}
+	// Forward difference estimate.
+	else {
+		P1 = GetGroundPoint(pt);
+		P2 = P1 + offset;
+	}
 
 	// Project the expected edge points back into the image.
 	cv::Point2d p1 = m_model.project3dToPixel(P1);
@@ -497,5 +482,14 @@ double LineDetectionNode::ReprojectDistance(cv::Point2d pt, cv::Point3d offset)
 
 	// Find the distance between the reprojected points.
 	cv::Point2d diff = p2 - p1;
+	return sqrt(diff.dot(diff));
+}
+
+double LineDetectionNode::ReprojectDistance(cv::Point2d pt, cv::Point2d offset)
+{
+	cv::Point3d P1 = GetGroundPoint(pt);
+	cv::Point3d P2 = GetGroundPoint(pt + offset);
+
+	cv::Point3d diff = P2 - P1;
 	return sqrt(diff.dot(diff));
 }

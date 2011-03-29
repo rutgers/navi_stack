@@ -48,7 +48,6 @@ public:
 	void SetCutoffWidth(int  width);
 	void SetDeadWidth(double width);
 	void SetLineWidth(double width);
-	void SetIntrinsics(cv::Mat mint);
 	void SetGroundPlane(Plane plane);
 	void SetResolution(int width, int height);
 	void SetThreshold(double threshold);
@@ -85,7 +84,9 @@ public:
 	void ImageCallback(ImageConstPtr const &msg_img, CameraInfoConstPtr const &msg_cam);
 
 protected:
-	double ReprojectDistance(cv::Point2d pt, cv::Point3d offset);
+	cv::Point3d GetGroundPoint(cv::Point2d pt);
+	double ProjectDistance(cv::Point2d pt, cv::Point3d offset, bool center);
+	double ReprojectDistance(cv::Point2d pt, cv::Point2d offset);
 
 private:
 	bool m_debug;
@@ -98,7 +99,6 @@ private:
 	double m_width_line;
 	double m_threshold;
 	Plane m_plane;
-	cv::Mat m_mint;
 	std::string m_ground_id;
 
 	int              m_cutoff_ver, m_cutoff_hor;
