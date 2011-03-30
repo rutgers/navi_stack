@@ -140,7 +140,8 @@ void LineDetectionNode::UpdateCache(void)
 		);
 
 		m_horizon_hor = GeneratePulseFilter(dhor, m_kernel_hor, m_offset_hor);
-		m_horizon_ver = GeneratePulseFilter(dver, m_kernel_ver, m_offset_ver);
+		m_horizon_ver = GeneratePulseFilter(dhor, m_kernel_ver, m_offset_ver);
+		//m_horizon_ver = GeneratePulseFilter(dver, m_kernel_ver, m_offset_ver);
 
 		ROS_INFO("detected horizon horizontal = %d, vertical = %d",
 			m_horizon_hor, m_horizon_ver
