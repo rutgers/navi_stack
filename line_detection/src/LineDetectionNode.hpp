@@ -128,6 +128,7 @@ private:
 	image_transport::Publisher m_pub_ker_hor;
 	image_transport::Publisher m_pub_ker_ver;
 	ros::Publisher             m_pub_visual;
+	ros::Publisher             m_pub_visual_one;
 };
 
 #endif

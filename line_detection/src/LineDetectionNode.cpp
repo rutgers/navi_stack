@@ -32,6 +32,7 @@ LineDetectionNode::LineDetectionNode(ros::NodeHandle nh, std::string ground_id,
 		m_pub_filter_hor = m_it.advertise("line_filter_hor", 10);
 		m_pub_filter_ver = m_it.advertise("line_filter_ver", 10);
 		m_pub_normal     = m_it.advertise("line_normal", 10);
+		m_pub_visual_one = m_nh.advertise<Marker>("/visualization_marker", 1);
 		m_pub_visual     = m_nh.advertise<MarkerArray>("/visualization_marker_array", 1);
 	}
 }
@@ -67,7 +68,10 @@ void LineDetectionNode::SetGroundPlane(Plane plane)
 	                  && (plane.point.z == m_plane.point.z)
 	                  && (plane.normal.x == m_plane.normal.x)
 	                  && (plane.normal.y == m_plane.normal.y)
-	                  && (plane.normal.z == m_plane.normal.z);
+	                  && (plane.normal.z == m_plane.normal.z)
+	                  && (plane.forward.x == m_plane.forward.x)
+	                  && (plane.forward.y == m_plane.forward.y)
+	                  && (plane.forward.z == m_plane.forward.z);
 	m_plane = plane;
 }
 
@@ -260,13 +264,43 @@ void LineDetectionNode::ImageCallback(ImageConstPtr const &msg_img,
 	if (m_debug) {
 		size_t num = msg_pts->points.size();
 
-		// Project a line down the center of the image.
-		cv::Mat img_distance = img_input.clone();
+		// Render lines every 1 m on the ground plane and render them in 3D!
+		cv::Mat img_distance  = img_input.clone();
+		cv::Point3d P_ground  = m_plane.point;
+		cv::Point3d P_forward = m_plane.forward;
+		P_forward *= 1.0 / sqrt(P_forward.dot(P_forward));
 
-		for (int r = m_rows - 1; r >= 0; --r) {
-			cv::Point2d pt1( m_cols / 2 - m_offset_hor[r].neg, r);
-			cv::Point2d pt2( m_cols / 2 + m_offset_hor[r].pos, r);
-			cv::line(img_distance, pt1, pt2, cv::Scalar(255, 0, 0), 1);
+		double z_step = 1;
+		double z_max  = 1000;
+
+		Marker msg_contour;
+		msg_contour.header.stamp    = msg_img->header.stamp;
+		msg_contour.header.frame_id = msg_img->header.frame_id;
+		msg_contour.ns     = "line_contour";
+		msg_contour.id     = 0;
+		msg_contour.type   = Marker::LINE_LIST;
+		msg_contour.action = Marker::ADD;
+		msg_contour.points.resize(2 * z_max);
+		msg_contour.scale.x = 0.05;
+		msg_contour.color.r = 1.0;
+		msg_contour.color.g = 0.0;
+		msg_contour.color.b = 0.0;
+		msg_contour.color.a = 1.0;
+
+		for (int i = 0; i < (int)(z_max / z_step); ++i) {
+			P_ground += z_step * P_forward;
+			cv::Point2d p = m_model.project3dToPixel(P_ground);
+			cv::Point2d p1(0.0, p.y);
+			cv::Point2d p2(m_cols, p.y);
+			cv::line(img_distance, cv::Point2d(0.0, p.y), cv::Point2d(m_cols, p.y), cv::Scalar(255, 0, 0), 1);
+
+			// 3D Marker
+			msg_contour.points[2 * i + 0].x = P_ground.x - 1.0;
+			msg_contour.points[2 * i + 0].y = P_ground.y;
+			msg_contour.points[2 * i + 0].z = P_ground.z;
+			msg_contour.points[2 * i + 1].x = P_ground.x + 1.0;
+			msg_contour.points[2 * i + 1].y = P_ground.y;
+			msg_contour.points[2 * i + 1].z = P_ground.z;
 		}
 
 		cv_bridge::CvImage msg_distance;
@@ -275,6 +309,7 @@ void LineDetectionNode::ImageCallback(ImageConstPtr const &msg_img,
 		msg_distance.encoding = image_encodings::RGB8;
 		msg_distance.image    = img_distance;
 		m_pub_distance.publish(msg_distance.toImageMsg());
+		m_pub_visual_one.publish(msg_contour);
 
 		// Visualize the matched pulse width kernels.
 		cv::Mat img_ker_hor;
@@ -318,6 +353,7 @@ void LineDetectionNode::ImageCallback(ImageConstPtr const &msg_img,
 		msg_filter_ver.image    = img_filter_ver;
 		m_pub_filter_ver.publish(msg_filter_ver.toImageMsg());
 
+
 		// Visualize normal vectors on the image. Also render the cut-off lines
 		// for debugging purposes.
 		cv::Mat img_normal = img_input.clone();
@@ -360,7 +396,7 @@ void LineDetectionNode::ImageCallback(ImageConstPtr const &msg_img,
 			Marker &marker = msg_visual.markers[i];
 			marker.header.stamp    = msg_img->header.stamp;
 			marker.header.frame_id = msg_img->header.frame_id;
-			marker.ns     = "line_detection";
+			marker.ns     = "line_normal";
 			marker.id     = i;
 			marker.type   = Marker::ARROW;
 			marker.action = Marker::ADD;
@@ -395,7 +431,7 @@ void LineDetectionNode::ImageCallback(ImageConstPtr const &msg_img,
 			Marker &marker = msg_visual.markers[i];
 			marker.header.stamp    = msg_img->header.stamp;
 			marker.header.frame_id = msg_img->header.frame_id;
-			marker.ns     = "line_detection";
+			marker.ns     = "line_normal";
 			marker.id     = i;
 			marker.action = Marker::DELETE;
 		}
