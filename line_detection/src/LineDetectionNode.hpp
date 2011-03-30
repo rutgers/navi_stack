@@ -48,6 +48,7 @@ public:
 	void SetCutoffWidth(int  width);
 	void SetDeadWidth(double width);
 	void SetLineWidth(double width);
+	void SetInvert(bool invert);
 	void SetGroundPlane(Plane plane);
 	void SetResolution(int width, int height);
 	void SetThreshold(double threshold);
@@ -96,6 +97,7 @@ protected:
 	                 std::vector<Offset> const &offsets, bool horizontal);
 private:
 	bool m_debug;
+	bool m_invert;
 	bool m_valid;
 	int m_rows;
 	int m_cols;

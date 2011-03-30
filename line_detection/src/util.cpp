@@ -5,7 +5,7 @@
 using geometry_msgs::PointStamped;
 using geometry_msgs::Vector3Stamped;
 
-void LineColorTransform(cv::Mat src, cv::Mat &dst)
+void LineColorTransform(cv::Mat src, cv::Mat &dst, bool invert)
 {
 	ROS_ASSERT(src.type() == CV_8UC3);
 
@@ -26,6 +26,11 @@ void LineColorTransform(cv::Mat src, cv::Mat &dst)
 	// TODO: Find a better way of doing this transformation.
 	cv::Mat img_sat = 255 - img_chan[1];
 	cv::Mat img_val = img_chan[2];
+
+	// Detect black lines on a bright surface for testing.
+	if (invert) {
+		img_val = 255 - img_val;
+	}
 
 	cv::Mat dst_8u;
 	cv::min(img_sat, img_val, dst_8u);

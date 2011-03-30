@@ -22,8 +22,9 @@ struct Plane {
  * CV_8U and the output it CV_64F (for future computations).
  * \param src color input image, 8-bit BGR
  * \param dst grayscale output image, 64-bit
+ * \param invert detect black lines on a white background if true
  */
-void LineColorTransform(cv::Mat src, cv::Mat &dst);
+void LineColorTransform(cv::Mat src, cv::Mat &dst, bool invert);
 
 void GuessGroundPlane(tf::TransformListener &tf,
                       std::string fr_gnd, std::string fr_cam, Plane &plane);

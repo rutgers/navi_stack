@@ -13,6 +13,7 @@ using visualization_msgs::MarkerArray;
 LineDetectionNode::LineDetectionNode(ros::NodeHandle nh, std::string ground_id,
                                      bool debug)
 	: m_debug(debug),
+	  m_invert(false),
 	  m_valid(false),
 	  m_num_prev(0),
 	  m_ground_id(ground_id),
@@ -59,6 +60,10 @@ void LineDetectionNode::SetLineWidth(double width_line)
 
 	m_valid      = m_valid && (width_line == m_width_line);
 	m_width_line = width_line;
+}
+
+void LineDetectionNode::SetInvert(bool invert) {
+	m_invert = invert;
 }
 
 void LineDetectionNode::SetGroundPlane(Plane plane)
@@ -127,19 +132,16 @@ void LineDetectionNode::UpdateCache(void)
 
 	if (!m_valid) {
 		ROS_INFO("rebuilding cache with changed parameters");
-		ROS_INFO("ground plane P(%4f, %4f, %4f) N(%4f, %f, %f)",
+		ROS_INFO("found ground plane P(%4f, %4f, %4f) N(%4f, %f, %f)",
 			m_plane.point.x,  m_plane.point.y,  m_plane.point.z,
 			m_plane.normal.x, m_plane.normal.y, m_plane.normal.z
 		);
 
 		m_horizon_hor = GeneratePulseFilter(dhor, m_kernel_hor, m_offset_hor);
-		ROS_INFO("horizontal: [ %d x %d ] with horizon = %d",
-			m_kernel_hor.cols, m_kernel_hor.rows, m_horizon_hor
-		);
-
 		m_horizon_ver = GeneratePulseFilter(dver, m_kernel_ver, m_offset_ver);
-		ROS_INFO("vertical:   [ %d x %d ] with horizon = %d",
-			m_kernel_ver.cols, m_kernel_ver.rows, m_horizon_ver
+
+		ROS_INFO("detected horizon horizontal = %d, vertical = %d",
+			m_horizon_hor, m_horizon_ver
 		);
 	}
 	m_valid = true;
@@ -185,7 +187,7 @@ void LineDetectionNode::ImageCallback(ImageConstPtr const &msg_img,
 	cv::Mat img_hor, img_ver;
 	cv::Mat img_pre;
 
-	LineColorTransform(img_input, img_pre);
+	LineColorTransform(img_input, img_pre, m_invert);
 	PulseFilter(img_pre, img_hor, m_kernel_hor, m_offset_hor, true);
 	PulseFilter(img_pre, img_ver, m_kernel_ver, m_offset_ver, false);
 	NonMaxSupr(img_hor, img_ver, maxima);
