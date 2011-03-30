@@ -12,8 +12,7 @@ void LineColorTransform(cv::Mat src, cv::Mat &dst, bool invert)
 	// Blur the original image to reduce noise in the grass.
 	// TODO: Make the radius a parameter.
 	cv::Mat src_blur;
-	//cv::GaussianBlur(src, src_blur, cv::Size(3, 3), 0.0);
-	src_blur = src;
+	cv::GaussianBlur(src, src_blur, cv::Size(5, 5), 0.0);
 
 	// Convert to the HSV color space to get saturation and intensity.
 	std::vector<cv::Mat> img_chan;
@@ -24,16 +23,18 @@ void LineColorTransform(cv::Mat src, cv::Mat &dst, bool invert)
 	// Find bright (i.e. high intensity) regions of little color (i.e. low
 	// saturation) using the minimum operator.
 	// TODO: Find a better way of doing this transformation.
-	cv::Mat img_sat = 255 - img_chan[1];
-	cv::Mat img_val = img_chan[2];
 
 	// Detect black lines on a bright surface for testing.
-	if (invert) {
-		img_val = 255 - img_val;
-	}
-
+	cv::Mat img_hue = img_chan[0];
+	cv::Mat img_sat = 255 - img_chan[1];
+	cv::Mat img_val = img_chan[2];
 	cv::Mat dst_8u;
-	cv::min(img_sat, img_val, dst_8u);
+
+	if (invert) {
+		dst_8u = 255 - img_val;
+	} else {
+		cv::min(img_sat, img_val, dst_8u);
+	}
 	dst_8u.convertTo(dst, CV_64FC1);
 }
 
