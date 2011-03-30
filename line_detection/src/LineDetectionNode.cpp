@@ -1,3 +1,4 @@
+#include <limits>
 #include <tf/transform_datatypes.h>
 #include <visualization_msgs/Marker.h>
 #include <visualization_msgs/MarkerArray.h>
@@ -523,9 +524,9 @@ int LineDetectionNode::GeneratePulseFilter(cv::Point3d dw, cv::Mat &kernel, std:
 			cv::Mat center = kernel(row, cv::Range(offs_both_neg - offs_line_neg, offs_both_neg + offs_line_pos));
 			cv::Mat right  = kernel(row, cv::Range(offs_both_neg + offs_line_pos, offs_both_neg + offs_both_pos));
 
-			double value_left   = left.cols  * -1.0 / (left.cols + right.cols);
+			double value_left   = -0.5 / left.cols;
 			double value_center = +1.0 / center.cols;
-			double value_right  = right.cols * -1.0 / (left.cols + right.cols);
+			double value_right  = -0.5 / right.cols;
 
 			left.setTo(value_left);
 			center.setTo(value_center);
@@ -554,7 +555,7 @@ void LineDetectionNode::PulseFilter(cv::Mat src, cv::Mat &dst, cv::Mat ker,
 
 	// TODO: Dynamically select the value of invalid regions in the image.
 	dst.create(src.rows, src.cols, CV_64FC1);
-	dst.setTo(-255);
+	dst.setTo(std::numeric_limits<double>::quiet_NaN());
 
 	for (int r = m_rows - 1; r >= 0; --r) {
 		Offset const &offset = offsets[r];
