@@ -56,7 +56,7 @@
 				<geometry name="base_link_visual_geom">
 					<box size="${camera_width} ${camera_length} ${camera_height}"/>
 				</geometry>
-			<material name="Grey"/> 
+			<material name="Grey"/>
 		</visual>
 		<collision>
 			<origin xyz="0 0 ${-camera_height/2 - camera_depth/2}" rpy="0 0 0"/>
@@ -65,7 +65,7 @@
 			</geometry>
 		</collision>
 	</link>
-	 
+
 	<!-- Monocular Camera -->
 	<xacro:macro name="camera" params="prefix topic x baseline">
 		<joint name="${prefix}_camera_joint" type="fixed">
@@ -73,7 +73,7 @@
 			<parent link="camera_link"/>
 			<child link="${prefix}_camera_link"/>
 		</joint>
-		
+
 		<link name="${prefix}_camera_link">
 			<inertial>
 				<mass value="0.044036"/>
@@ -86,7 +86,7 @@
 				<geometry name="${prefix}_camera_joint_visual_geom">
 					<cylinder radius="${camera_radius}" length="${camera_depth}"/>
 				</geometry>
-				<material name="Black"/> 
+				<material name="Black"/>
 			</visual>
 			<collision>
 				<origin xyz="0 0 0" rpy="1.5707963267948966 0 0"/>
