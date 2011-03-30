@@ -27,6 +27,7 @@ LineDetectionNode::LineDetectionNode(ros::NodeHandle nh, std::string ground_id,
 	if (m_debug) {
 		ROS_WARN("debugging topics are enabled; performance may be degraded");
 
+		m_pub_pre        = m_it.advertise("line_pre",        10);
 		m_pub_distance   = m_it.advertise("line_distance",   10);
 		m_pub_ker_hor    = m_it.advertise("line_kernel_hor", 10);
 		m_pub_ker_ver    = m_it.advertise("line_kernel_ver", 10);
@@ -265,6 +266,17 @@ void LineDetectionNode::ImageCallback(ImageConstPtr const &msg_img,
 	m_pub_max.publish(msg_max.toImageMsg());
 	if (m_debug) {
 		size_t num = msg_pts->points.size();
+
+		// Preprocessing output.
+		cv::Mat img_pre_8u;
+		img_pre.convertTo(img_pre_8u, CV_8UC1);
+
+		cv_bridge::CvImage msg_pre;
+		msg_pre.header.stamp    = msg_img->header.stamp;
+		msg_pre.header.frame_id = msg_img->header.frame_id;
+		msg_pre.encoding = image_encodings::MONO8;
+		msg_pre.image    = img_pre_8u;
+		m_pub_pre.publish(msg_pre.toImageMsg());
 
 		// Render lines every 1 m on the ground plane and render them in 3D!
 		cv::Mat img_distance  = img_input.clone();
