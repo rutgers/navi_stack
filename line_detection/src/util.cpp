@@ -53,15 +53,27 @@ void GuessGroundPlane(tf::TransformListener &tf,
 	normal_gnd.vector.y = 0.0;
 	normal_gnd.vector.z = 1.0;
 
+	// Forward direction of the robot.
+	Vector3Stamped forward_gnd, forward_cam;
+	forward_gnd.header.stamp    = ros::Time(0);
+	forward_gnd.header.frame_id = fr_gnd;
+	forward_gnd.vector.x = 1.0;
+	forward_gnd.vector.y = 0.0;
+	forward_gnd.vector.z = 0.0;
+
 	// These may throw a tf::TransformException.
 	tf.transformPoint(fr_cam, point_gnd, point_cam);
 	tf.transformVector(fr_cam, normal_gnd, normal_cam);
+	tf.transformVector(fr_cam, forward_gnd, forward_cam);
 
 	// Convert from a StampedVector to the OpenCV data type.
-	plane.point.x  = point_cam.point.x;
-	plane.point.y  = point_cam.point.y;
-	plane.point.z  = point_cam.point.z;
-	plane.normal.x = normal_cam.vector.x;
-	plane.normal.y = normal_cam.vector.y;
-	plane.normal.z = normal_cam.vector.z;
+	plane.point.x   = point_cam.point.x;
+	plane.point.y   = point_cam.point.y;
+	plane.point.z   = point_cam.point.z;
+	plane.normal.x  = normal_cam.vector.x;
+	plane.normal.y  = normal_cam.vector.y;
+	plane.normal.z  = normal_cam.vector.z;
+	plane.forward.x = forward_cam.vector.x;
+	plane.forward.y = forward_cam.vector.y;
+	plane.forward.z = forward_cam.vector.z;
 }

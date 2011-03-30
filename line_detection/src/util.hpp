@@ -13,6 +13,7 @@ using sensor_msgs::ImageConstPtr;
 struct Plane {
 	cv::Point3d normal;
 	cv::Point3d point;
+	cv::Point3d forward;
 };
 
 /**
