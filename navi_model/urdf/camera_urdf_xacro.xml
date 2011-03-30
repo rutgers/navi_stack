@@ -1,19 +1,22 @@
 <?xml version="1.0"?>
-<robot xmlns:body="http://playerstage.sourceforge.net/gazebo/xmlschema/#body" 
+<robot xmlns:body="http://playerstage.sourceforge.net/gazebo/xmlschema/#body"
        xmlns:controller="http://playerstage.sourceforge.net/gazebo/xmlschema/#controller"
-       xmlns:geom="http://playerstage.sourceforge.net/gazebo/xmlschema/#geom" 
-       xmlns:interface="http://playerstage.sourceforge.net/gazebo/xmlschema/#interface" 
-       xmlns:joint="http://playerstage.sourceforge.net/gazebo/xmlschema/#slider" 
-       xmlns:sensor="http://playerstage.sourceforge.net/gazebo/xmlschema/#sensor" 
+       xmlns:geom="http://playerstage.sourceforge.net/gazebo/xmlschema/#geom"
+       xmlns:interface="http://playerstage.sourceforge.net/gazebo/xmlschema/#interface"
+       xmlns:joint="http://playerstage.sourceforge.net/gazebo/xmlschema/#slider"
+       xmlns:sensor="http://playerstage.sourceforge.net/gazebo/xmlschema/#sensor"
        xmlns:xacro="http://ros.org/wiki/xacro">
 
 	<property name="M_PI" value="3.1415926535897931"/>
 
-	<!-- Position of the left camera w.r.t. the chassis --> 
+	<!-- Position of the left camera w.r.t. the chassis -->
 	<property name="camera_x" value="0.43815"/>
-	<property name="camera_y" value="0.079121"/>
-	<property name="camera_z" value="0.0127"/>
-	<property name="camera_roll"  value="1.57079633"/>
+	<property name="camera_y" value="0.07912"/>
+	<property name="camera_z" value="0.01270"/>
+	<!--<property name="camera_roll"  value="1.83259"/>-->
+	<!--<property name="camera_roll"  value="1.30899694"/>-->
+	<!--<property name="camera_roll"  value="1.04719755"/>-->
+	<property name="camera_roll"   value="1.57079633"/>
 	<property name="camera_pitch" value="3.14159265"/>
 	<property name="camera_yaw"   value="1.57079633"/>
 
@@ -92,7 +95,7 @@
 				</geometry>
 			</collision>
 		</link>
-		 
+
 		<gazebo reference="${prefix}_camera_link">
 			<material>Gazebo/Black</material>
 
@@ -108,7 +111,7 @@
 					<updateRate>${fps}</updateRate>
 					<imageTopicName>${topic}/image_raw</imageTopicName>
 					<cameraInfoTopicName>${topic}/camera_info</cameraInfoTopicName>
-					<frameName>camera_link</frameName>
+					<frameName>/camera_link</frameName>
 					<hackBaseline>${baseline}</hackBaseline>
 					<CxPrime>${(image_width+1)/2}</CxPrime>
 					<Cx>${(image_width+1)/2}</Cx>
