@@ -10,7 +10,7 @@
   <url>http://ros.org/wiki/navi_model</url>
   <depend package="xacro"/>
   <depend package="urdf"/>
-
+  <depend package="erratic_gazebo_plugins"/>
 </package>
 
 
