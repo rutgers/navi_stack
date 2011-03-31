@@ -146,7 +146,7 @@ void DiffDrivePlugin::LoadChild(XMLConfigNode *node)
                                                           boost::bind(&DiffDrivePlugin::cmdVelCallback, this, _1),
                                                           ros::VoidPtr(), &queue_);
   sub_ = rosnode_->subscribe(so);
-  pub_ = rosnode_->advertise<nav_msgs::Odometry>("odom", 1);
+ // pub_ = rosnode_->advertise<nav_msgs::Odometry>("odom", 1);
 }
 
 // Initialize the controller
@@ -235,7 +235,7 @@ void DiffDrivePlugin::UpdateChild()
   }
 
   write_position_data();
-  publish_odometry();
+  //publish_odometry();
 
   //myIface->Unlock();
 }
