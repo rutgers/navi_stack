@@ -525,9 +525,9 @@ int LineDetectionNode::GeneratePulseFilter(cv::Point3d dw, cv::Mat &kernel, std:
 			cv::Mat center = kernel(row, cv::Range(offs_both_neg - offs_line_neg, offs_both_neg + offs_line_pos));
 			cv::Mat right  = kernel(row, cv::Range(offs_both_neg + offs_line_pos, offs_both_neg + offs_both_pos));
 
-			double value_left   = -1.0 / left.cols;
+			double value_left   = -0.5 / left.cols;
 			double value_center = +1.0 / center.cols;
-			double value_right  = -1.0 / right.cols;
+			double value_right  = -0.5 / right.cols;
 
 			left.setTo(value_left);
 			center.setTo(value_center);
