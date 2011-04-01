@@ -13,15 +13,12 @@
 			<param name="invert"    value="true"/>
 			-->
 
-			<param name="threshold" value="30"/>
-			<param name="cutoff"    value="1"/>
+			<param name="threshold" value="40"/>
+			<param name="cutoff"    value="3"/>
 			<param name="frame"     value="/base_footprint"/>
 			<param name="debug"     value="true"/>
 			<remap from="image" to="narrow/left/image_rect_color"/>
 		</node>
-		<!--
-		<node pkg="line_detection" type="line_tracker" name="line_tracker">
-		</node>
-		-->
+		<node pkg="line_detection" type="line_tracker" name="line_tracker"/>
 	</group>
 </launch>
