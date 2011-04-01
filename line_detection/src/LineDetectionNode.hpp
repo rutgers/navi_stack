@@ -48,7 +48,7 @@ public:
 	void SetCutoffWidth(int  width);
 	void SetDeadWidth(double width);
 	void SetLineWidth(double width);
-	void SetIntrinsics(cv::Mat mint);
+	void SetInvert(bool invert);
 	void SetGroundPlane(Plane plane);
 	void SetResolution(int width, int height);
 	void SetThreshold(double threshold);
@@ -84,37 +84,54 @@ public:
 
 	void ImageCallback(ImageConstPtr const &msg_img, CameraInfoConstPtr const &msg_cam);
 
+protected:
+	struct Offset {
+		int neg, pos;
+	};
+
+	cv::Point3d GetGroundPoint(cv::Point2d pt);
+	double ProjectDistance(cv::Point2d pt, cv::Point3d offset);
+	double ReprojectDistance(cv::Point2d pt, cv::Point2d offset);
+	int GeneratePulseFilter(cv::Point3d dw, cv::Mat &kernel, std::vector<Offset> &offsets);
+	void PulseFilter(cv::Mat src, cv::Mat &dst, cv::Mat kernel,
+	                 std::vector<Offset> const &offsets, bool horizontal);
 private:
 	bool m_debug;
+	bool m_invert;
 	bool m_valid;
 	int m_rows;
 	int m_cols;
 	size_t m_num_prev;
-	double m_width_cutoff;
+	int    m_width_cutoff;
 	double m_width_dead;
 	double m_width_line;
 	double m_threshold;
 	Plane m_plane;
-	cv::Mat m_mint;
 	std::string m_ground_id;
 
-	int              m_cutoff_ver, m_cutoff_hor;
-	cv::Mat          m_cache_ver,  m_cache_hor;
-	std::vector<int> m_size_ver,   m_size_hor;
+	int                 m_horizon_ver, m_horizon_hor;
+	cv::Mat             m_kernel_ver,  m_kernel_hor;
+	std::vector<Offset> m_offset_ver,  m_offset_hor;
 
-	ros::NodeHandle                 m_nh;
-	tf::TransformListener           m_tf;
-	image_transport::ImageTransport m_it;
+	ros::NodeHandle                    m_nh;
+	tf::TransformListener              m_tf;
+	image_transport::ImageTransport    m_it;
+	image_geometry::PinholeCameraModel m_model;
 
 	CameraSubscriber           m_sub_cam;
 	image_transport::Publisher m_pub_max;
 	ros::Publisher             m_pub_pts;
 
 	// Debug topics; only enabled if m_debug is true.
+	image_transport::Publisher m_pub_pre;
+	image_transport::Publisher m_pub_distance;
 	image_transport::Publisher m_pub_normal;
+	image_transport::Publisher m_pub_filter_hor;
+	image_transport::Publisher m_pub_filter_ver;
 	image_transport::Publisher m_pub_ker_hor;
 	image_transport::Publisher m_pub_ker_ver;
 	ros::Publisher             m_pub_visual;
+	ros::Publisher             m_pub_visual_one;
 };
 
 #endif
