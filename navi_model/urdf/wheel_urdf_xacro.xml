@@ -11,6 +11,7 @@
 	<property name="wheel_length" value="0.1524"/>
 	<property name="wheel_offset_y" value="0.35433"/>
 	<property name="wheel_offset_x" value="0.3596132"/>
+	<property name="caster_wheel_radius" value="0.108"/>
 
 
 <xacro:macro name="diffdrive" params="prefix">
@@ -108,5 +109,103 @@
             <mechanicalReduction>1.0</mechanicalReduction>
         </transmission>
         
+	</xacro:macro>
+	
+	
+	<xacro:macro name="caster" params="">
+	<joint name="caster_base_joint" type="fixed">
+		<origin xyz="-0.38967 0 -0.250825" rpy="0 0 0"/>
+		<axis xyz="0 0 1"/>
+		<dynamics damping="0.0" friction="0.0"/>
+		<parent link="base_link"/>
+		<child link="caster_base_link"/>
+	</joint>
+	
+	<link name="caster_base_link">
+	<inertial>
+				<mass value="0.01"/>
+				<origin xyz="0 0 0"/>
+				<inertia ixx="0.012411765597" ixy="0.0" ixz="0.0"
+						 iyy="0.015218160428" iyz="0.0" izz="0.011763977943"/>
+			</inertial>
+			<visual>
+				<origin xyz="0 0 0" rpy="0 0 0" />
+				<geometry>
+					<box size="0.01 0.01 0.01" />
+				</geometry>
+				<material name="Grey" />
+			</visual>
+			<collision>
+				<!-- rotation because cyl. geom primitive has symmetry axis in +x direction -->
+				<origin xyz="0 0 0" rpy="0 0 0 " />
+				<geometry>
+					<box size="0.01 0.01 0.01" />
+				</geometry>
+			</collision>
+	</link>
+	<link name="caster_swivel_link">
+	<inertial>
+				<mass value="0.01"/>
+				<origin xyz="0 0 0"/>
+				<inertia ixx="0.012411765597" ixy="0.0" ixz="0.0"
+						 iyy="0.015218160428" iyz="0.0" izz="0.011763977943"/>
+			</inertial>
+			<visual>
+				<origin xyz="0 0 0" rpy="0 0 0" />
+				<geometry>
+					<box size="0.01 0.01 0.01" />
+				</geometry>
+				<material name="Grey" />
+			</visual>
+			<collision>
+				<!-- rotation because cyl. geom primitive has symmetry axis in +x direction -->
+				<origin xyz="0 0 0" rpy="0 0 0 " />
+				<geometry>
+					<box size="0.01 0.01 0.01" />
+				</geometry>
+			</collision>
+	</link>
+	
+	<joint name="caster_swivel_joint" type="continuous">
+		<origin xyz="0 0 0" rpy="0 0 0"/>
+		<axis xyz="0 0 1"/>
+		<dynamics damping="0.0" friction="0.0"/>
+		<parent link="caster_base_link"/>
+		<child link="caster_swivel_link"/>
+	</joint>
+	
+	
+	<joint name="caster_wheel_joint" type="continuous">
+		<origin xyz="-0.0405 0 -0.122238" rpy="0 0 0"/>
+		<axis xyz="0 1 0"/>
+		<dynamics damping="0.0" friction="0.0"/>
+		<parent link="caster_swivel_link"/>
+		<child link="caster_wheel_link"/>
+	</joint>
+	
+	
+	<link name="caster_wheel_link">
+		<inertial>
+			<mass value="1"/>
+			<origin xyz="0 0 0"/>
+			<inertia ixx="0.012411765597" ixy="0.0" ixz="0.0"
+						 iyy="0.015218160428" iyz="0.0" izz="0.011763977943"/>
+		</inertial>
+		<visual>
+			<origin xyz="0 0 0" rpy="${M_PI/2} 0 0" />
+			<geometry>
+				<cylinder radius="${caster_wheel_radius}" length="0.05" />
+			</geometry>
+			<material name="Grey" />
+		</visual>
+		<collision>
+			<!-- rotation because cyl. geom primitive has symmetry axis in +x direction -->
+			<origin xyz="0 0 0" rpy="${M_PI/2} 0 0 " />
+			<geometry>
+				<cylinder radius="${caster_wheel_radius}" length="0.05" />
+			</geometry>
+		</collision>
+
+	</link>
 	</xacro:macro>
 </robot>

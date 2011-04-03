@@ -19,10 +19,12 @@
 	<navi_base name="base"/> 
 	<wheel prefix="fl" reflect_x="1" reflect_y="-1"/>
 	<wheel prefix="fr" reflect_x="1" reflect_y="1"/>
-	<wheel prefix="br" reflect_x="-1" reflect_y="1"/>
-	<wheel prefix="bl" reflect_x="-1" reflect_y="-1"/>
+	<!--<wheel prefix="br" reflect_x="-1" reflect_y="1"/>
+	<wheel prefix="bl" reflect_x="-1" reflect_y="-1"/> -->
+	<caster/>
+	
 	<diffdrive prefix="f"/>
-	<diffdrive prefix="b" />
+	<!--<diffdrive prefix="b" /> -->
 
 
 	<stereo-camera prefix="narrow" topic="vision/narrow" baseline="${baseline_narrow}"/>
