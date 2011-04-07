@@ -8,8 +8,6 @@ using visualization_msgs::Marker;
 using visualization_msgs::MarkerArray;
 
 // TODO: Convert the direction of principal curvature to real-world coordinates.
-// TODO: Compute a seperate filter kernel for the vertical direction using a
-//         a vertical direction sampling vector.
 
 LineDetectionNode::LineDetectionNode(ros::NodeHandle nh, std::string ground_id,
                                      bool debug)
@@ -205,14 +203,23 @@ void LineDetectionNode::ImageCallback(ImageConstPtr const &msg_img,
 	// Use a row vector to store unordered points (as per PCL documentation).
 	msg_pts->header.stamp    = msg_img->header.stamp;
 	msg_pts->header.frame_id = msg_img->header.frame_id;
-	msg_pts->height = 1;
-	msg_pts->width  = maxima.size();
-	msg_pts->points.resize(maxima.size());
+	msg_pts->height   = img_input.rows;
+	msg_pts->width    = img_input.cols;
+	msg_pts->is_dense = true;
+	msg_pts->points.resize(img_input.rows * img_input.cols);
+
+	for (int y = 0; y < img_input.rows; ++y)
+	for (int x = 0; x < img_input.cols; ++x) {
+		pcl::PointXYZ &pt = msg_pts->points[y * img_input.cols + x];
+		pt.x = std::numeric_limits<double>::quiet_NaN();
+		pt.y = std::numeric_limits<double>::quiet_NaN();
+		pt.z = std::numeric_limits<double>::quiet_NaN();
+	}
 
 	int i;
 	for (it = maxima.begin(), i = 0; it != maxima.end(); ++it, ++i) {
 		cv::Point3d    pt_world = GetGroundPoint(*it);
-		pcl::PointXYZ &pt_cloud = msg_pts->points[i];
+		pcl::PointXYZ &pt_cloud = msg_pts->points[it->y * img_input.cols + it->x];
 		pt_cloud.x = pt_world.x;
 		pt_cloud.y = pt_world.y;
 		pt_cloud.z = pt_world.z;
@@ -234,8 +241,6 @@ void LineDetectionNode::ImageCallback(ImageConstPtr const &msg_img,
 	msg_max.image    = img_max;
 	m_pub_max.publish(msg_max.toImageMsg());
 	if (m_debug) {
-		size_t num = msg_pts->points.size();
-
 		// Preprocessing output.
 		cv::Mat img_pre_8u;
 		img_pre.convertTo(img_pre_8u, CV_8UC1);
@@ -401,8 +406,6 @@ int LineDetectionNode::GeneratePulseFilter(cv::Point3d dw, cv::Mat &kernel, std:
 		// degenerate and will sum to zero.
 		if (m_width_cutoff <= width_min && width_prev >= width_min) {
 			cv::Range row(r, r + 1);
-
-			// TODO: Clip these ranges at the image's borders.
 			cv::Mat left   = kernel(row, cv::Range(0,                             offs_both_neg - offs_line_neg));
 			cv::Mat center = kernel(row, cv::Range(offs_both_neg - offs_line_neg, offs_both_neg + offs_line_pos));
 			cv::Mat right  = kernel(row, cv::Range(offs_both_neg + offs_line_pos, offs_both_neg + offs_both_pos));
@@ -436,7 +439,6 @@ void LineDetectionNode::PulseFilter(cv::Mat src, cv::Mat &dst, cv::Mat ker,
 	ROS_ASSERT(ker.rows == src.rows && ker.cols == ker.cols);
 	ROS_ASSERT((int)offsets.size() == ker.rows);
 
-	// TODO: Dynamically select the value of invalid regions in the image.
 	dst.create(src.rows, src.cols, CV_64FC1);
 	dst.setTo(std::numeric_limits<double>::quiet_NaN());
 
