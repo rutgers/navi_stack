@@ -171,7 +171,7 @@ class RobotWrapper():
 		odom.pose.pose.position.y = yOdom
 		odom.pose.pose.position.z = 0.0
         
-		qNpy =   tf.transformations.quaternion_from_euler(0,0,theta)
+		qNpy = tf.transformations.quaternion_from_euler(0,0,theta)
 		odom_quat = Quaternion(qNpy[0], qNpy[1], qNpy[2], qNpy[3])
 		odom.pose.pose.orientation = odom_quat
         

@@ -17,8 +17,8 @@ void Encoder::clearCount(){
 }
 
 
-void Encoder::update(char channelA, char channelB){
-	   if (!(priorA ) && (channelA)) {
+void Encoder::update(char channelA, char channelB) {
+	   if (!(priorA) && (channelA)) {
 	     if (!channelB) {
 	       encoderCount--;
 	     } else {

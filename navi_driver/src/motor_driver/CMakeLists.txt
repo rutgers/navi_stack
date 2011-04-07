@@ -1,4 +1,6 @@
 cmake_minimum_required(VERSION 2.6)
+include($ENV{ROS_ROOT}/core/rosbuild/rosbuild.cmake)
+rosbuild_init()
 
 #set your project name
 Project(navi_motor_driver)
@@ -25,8 +27,17 @@ set(PROJECT_SRC
     ${ARDUINO_SOURCE_FILES}
 )
 
+rosbuild_find_ros_package(avr_bridge)
 
-add_executable(firmware ${PROJECT_SRC})
+add_custom_command(
+	OUTPUT  ${avr_bridge_PACKAGE_PATH}/avr_ros/*.{c,h,cpp,cc,hpp}
+	COMMAND ${avr_bridge_PACKAGE_PATH}/scripts/gen_avr.py
+	${CMAKE_SOURCE_DIR}
+	DEPENDS ${avr_bridge_PACKAGE_PATH}/**
+	)
+
+add_executable(firmware ${PROJECT_SRC}
+	${avr_bridge_PACKAGE_PATH}/avr_ros/*.{c,h,cpp,cc,hpp})
 
 #to compile, use make
 #to program arduino on /dev/ttyUSB0, do make flash
