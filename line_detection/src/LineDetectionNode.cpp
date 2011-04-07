@@ -23,7 +23,7 @@ LineDetectionNode::LineDetectionNode(ros::NodeHandle nh, std::string ground_id,
 {
 	m_sub_cam = m_it.subscribeCamera("image", 1, &LineDetectionNode::ImageCallback, this);
 	m_pub_max = m_it.advertise("line_maxima", 10);
-	m_pub_pts = m_nh.advertise<PointNormalCloud>("line_points", 10);
+	m_pub_pts = m_nh.advertise<PointCloud>("line_points", 10);
 
 	if (m_debug) {
 		ROS_WARN("debugging topics are enabled; performance may be degraded");
@@ -34,9 +34,7 @@ LineDetectionNode::LineDetectionNode(ros::NodeHandle nh, std::string ground_id,
 		m_pub_ker_ver    = m_it.advertise("line_kernel_ver", 10);
 		m_pub_filter_hor = m_it.advertise("line_filter_hor", 10);
 		m_pub_filter_ver = m_it.advertise("line_filter_ver", 10);
-		m_pub_normal     = m_it.advertise("line_normal", 10);
 		m_pub_visual_one = m_nh.advertise<Marker>("/visualization_marker", 1);
-		m_pub_visual     = m_nh.advertise<MarkerArray>("/visualization_marker_array", 1);
 	}
 }
 
@@ -201,7 +199,7 @@ void LineDetectionNode::ImageCallback(ImageConstPtr const &msg_img,
 	// TODO: Scrap the std::list middleman.
 	// TODO: Do this directly in NonMaxSupr().
 	// TODO: Precompute the mapping from 2D to 3D.
-	PointNormalCloud::Ptr msg_pts(new PointNormalCloud);
+	PointCloud::Ptr msg_pts(new PointCloud);
 	std::list<cv::Point2i>::iterator it;
 
 	// Use a row vector to store unordered points (as per PCL documentation).
@@ -211,47 +209,16 @@ void LineDetectionNode::ImageCallback(ImageConstPtr const &msg_img,
 	msg_pts->width  = maxima.size();
 	msg_pts->points.resize(maxima.size());
 
-	// Calculate second-order partials to compute the Hessian matrix.
-	cv::Mat dxx, dxy, dyy;
-	cv::Sobel(img_pre, dxx, CV_64FC1, 2, 0);
-	cv::Sobel(img_pre, dxy, CV_64FC1, 1, 1);
-	cv::Sobel(img_pre, dyy, CV_64FC1, 0, 2);
-
 	int i;
 	for (it = maxima.begin(), i = 0; it != maxima.end(); ++it, ++i) {
-		cv::Point2i pt_image = *it;
-		cv::Point3d pt_world = GetGroundPoint(*it);
-
-		// Calculate a vector that is normal to the direction of the line by
-		// finding the principle eigenvector of the Hessian matrix centered
-		// on this pixel.
-		cv::Mat hessian(2, 2, CV_64FC1);
-		hessian.at<double>(0, 0) = dxx.at<double>(pt_image.y, pt_image.x);
-		hessian.at<double>(0, 1) = dxy.at<double>(pt_image.y, pt_image.x);
-		hessian.at<double>(1, 0) = dxy.at<double>(pt_image.y, pt_image.x);
-		hessian.at<double>(1, 1) = dyy.at<double>(pt_image.y, pt_image.x);
-
-		cv::Mat eigen_vec;
-		cv::Mat eigen_val;
-		cv::eigen(hessian, eigen_val, eigen_vec, 0, 0);
-
-		// Convert image coordinates to real-world coordinates on the ground plane.
-		double normal_x =  eigen_vec.at<double>(0, 0);
-		double normal_y = -eigen_vec.at<double>(0, 1);
-
-		// Convert OpenCV cv::Point into a ROS geometry_msgs::Point object.
-		// XXX: Normal vector is always postive; does not have the correct signs.
-		pcl::PointNormal &pt = msg_pts->points[i];
-		pt.x = pt_world.x;
-		pt.y = pt_world.y;
-		pt.z = pt_world.z;
-		pt.normal[0] = 0.0;
-		pt.normal[1] = ReprojectDistance(pt_image, cv::Point2d(normal_x, 0.0));
-		pt.normal[2] = ReprojectDistance(pt_image, cv::Point2d(0.0, normal_y));
+		cv::Point3d    pt_world = GetGroundPoint(*it);
+		pcl::PointXYZ &pt_cloud = msg_pts->points[i];
+		pt_cloud.x = pt_world.x;
+		pt_cloud.y = pt_world.y;
+		pt_cloud.z = pt_world.z;
 	}
 
 	m_pub_pts.publish(msg_pts);
-
 
 	// Two dimensional local maxima as a binary image. Detected line pixels are
 	// white (255) and all other pixels are black (0).
@@ -368,91 +335,6 @@ void LineDetectionNode::ImageCallback(ImageConstPtr const &msg_img,
 		msg_filter_ver.encoding = image_encodings::MONO8;
 		msg_filter_ver.image    = img_filter_ver;
 		m_pub_filter_ver.publish(msg_filter_ver.toImageMsg());
-
-
-		// Visualize normal vectors on the image. Also render the cut-off lines
-		// for debugging purposes.
-		cv::Mat img_normal = img_input.clone();
-
-		int i = 0;
-		for (it = maxima.begin(), i = 0; it != maxima.end(); ++it, ++i) {
-			double normal_x = msg_pts->points[i].normal[1];
-			double normal_y = msg_pts->points[i].normal[2];
-
-			cv::Point2d point(it->x, it->y);
-			cv::Point2d normal(normal_x, normal_y);
-			double scale = 25 / sqrt(pow(normal_x, 2) + pow(normal_y, 2));
-			normal = normal * scale;
-
-			cv::line(img_normal, point, point + normal, cv::Scalar(255, 0, 0));
-		}
-
-		cv::Point pt_hor0(0,               m_horizon_hor);
-		cv::Point pt_hor1(img_normal.cols, m_horizon_hor);
-		cv::line(img_normal, pt_hor0, pt_hor1, cv::Scalar(255, 0, 0));
-
-		cv::Point pt_ver0(0,               m_horizon_ver);
-		cv::Point pt_ver1(img_normal.cols, m_horizon_ver);
-		cv::line(img_normal, pt_ver0, pt_ver1, cv::Scalar(255, 0, 0));
-
-		cv_bridge::CvImage msg_normal;
-		msg_normal.header.stamp    = msg_img->header.stamp;
-		msg_normal.header.frame_id = msg_img->header.frame_id;
-		msg_normal.encoding = image_encodings::RGB8;
-		msg_normal.image    = img_normal;
-		m_pub_normal.publish(msg_normal.toImageMsg());
-
-		// Render normal vectors as lines that can be visualized in RViz.
-		// TODO: Fetch .ns from the current node's __name.
-		// TODO: Extract most of this to a helper function.
-		MarkerArray msg_visual;
-		msg_visual.markers.resize(MAX(num, m_num_prev));
-
-		for (size_t i = 0; i < num; ++i) {
-			Marker &marker = msg_visual.markers[i];
-			marker.header.stamp    = msg_img->header.stamp;
-			marker.header.frame_id = msg_img->header.frame_id;
-			marker.ns     = "line_normal";
-			marker.id     = i;
-			marker.type   = Marker::ARROW;
-			marker.action = Marker::ADD;
-
-			// Tail of the vector is on the detected point.
-			geometry_msgs::Point &pos = marker.pose.position;
-			pos.x = msg_pts->points[i].x;
-			pos.y = msg_pts->points[i].y;
-			pos.z = msg_pts->points[i].z;
-
-			// TODO: Are the signs/order correct?
-			double normal_x = msg_pts->points[i].normal[1];
-			double normal_y = msg_pts->points[i].normal[2];
-			double yaw = -atan2(normal_y, normal_x);
-			marker.pose.orientation = tf::createQuaternionMsgFromRollPitchYaw(0.0, yaw, 0.0);
-
-			geometry_msgs::Vector3 &scale = marker.scale;
-			scale.x = 0.5;
-			scale.y = 1.0;
-			scale.z = 1.0;
-
-			std_msgs::ColorRGBA &color = marker.color;
-			color.r = 1.0;
-			color.g = 0.0;
-			color.b = 0.0;
-			color.a = 1.0;
-		}
-
-		// Clear the old markers if they were not already modified. Old markers
-		// will linger until they are modified without this hack.
-		for (size_t i = num; i < m_num_prev; ++i) {
-			Marker &marker = msg_visual.markers[i];
-			marker.header.stamp    = msg_img->header.stamp;
-			marker.header.frame_id = msg_img->header.frame_id;
-			marker.ns     = "line_normal";
-			marker.id     = i;
-			marker.action = Marker::DELETE;
-		}
-
-		m_pub_visual.publish(msg_visual);
 	}
 }
 

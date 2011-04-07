@@ -30,11 +30,12 @@ void LineColorTransform(cv::Mat src, cv::Mat &dst, bool invert)
 	// Detect black lines on a bright surface for testing.
 	if (invert) {
 		img_val = 255 - img_val;
+		img_val.convertTo(dst, CV_64FC1);
+	} else {
+		cv::Mat dst_8u;
+		cv::min(img_sat, img_val, dst_8u);
+		dst_8u.convertTo(dst, CV_64FC1);
 	}
-
-	cv::Mat dst_8u;
-	cv::min(img_sat, img_val, dst_8u);
-	dst_8u.convertTo(dst, CV_64FC1);
 }
 
 void GuessGroundPlane(tf::TransformListener &tf,

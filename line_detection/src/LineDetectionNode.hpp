@@ -29,6 +29,7 @@ using sensor_msgs::ImageConstPtr;
 using sensor_msgs::CameraInfo;
 using sensor_msgs::Image;
 
+typedef pcl::PointCloud<pcl::PointXYZ>    PointCloud;
 typedef pcl::PointCloud<pcl::PointNormal> PointNormalCloud;
 
 class LineDetectionNode
@@ -125,12 +126,10 @@ private:
 	// Debug topics; only enabled if m_debug is true.
 	image_transport::Publisher m_pub_pre;
 	image_transport::Publisher m_pub_distance;
-	image_transport::Publisher m_pub_normal;
 	image_transport::Publisher m_pub_filter_hor;
 	image_transport::Publisher m_pub_filter_ver;
 	image_transport::Publisher m_pub_ker_hor;
 	image_transport::Publisher m_pub_ker_ver;
-	ros::Publisher             m_pub_visual;
 	ros::Publisher             m_pub_visual_one;
 };
 
