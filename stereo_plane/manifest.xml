@@ -1,5 +1,6 @@
 <package>
 	<description brief="stereo_plane">
+		Estimates the ground plane using stereo data.
 	</description>
 	<author>Michael Koval</author>
 	<license>BSD</license>
