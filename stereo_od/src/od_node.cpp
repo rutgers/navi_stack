@@ -42,8 +42,9 @@ void FindObstacles(PointCloudXYZ const &src, PointCloudXYZ &dst,
 
 	float sin_theta = sin(m_theta);
 
-	for (size_t i = 0; i < src.points.size(); ++i) {
-		pcl::PointXYZ const &pt1 = src.points[i];
+	for (int y0 = 0; y0 < (int)src.height; ++y0)
+	for (int x0 = 0; x0 < (int)src.width;  ++x0) {
+		pcl::PointXYZ const &pt1 = src.points[y0 * src.width + x0];
 
 		if (isnan(pt1.x) || isnan(pt1.y) || isnan(pt1.z)) continue;
 		++num_valid;
@@ -51,22 +52,19 @@ void FindObstacles(PointCloudXYZ const &src, PointCloudXYZ &dst,
 		// Use the kd-tree to restrict the search to the distance hmax.
 		std::vector<int>   indices;
 		std::vector<float> distances;
-		size_t neighbors = tree.radiusSearch(pt1, m_hmax, indices, distances);
+		int neighbors = tree.radiusSearch(pt1, m_hmax, indices, distances);
 
 		// Two points are compatible iff their vertical offset is between hmin
 		// and hmax and their angle to the plane is sufficiently large. if this
 		// point is compatible with one or more other points, then it is an
 		// obstacle.
-		for (size_t j = 0; j < neighbors; ++j) {
-			pcl::PointXYZ const &pt2 = src.points[indices[j]];
+		for (int i = 0; i < neighbors; ++i) {
+			pcl::PointXYZ const &pt2 = src.points[indices[i]];
 
-			if (indices[j] == (int)i) continue;
+			if (indices[i] == (int)(y0 * src.width + x0)) continue;
 			if (isnan(pt2.x) || isnan(pt2.y) || isnan(pt2.z)) continue;
 
-			// TODO: Why does abs() always return 0?
-			float height = pt2.y - pt1.y;
-			if (height < 0.0) height = -height;
-
+			float height = fabs(pt2.y - pt1.y);
 			float angle  = height / distance(pt1, pt2);
 			bool valid_height = hmin <= height && height <= hmax;
 			bool valid_angle  = angle >= sin_theta;
