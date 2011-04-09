@@ -1,7 +1,7 @@
 <?xml version="1.0" ?>
 <!-- Each square is 0.06096 meters 
 	There are 7x7 internal corners-->
-<model:physical name="checkerboard_stand"
+<model:physical name="barrel_construction"
 xmlns:gazebo="http://playerstage.sourceforge.net/gazebo/xmlschema/#gz" 
 xmlns:model="http://playerstage.sourceforge.net/gazebo/xmlschema/#model" 
 xmlns:sensor="http://playerstage.sourceforge.net/gazebo/xmlschema/#sensor" 
@@ -15,42 +15,19 @@ xmlns:physics="http://playerstage.sourceforge.net/gazebo/xmlschema/#physics">
     <xyz>0 0 0</xyz>
     <rpy>0 0 0</rpy>
     <static>false</static>
-    <body:box name="checkerboard">
+    <body:box name="barrel">
         <xyz>0 0 0</xyz>
         <rpy>0 0 0</rpy>
         <geom:box name="board">
-            <xyz>0 0 0.3556</xyz>
+            <xyz>0 0 0.15</xyz>
             <rpy>0 0 0</rpy>
-            <size>0.025 0.6096 0.6096</size>
+            <size>0.3 0.3 0.3</size>
             <visual>
                 <xyz>0 0 0</xyz>
                 <rpy>0 0 0</rpy>
-                <scale>0.025 0.6096 0.6096</scale>
-                <mesh>unit_box</mesh>
-                <segments>1 1</segments>
-				<uvTile>1 1</uvTile>
-                <material>Navi/checkerboard</material>
-            </visual>
-        </geom:box>
-        
-        <geom:box name="stand_leg1">
-            <xyz>0 0.3 0.0127</xyz>
-            <rpy>0 0 0</rpy>
-            <size>0.2 0.0254 0.0254</size>
-            <visual>
-				<size>0.2 0.0254 0.0254</size>
-                <mesh>unit_box</mesh>
-                <material>Gazebo/BumpyMetal</material>
-            </visual>
-        </geom:box>
-        <geom:box name="stand_leg2">
-            <xyz>0 -0.3 0.0127</xyz>
-            <rpy>0 0 0</rpy>
-            <size>0.2 0.0254 0.0254</size>
-            <visual>
-				<size>0.2 0.0254 0.0254</size>
-                <mesh>unit_box</mesh>
-                <material>Gazebo/BumpyMetal</material>
+                <scale>0.0254 0.0254  0.0254 </scale>
+                <mesh>barrel_construction.dae</mesh>
+
             </visual>
         </geom:box>
         
