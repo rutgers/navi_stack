@@ -1,0 +1,13 @@
+<package>
+	<description brief="stereo_plane">
+	</description>
+	<author>Michael Koval</author>
+	<license>BSD</license>
+	<review status="unreviewed" notes=""/>
+	<depend package="geometry_msgs"/>
+	<depend package="roscpp"/>
+	<depend package="pcl"/>
+	<depend package="pcl_ros"/>
+	<depend package="sensor_msgs"/>
+	<depend package="tf"/>
+</package>
