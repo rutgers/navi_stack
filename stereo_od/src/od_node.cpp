@@ -18,6 +18,7 @@ typedef pcl::PointCloud<pcl::PointXYZ>  PointCloudXYZ;
 static double m_hmin;
 static double m_hmax;
 static double m_theta;
+static float  float_nan = std::numeric_limits<float>::quiet_NaN();
 
 static ros::Publisher  m_pub_pts;
 
@@ -29,25 +30,28 @@ float distance(pcl::PointXYZ const &pt1, pcl::PointXYZ const &pt2)
 void FindObstacles(PointCloudXYZ const &src, PointCloudXYZ &dst,
                    double hmin, double hmax, double theta)
 {
-	dst.points.clear();
+	float sin_theta = sin(m_theta);
+
+	dst.points.resize(src.width * src.height);
+	dst.width    = src.width;
+	dst.height   = src.height;
+	dst.is_dense = false;
 
 	// Index the pointcloud using a k-d tree to make searching for points in
 	// the truncated cones O(log n) intead of O(n).
 	pcl::KdTreeFLANN<pcl::PointXYZ> tree;
 	tree.setInputCloud(src.makeShared());
 
-	int num_obs   = 0;
-	int num_valid = 0;
-	int num_all   = src.width * src.height;
-
-	float sin_theta = sin(m_theta);
-
 	for (int y0 = 0; y0 < (int)src.height; ++y0)
 	for (int x0 = 0; x0 < (int)src.width;  ++x0) {
-		pcl::PointXYZ const &pt1 = src.points[y0 * src.width + x0];
+		pcl::PointXYZ const &pt1    = src.points[y0 * src.width + x0];
+		pcl::PointXYZ       &pt_dst = dst.points[y0 * src.width + x0];
 
+		// Invalid points are marked with NaN.
+		pt_dst.x = float_nan;
+		pt_dst.y = float_nan;
+		pt_dst.z = float_nan;
 		if (isnan(pt1.x) || isnan(pt1.y) || isnan(pt1.z)) continue;
-		++num_valid;
 
 		// Use the kd-tree to restrict the search to the distance hmax.
 		std::vector<int>   indices;
@@ -69,18 +73,10 @@ void FindObstacles(PointCloudXYZ const &src, PointCloudXYZ &dst,
 			bool valid_height = hmin <= height && height <= hmax;
 			bool valid_angle  = angle >= sin_theta;
 
-#if 0
-			ROS_INFO("P1(%+3.3f, %+3.3f, %+3.3f) P2(%+3.3f, %+3.3f, %+3.3f): h = %+3.2f, a = %+3.2f ===> (%d, %d, %d)",
-				pt1.x, pt1.y, pt1.z,
-				pt2.x, pt2.y, pt2.z,
-				height, (180.0 / M_PI) * asin(angle),
-				!!valid_height, !!valid_angle, !!(valid_height && valid_angle)
-			);
-#endif
-
 			if (valid_height && valid_angle) {
-				dst.points.push_back(pt1);
-				++num_obs;
+				pt_dst.x = pt1.x;
+				pt_dst.y = pt1.y;
+				pt_dst.z = pt1.z;
 				break;
 			}
 		}
@@ -89,8 +85,6 @@ void FindObstacles(PointCloudXYZ const &src, PointCloudXYZ &dst,
 	dst.width    = dst.points.size();
 	dst.height   = 1;
 	dst.is_dense = false;
-
-	ROS_ERROR("Detected %d/%d valid points as obstacles (%d total).", num_obs, num_valid, num_all);
 }
 
 void Callback(PointCloudXYZ::ConstPtr const &msg_pts, CameraInfo::ConstPtr const &msg_info)
