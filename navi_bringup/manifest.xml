@@ -9,7 +9,13 @@
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/navi_bringup</url>
   <depend package="navi_model"/>
-
+  <depend package="navi_driver"/>
+  <depend package="gps_common"/>
+  <depend package="gpsd_client"/>
+  <depend package="line_detection"/>
+  <depend package="stereo_mux"/>
+  <depend package="stereo_webcam"/>
+  
 </package>
 
 

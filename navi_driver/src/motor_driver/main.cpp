@@ -95,7 +95,7 @@ void setup()
     right_motor.setVelocity(0);
 
     //Set up PD control loop timer
-   // initPIDTimer(); NOT WORKING
+    //initPIDTimer(); //NOT WORKING
 
     pub_current = node.advertise("current");
     pub_enc = node.advertise("encoder");

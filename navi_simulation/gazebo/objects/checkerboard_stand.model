@@ -1,0 +1,46 @@
+<?xml version="1.0" ?>
+<!-- Each square is 0.06096 meters 
+	There are 7x7 internal corners-->
+<model:physical xmlns:gazebo="http://playerstage.sourceforge.net/gazebo/xmlschema/#gz" xmlns:model="http://playerstage.sourceforge.net/gazebo/xmlschema/#model" xmlns:sensor="http://playerstage.sourceforge.net/gazebo/xmlschema/#sensor" xmlns:body="http://playerstage.sourceforge.net/gazebo/xmlschema/#body" xmlns:geom="http://playerstage.sourceforge.net/gazebo/xmlschema/#geom" xmlns:joint="http://playerstage.sourceforge.net/gazebo/xmlschema/#joint" xmlns:controller="http://playerstage.sourceforge.net/gazebo/xmlschema/#controller" xmlns:interface="http://playerstage.sourceforge.net/gazebo/xmlschema/#interface" xmlns:rendering="http://playerstage.sourceforge.net/gazebo/xmlschema/#rendering" xmlns:physics="http://playerstage.sourceforge.net/gazebo/xmlschema/#physics" name="desk3_model">
+    <xyz>0 0 0</xyz>
+    <rpy>0 0 0</rpy>
+    <static>false</static>
+    <body:box name="checkerboard">
+        <xyz>0 0 0</xyz>
+        <rpy>0 0 0</rpy>
+        <geom:box name="board">
+            <xyz>0 0 0.3556</xyz>
+            <rpy>0 0 0</rpy>
+            <size>0.025 0.6096 0.6096</size>
+            <visual>
+                <xyz>0 0 0</xyz>
+                <rpy>0 0 0</rpy>
+                <scale>0.025 0.6096 0.6096</scale>
+                <mesh>unit_box</mesh>
+                <segments>1 1</segments>
+				<uvTile>1 1</uvTile>
+                <material>Navi/checkerboard</material>
+            </visual>
+        </geom:box>
+        
+        <geom:box name="stand_leg1">
+            <xyz>0 0.3 0.0127</xyz>
+            <rpy>0 0 0</rpy>
+            <size>0.2 0.0254 0.0254</size>
+            <visual>
+				<size>0.2 0.0254 0.0254</size>
+                <mesh>unit_box</mesh>
+            </visual>
+        </geom:box>
+        <geom:box name="stand_leg2">
+            <xyz>0 -0.3 0.0127</xyz>
+            <rpy>0 0 0</rpy>
+            <size>0.2 0.0254 0.0254</size>
+            <visual>
+				<size>0.2 0.0254 0.0254</size>
+                <mesh>unit_box</mesh>
+            </visual>
+        </geom:box>
+        
+    </body:box>
+</model:physical>

@@ -32,3 +32,21 @@ material Navi/nav_field
 		}
 	}
 }
+
+material Navi/checkerboard
+{
+	receive_shadows on
+
+	technique
+	{
+		pass
+		{
+			texture_unit
+			{
+				texture checkerboard.png
+				filtering anisotropic
+				max_anisotropy 16
+			}
+		}
+	}
+}
