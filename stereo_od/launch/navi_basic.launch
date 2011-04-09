@@ -1,0 +1,7 @@
+<launch>
+	<group ns="vision">
+		<node pkg="stereo_od" type="od_node" name="stereo_od">
+			<remap from="stereo_points" to="narrow/points2"/>
+		</node>
+	</group>
+</launch>

@@ -1,79 +1,87 @@
 #include <ros/ros.h>
-#include <tf/transform_broadcaster.h>
-#include <tf/transform_listener.h>
 #include <pcl_ros/point_cloud.h>
-#include <pcl_ros/transforms.h>
+#include <pcl/kdtree/kdtree_flann.h>
 #include <pcl/point_types.h>
-#include <pcl/filters/passthrough.h>
-#include <pcl/sample_consensus/method_types.h>
-#include <pcl/sample_consensus/model_types.h>
-#include <pcl/segmentation/sac_segmentation.h>
-#include <pcl_ros/point_cloud.h>
 
-typedef pcl::PointCloud<pcl::PointXYZ> PointCloud;
+typedef pcl::PointCloud<pcl::PointXYZ>  PointCloudXYZ;
 
-struct Plane {
-	cv::Point3d point;
-	cv::Vec3d   normal;
-};
-
-static double m_minz;
-static double m_maxz;
+static double m_hmin;
+static double m_hmax;
 static double m_theta;
-static std::string m_plane;
 
-static ros::Subscriber           m_sub_pts;
-static tf::TransformListener    *m_sub_tf;
-static tf::TransformBroadcaster *m_pub_tf;
+static ros::Subscriber m_sub_pts;
+static ros::Publisher  m_pub_pts;
 
-cv::Point3d StereoObstacleDetection::GetGroundPoint(cv::Point2d pt)
+float distance(pcl::PointXYZ const &pt1, pcl::PointXYZ const &pt2)
 {
-	cv::Point3d ray     = m_model.projectPixelTo3dRay(pt);
-	cv::Point3d &normal = m_plane.normal;
-	cv::Point3d &plane  = m_plane.point;
-	return (plane.dot(normal) / ray.dot(normal)) * ray;
+	return sqrt(pow(pt2.x - pt1.x, 2) + pow(pt2.y - pt1.y, 2) + pow(pt2.z - pt1.z, 2));
 }
 
-void StereoObstacleDetection::PointCloudCallback(PointCloud::ConstPtr const &pc_xyz)
+void FindObstacles(PointCloudXYZ const &src, PointCloudXYZ &dst,
+                   double hmin, double hmax, double theta)
 {
-	ROS_ASSERT(pc_xyz.is_dense);
+	dst.points.clear();
 
-	// Unit vector that is orthgonal to the plane, points towards the robot, and
-	// is normalized to have unit length.
-	cv::Vec3d normal = m_plane.normal / cv::norm(m_plane.normal);
-	if (normal[1] < 0.0) {
-		normal = -1.0 * normal;
+	// Index the pointcloud using a k-d tree to make searching for points in
+	// the truncated cones O(log n) intead of O(n).
+	pcl::KdTreeFLANN<pcl::PointXYZ> tree;
+	tree.setInputCloud(src.makeShared());
+
+	int num_obs = 0;
+	int num_all = src.width * src.height;
+
+	for (size_t i = 0; i < src.points.size(); ++i) {
+		pcl::PointXYZ const &pt1 = src.points[i];
+
+		// Use the kd-tree to restrict the search to the distance hmax.
+		std::vector<int>   indices;
+		std::vector<float> distances;
+		size_t neighbors = tree.radiusSearch(pt1, m_hmax, indices, distances);
+
+		// Two points are compatible iff their vertical offset is between hmin
+		// and hmax and their angle to the plane is sufficiently large. if this
+		// point is compatible with one or more other points, then it is an
+		// obstacle.
+		for (size_t j = 0; j < neighbors; ++j) {
+			if (indices[j] == (int)i) continue;
+
+			pcl::PointXYZ const &pt2 = src.points[indices[j]];
+
+			float angle  = abs(pt2.y - pt1.y) / distance(pt1, pt2);
+			float height = abs(pt2.y - pt1.y);
+			bool valid_height = hmin <= height && height >= hmax;
+			bool valid_angle  = angle >= sin(theta);
+
+			if (valid_height && valid_angle) {
+				dst.points.push_back(pt1);
+				++num_obs;
+				break;
+			}
+		}
 	}
 
-	// Vector parallel to the image plane. Later scaled by the cone's height.
-	cv::Vec3d side(0.0, cos(m_theta), 0.0);
+	dst.width    = dst.points.size();
+	dst.height   = 1;
+	dst.is_dense = false;
 
-	cv::Mat  segments(pc_xyz.height, pc_xyz.width, CV_32U, cv::Scalar(0));
-	uint32_t segment = 1;
+	ROS_ERROR("Detected %d/%d points as obstacles.", num_obs, num_all);
+}
 
-	for (int y0 = pc_xyz.height; y0 >= 0; --y0)
-	for (int x0 = pc_xyz.width;  x0 >= 0; --x0) {
-		cv::Point2d pt2(x0, y0);
+void PointCloudCallback(PointCloudXYZ::ConstPtr const &pc_src)
+{
+	PointCloudXYZ pc_dst;
 
-		// Three-dimensional coordinates of the inverted cone.
-		cv::Point3d pt3    = GetGroundPoint(pt2);
-		cv::Point3d pt3_bl = pt + (normal - side) * m_minz;
-		cv::Point3d pt3_br = pt + (normal + side) * m_minz;
-		cv::Point3d pt3_tl = pt + (normal - side) * m_maxz;
-		cv::Point3d pt3_tr = pt + (normal + side) * m_maxz;
+	ROS_ERROR("OD BEFORE");
+	FindObstacles(*pc_src, pc_dst, m_hmin, m_hmax, m_theta);
+	ROS_ERROR("OD AFTER");
 
-		// Projection of the inverted cone into the image.
-		cv::Point2d pt2_bl = model.project3dToPixel(pt3_bl);
-		cv::Point2d pt2_br = model.project3dToPixel(pt3_br);
-		cv::Point2d pt2_tl = model.project3dToPixel(pt3_tl);
-		cv::Point2d pt2_tr = model.project3dToPixel(pt3_tr);
 
-		double radius_bot = 0.5 * cv::norm(pt2_br - pt2_bl);
-		double radius_top = 0.5 * cv::norm(pt2_tr - pt2_tl);
-
-		// TODO: Search the upper trapezoid for compatible points.
-		// TODO: Assign all compatible points the same label.
-	}
+#if 0
+	pcl::toROSMsg(pc_dst, msg);
+	//pc_dst.header.frame_id = pc_src.header.frame_id;
+	//pc_dst.header.stamp    = pc_src.header.stamp;
+#endif
+	m_pub_pts.publish(pc_dst);
 }
 
 int main(int argc, char **argv)
@@ -83,18 +91,13 @@ int main(int argc, char **argv)
 	ros::NodeHandle nh;
 	ros::NodeHandle nh_priv("~");
 
-	m_sub_tf = new tf::TransformListener;
-	m_pub_tf = new tf::TransformBroadcaster;
+	nh_priv.param<double>("height_min", m_hmin,  0.100);
+	nh_priv.param<double>("height_max", m_hmax,  1.000);
+	nh_priv.param<double>("theta",      m_theta, M_PI / 2);
 
-	nh_priv.param<double>("minz", m_minz, 0.100);
-	nh_priv.param<double>("maxz", m_maxz, 2.000);
-	nh_priv.param<double>("theta", m_theta, M_PI / 2);
-	nh_priv.param<std::string>("plane", m_plane, "/ground_plane");
-
-	m_sub_pts = nh.subscribe<PointCloud>("stereo_points", 1, &PointCloudCallback);
+	m_sub_pts = nh.subscribe<PointCloudXYZ>("stereo_points", 1, &PointCloudCallback);
+	m_pub_pts = nh.advertise<PointCloudXYZ>("obstacle_points", 10);
 
 	ros::spin();
-
-	delete m_sub_tf;
-	delete m_pub_tf;
+	return 0;
 }
