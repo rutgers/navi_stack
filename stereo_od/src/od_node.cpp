@@ -1,7 +1,17 @@
+#include <cmath>
 #include <ros/ros.h>
+#include <sensor_msgs/CameraInfo.h>
+#include <sensor_msgs/PointCloud2.h>
+#include <message_filters/subscriber.h>
+#include <message_filters/time_synchronizer.h>
 #include <pcl_ros/point_cloud.h>
 #include <pcl/kdtree/kdtree_flann.h>
 #include <pcl/point_types.h>
+
+namespace mf = message_filters;
+
+using sensor_msgs::CameraInfo;
+using sensor_msgs::PointCloud2;
 
 typedef pcl::PointCloud<pcl::PointXYZ>  PointCloudXYZ;
 
@@ -9,7 +19,6 @@ static double m_hmin;
 static double m_hmax;
 static double m_theta;
 
-static ros::Subscriber m_sub_pts;
 static ros::Publisher  m_pub_pts;
 
 float distance(pcl::PointXYZ const &pt1, pcl::PointXYZ const &pt2)
@@ -27,11 +36,17 @@ void FindObstacles(PointCloudXYZ const &src, PointCloudXYZ &dst,
 	pcl::KdTreeFLANN<pcl::PointXYZ> tree;
 	tree.setInputCloud(src.makeShared());
 
-	int num_obs = 0;
-	int num_all = src.width * src.height;
+	int num_obs   = 0;
+	int num_valid = 0;
+	int num_all   = src.width * src.height;
+
+	float sin_theta = sin(m_theta);
 
 	for (size_t i = 0; i < src.points.size(); ++i) {
 		pcl::PointXYZ const &pt1 = src.points[i];
+
+		if (isnan(pt1.x) || isnan(pt1.y) || isnan(pt1.z)) continue;
+		++num_valid;
 
 		// Use the kd-tree to restrict the search to the distance hmax.
 		std::vector<int>   indices;
@@ -43,14 +58,27 @@ void FindObstacles(PointCloudXYZ const &src, PointCloudXYZ &dst,
 		// point is compatible with one or more other points, then it is an
 		// obstacle.
 		for (size_t j = 0; j < neighbors; ++j) {
-			if (indices[j] == (int)i) continue;
-
 			pcl::PointXYZ const &pt2 = src.points[indices[j]];
 
-			float angle  = abs(pt2.y - pt1.y) / distance(pt1, pt2);
-			float height = abs(pt2.y - pt1.y);
-			bool valid_height = hmin <= height && height >= hmax;
-			bool valid_angle  = angle >= sin(theta);
+			if (indices[j] == (int)i) continue;
+			if (isnan(pt2.x) || isnan(pt2.y) || isnan(pt2.z)) continue;
+
+			// TODO: Why does abs() always return 0?
+			float height = pt2.y - pt1.y;
+			if (height < 0.0) height = -height;
+
+			float angle  = height / distance(pt1, pt2);
+			bool valid_height = hmin <= height && height <= hmax;
+			bool valid_angle  = angle >= sin_theta;
+
+#if 0
+			ROS_INFO("P1(%+3.3f, %+3.3f, %+3.3f) P2(%+3.3f, %+3.3f, %+3.3f): h = %+3.2f, a = %+3.2f ===> (%d, %d, %d)",
+				pt1.x, pt1.y, pt1.z,
+				pt2.x, pt2.y, pt2.z,
+				height, (180.0 / M_PI) * asin(angle),
+				!!valid_height, !!valid_angle, !!(valid_height && valid_angle)
+			);
+#endif
 
 			if (valid_height && valid_angle) {
 				dst.points.push_back(pt1);
@@ -64,24 +92,20 @@ void FindObstacles(PointCloudXYZ const &src, PointCloudXYZ &dst,
 	dst.height   = 1;
 	dst.is_dense = false;
 
-	ROS_ERROR("Detected %d/%d points as obstacles.", num_obs, num_all);
+	ROS_ERROR("Detected %d/%d valid points as obstacles (%d total).", num_obs, num_valid, num_all);
 }
 
-void PointCloudCallback(PointCloudXYZ::ConstPtr const &pc_src)
+void Callback(PointCloudXYZ::ConstPtr const &msg_pts, CameraInfo::ConstPtr const &msg_info)
 {
-	PointCloudXYZ pc_dst;
+	PointCloudXYZ obstacles;
+	FindObstacles(*msg_pts, obstacles, m_hmin, m_hmax, m_theta);
 
-	ROS_ERROR("OD BEFORE");
-	FindObstacles(*pc_src, pc_dst, m_hmin, m_hmax, m_theta);
-	ROS_ERROR("OD AFTER");
+	PointCloud2 msg_obstacles;
+	pcl::toROSMsg(obstacles, msg_obstacles);
 
-
-#if 0
-	pcl::toROSMsg(pc_dst, msg);
-	//pc_dst.header.frame_id = pc_src.header.frame_id;
-	//pc_dst.header.stamp    = pc_src.header.stamp;
-#endif
-	m_pub_pts.publish(pc_dst);
+	msg_obstacles.header.stamp    = msg_pts->header.stamp;
+	msg_obstacles.header.frame_id = msg_pts->header.frame_id;
+	m_pub_pts.publish(msg_obstacles);
 }
 
 int main(int argc, char **argv)
@@ -91,11 +115,15 @@ int main(int argc, char **argv)
 	ros::NodeHandle nh;
 	ros::NodeHandle nh_priv("~");
 
-	nh_priv.param<double>("height_min", m_hmin,  0.100);
-	nh_priv.param<double>("height_max", m_hmax,  1.000);
-	nh_priv.param<double>("theta",      m_theta, M_PI / 2);
+	nh_priv.param<double>("height_min", m_hmin,  0.3);
+	nh_priv.param<double>("height_max", m_hmax,  2.0);
+	nh_priv.param<double>("theta",      m_theta, M_PI / 4);
 
-	m_sub_pts = nh.subscribe<PointCloudXYZ>("stereo_points", 1, &PointCloudCallback);
+	mf::Subscriber<PointCloudXYZ> sub_pts(nh, "points", 1);
+	mf::Subscriber<CameraInfo>    sub_info(nh, "camera_info", 1);
+	mf::TimeSynchronizer<PointCloudXYZ, CameraInfo> sub_sync(sub_pts, sub_info, 10);
+	sub_sync.registerCallback(&Callback);
+
 	m_pub_pts = nh.advertise<PointCloudXYZ>("obstacle_points", 10);
 
 	ros::spin();
