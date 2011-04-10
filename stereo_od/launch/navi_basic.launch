@@ -3,6 +3,8 @@
 		<node pkg="stereo_od" type="od_node" name="stereo_od">
 			<remap from="points"      to="narrow/points2"/>
 			<remap from="camera_info" to="narrow/left/camera_info"/>
+			<param name="height_min" value="0.5"/>
+			<param name="height_max" value="1.0"/>
 		</node>
 	</group>
 </launch>

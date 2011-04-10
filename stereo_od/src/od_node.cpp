@@ -1,5 +1,6 @@
 #include <cmath>
 #include <ros/ros.h>
+#include <image_geometry/pinhole_camera_model.h>
 #include <sensor_msgs/CameraInfo.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <message_filters/subscriber.h>
@@ -10,6 +11,7 @@
 
 namespace mf = message_filters;
 
+using image_geometry::PinholeCameraModel;
 using sensor_msgs::CameraInfo;
 using sensor_msgs::PointCloud2;
 
@@ -18,67 +20,81 @@ typedef pcl::PointCloud<pcl::PointXYZ>  PointCloudXYZ;
 static double m_hmin;
 static double m_hmax;
 static double m_theta;
+static PinholeCameraModel m_model;
 static float  float_nan = std::numeric_limits<float>::quiet_NaN();
 
 static ros::Publisher  m_pub_pts;
 
-float distance(pcl::PointXYZ const &pt1, pcl::PointXYZ const &pt2)
+float dist(pcl::PointXYZ const &pt1, pcl::PointXYZ const &pt2)
 {
 	return sqrt(pow(pt2.x - pt1.x, 2) + pow(pt2.y - pt1.y, 2) + pow(pt2.z - pt1.z, 2));
 }
 
 void FindObstacles(PointCloudXYZ const &src, PointCloudXYZ &dst,
-                   double hmin, double hmax, double theta)
+                   double hmin, double hmax, double flen, double theta)
 {
-	float sin_theta = sin(m_theta);
+	float const sin_theta = sin(m_theta);
+	float const tan_theta = tan(m_theta);
 
 	dst.points.resize(src.width * src.height);
 	dst.width    = src.width;
 	dst.height   = src.height;
 	dst.is_dense = false;
 
-	// Index the pointcloud using a k-d tree to make searching for points in
-	// the truncated cones O(log n) intead of O(n).
-	pcl::KdTreeFLANN<pcl::PointXYZ> tree;
-	tree.setInputCloud(src.makeShared());
 
-	for (int y0 = 0; y0 < (int)src.height; ++y0)
-	for (int x0 = 0; x0 < (int)src.width;  ++x0) {
-		pcl::PointXYZ const &pt1    = src.points[y0 * src.width + x0];
-		pcl::PointXYZ       &pt_dst = dst.points[y0 * src.width + x0];
+	// Initially mark all points as invalid (i.e. x = y = z = NaN).
+	for (size_t i = 0; i < src.width * src.height; ++i) {
+		dst.points[i].x = float_nan;
+		dst.points[i].y = float_nan;
+		dst.points[i].z = float_nan;
+	}
 
-		// Invalid points are marked with NaN.
-		pt_dst.x = float_nan;
-		pt_dst.y = float_nan;
-		pt_dst.z = float_nan;
-		if (isnan(pt1.x) || isnan(pt1.y) || isnan(pt1.z)) continue;
+	for (int y0 = src.height - 1; y0 >= 0; --y0)
+	for (int x0 = src.width  - 1; x0 >= 0; --x0) {
+		pcl::PointXYZ const &pt1_src = src.points[y0 * src.width + x0];
+		pcl::PointXYZ       &pt1_dst = dst.points[y0 * src.width + x0];
 
-		// Use the kd-tree to restrict the search to the distance hmax.
-		std::vector<int>   indices;
-		std::vector<float> distances;
-		int neighbors = tree.radiusSearch(pt1, m_hmax, indices, distances);
+		if (isnan(pt1_src.x) || isnan(pt1_src.y) || isnan(pt1_src.z)) continue;
 
-		// Two points are compatible iff their vertical offset is between hmin
-		// and hmax and their angle to the plane is sufficiently large. if this
-		// point is compatible with one or more other points, then it is an
-		// obstacle.
-		for (int i = 0; i < neighbors; ++i) {
-			pcl::PointXYZ const &pt2 = src.points[indices[i]];
+		// Project the cone above point P1 into the image as a trapezoid to
+		// reduce the search space for points inside the cone. This reduces the
+		// runtime of the algorithm from O(N^2) to O(K*N)
+		int cone_height = m_hmax * pt1_src.z / flen;
+		if (y0 - cone_height < 0) {
+			cone_height = y0;
+		}
 
-			if (indices[i] == (int)(y0 * src.width + x0)) continue;
-			if (isnan(pt2.x) || isnan(pt2.y) || isnan(pt2.z)) continue;
+		// Use the Manduchi OD2 algorithm. This exhaustively searches every
+		// cone, examining each pair pair of pixels exactly once.
+		bool is_obstacle = false;
+		for (int y = y0; y >= 0 && y >= y + cone_height; --y) {
+			int cone_radius = (y0 - y) / tan_theta;
+			int x_min = MAX(0,              x0 - cone_radius);
+			int x_max = MIN((int)src.width, x0 + cone_radius + 1);
 
-			float height = fabs(pt2.y - pt1.y);
-			float angle  = height / distance(pt1, pt2);
-			bool valid_height = hmin <= height && height <= hmax;
-			bool valid_angle  = angle >= sin_theta;
+			for (int x = x_min; x < x_max; ++x) {
+				pcl::PointXYZ const &pt2_src = src.points[y * src.width + x];
+				pcl::PointXYZ       &pt2_dst = dst.points[y * src.width + x];
 
-			if (valid_height && valid_angle) {
-				pt_dst.x = pt1.x;
-				pt_dst.y = pt1.y;
-				pt_dst.z = pt1.z;
-				break;
+				if (isnan(pt2_src.x) || isnan(pt2_src.y) || isnan(pt2_src.z)) continue;
+				float height = fabs(pt2_src.y - pt1_src.y);
+				float angle  = height / dist(pt1_src, pt2_src);
+				bool valid_height = hmin <= height && height <= hmax;
+				bool valid_angle  = angle >= sin_theta;
+
+				if (valid_height && valid_angle) {
+					is_obstacle = true;
+					pt2_dst.x = pt2_src.x;
+					pt2_dst.y = pt2_src.y;
+					pt2_dst.z = pt2_src.z;
+				}
 			}
+		}
+
+		if (is_obstacle) {
+			pt1_dst.x = pt1_src.x;
+			pt1_dst.y = pt1_src.y;
+			pt1_dst.z = pt1_src.z;
 		}
 	}
 
@@ -89,8 +105,13 @@ void FindObstacles(PointCloudXYZ const &src, PointCloudXYZ &dst,
 
 void Callback(PointCloudXYZ::ConstPtr const &msg_pts, CameraInfo::ConstPtr const &msg_info)
 {
+	// Extract the camera's focal length from the CameraInfo message. Because
+	// we are reprojecting a vertical distance, we can safely ignore fx().
+	m_model.fromCameraInfo(msg_info);
+	double flen = m_model.fy();
+
 	PointCloudXYZ obstacles;
-	FindObstacles(*msg_pts, obstacles, m_hmin, m_hmax, m_theta);
+	FindObstacles(*msg_pts, obstacles, m_hmin, m_hmax, flen, m_theta);
 
 	PointCloud2 msg_obstacles;
 	pcl::toROSMsg(obstacles, msg_obstacles);

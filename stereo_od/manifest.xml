@@ -4,6 +4,7 @@
 	<author>Michael Koval</author>
 	<license>BSD</license>
 	<review status="unreviewed" notes=""/>
+	<depend package="image_geometry"/>
 	<depend package="message_filters"/>
 	<depend package="roscpp"/>
 	<depend package="pcl"/>
