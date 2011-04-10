@@ -1,5 +1,6 @@
 <?xml version="1.0" ?>
-<model:physical name="cone3"
+<!-- This failes and has a huge block over the fence-->
+<model:physical name="fence_white_picket"
 xmlns:gazebo="http://playerstage.sourceforge.net/gazebo/xmlschema/#gz" 
 xmlns:model="http://playerstage.sourceforge.net/gazebo/xmlschema/#model" 
 xmlns:sensor="http://playerstage.sourceforge.net/gazebo/xmlschema/#sensor" 
@@ -13,20 +14,23 @@ xmlns:physics="http://playerstage.sourceforge.net/gazebo/xmlschema/#physics">
     <xyz>0 0 0</xyz>
     <rpy>0 0 0</rpy>
     <static>true</static>
-    <body:box name="cone">
+    <body:box name="fence_body">
         <xyz>0 0 0</xyz>
         <rpy>0 0 0</rpy>
-        <geom:box name="cone_geom">
-            <xyz>0 0 0.15</xyz>
+        <geom:box name="fency_geom">
+            <xyz>0 0 0</xyz>
             <rpy>0 0 0</rpy>
-            <size>0.3 0.3 0.3</size>
+            <!-- <size>3.6576 0.1016 0.889</size> -->
+            <size>.1 0.1016 0.1</size> 
             <visual>
                 <xyz>0 0 0</xyz>
                 <rpy>0 0 0</rpy>
+                <size>.1 0.1016 0.1</size> 
+
                 <scale>0.0254 0.0254  0.0254 </scale>
-                <mesh>cone3.dae</mesh>
+                <mesh>fence_white_picket.dae</mesh>
+                <material> Gazebo/White</material>
             </visual>
         </geom:box>
-        
     </body:box>
 </model:physical>
