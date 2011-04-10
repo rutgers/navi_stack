@@ -35,7 +35,7 @@
 	<xacro:macro name="wheel" params="prefix reflect_x reflect_y">
 		<joint name="${prefix}_wheel_asm_joint" type="fixed">
 			<axis xyz="0 1 0"/>
-			<origin xyz="${reflect_x * wheel_offset_x} ${reflect_y * wheel_offset_y} -0.358775" rpy="0 0 0"/>
+			<origin xyz="${reflect_x * wheel_offset_x} ${reflect_y * wheel_offset_y} -0.34" rpy="0 0 0"/>
 			<parent link="base_link"/>
 			<child link="${prefix}_wheel_asm_link"/>
 		</joint>
