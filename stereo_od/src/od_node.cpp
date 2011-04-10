@@ -35,6 +35,7 @@ static uint32_t const m_colors[]   = {
 static size_t const   m_colors_num = 6;
 
 static int    m_pmin;
+static double m_dmax;
 static double m_hmin;
 static double m_hmax;
 static double m_theta;
@@ -83,6 +84,8 @@ void FindObstacles(PointCloudXYZ const &src, PointCloudXYZ &dst,
 	for (int x0 = src.width  - 1; x0 >= 0; --x0) {
 		int const i = y0 * src.width + x0;
 		pcl::PointXYZ const &pt1_src = src.points[i];
+
+		if (pt1_src.z > m_dmax) continue;
 		if (isnan(pt1_src.x) || isnan(pt1_src.y) || isnan(pt1_src.z)) continue;
 
 		// Project the cone above point P1 into the image as a trapezoid to
@@ -103,7 +106,9 @@ void FindObstacles(PointCloudXYZ const &src, PointCloudXYZ &dst,
 			for (int x = x_min; x < x_max; ++x) {
 				int const j = y * src.width + x;
 				pcl::PointXYZ const &pt2_src = src.points[j];
+
 				if (isnan(pt2_src.x) || isnan(pt2_src.y) || isnan(pt2_src.z)) continue;
+				if (pt2_src.z > m_dmax) continue;
 
 				// FIXME: height check may be redundant
 				float height = fabs(pt2_src.y - pt1_src.y);
@@ -169,10 +174,11 @@ int main(int argc, char **argv)
 	ros::NodeHandle nh;
 	ros::NodeHandle nh_priv("~");
 
-	nh_priv.param<int>("points_min",    m_pmin,  25);
-	nh_priv.param<double>("height_min", m_hmin,  0.3);
-	nh_priv.param<double>("height_max", m_hmax,  2.0);
-	nh_priv.param<double>("theta",      m_theta, M_PI / 4);
+	nh_priv.param<int>("points_min",      m_pmin,  25);
+	nh_priv.param<double>("distance_max", m_dmax,  5.0);
+	nh_priv.param<double>("height_min",   m_hmin,  0.3);
+	nh_priv.param<double>("height_max",   m_hmax,  2.0);
+	nh_priv.param<double>("theta",        m_theta, M_PI / 4);
 
 	mf::Subscriber<PointCloudXYZ> sub_pts(nh, "points", 1);
 	mf::Subscriber<CameraInfo>    sub_info(nh, "camera_info", 1);
