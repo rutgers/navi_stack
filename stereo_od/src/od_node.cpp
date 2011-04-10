@@ -15,13 +15,24 @@
 #include <pcl/kdtree/kdtree_flann.h>
 #include <pcl/point_types.h>
 
+#define COLOR_RED(_x_)    ((uint8_t)(((_x_) & 0x000000FF) >>  0))
+#define COLOR_GREEN(_x_)  ((uint8_t)(((_x_) & 0x0000FF00) >>  8))
+#define COLOR_BLUE(_x_)   ((uint8_t)(((_x_) & 0x00FF0000) >> 16))
+#define COLOR_ALPHA(_x_)  ((uint8_t)(((_x_) & 0xFF000000) >> 24))
+
 namespace mf = message_filters;
 
 using image_geometry::PinholeCameraModel;
 using sensor_msgs::CameraInfo;
 using sensor_msgs::PointCloud2;
 
-typedef pcl::PointCloud<pcl::PointXYZ> PointCloudXYZ;
+typedef pcl::PointCloud<pcl::PointXYZ>    PointCloudXYZ;
+
+static uint32_t const m_colors[]   = {
+	0xFF0000FF, 0x00FF00FF, 0x0000FFFF,
+	0xFFFF00FF, 0x00FFFFFF, 0xFF00FFFF
+};
+static size_t const   m_colors_num = 6;
 
 static int    m_pmin;
 static double m_hmin;
@@ -108,6 +119,7 @@ void FindObstacles(PointCloudXYZ const &src, PointCloudXYZ &dst,
 	}
 
 	boost::component_index<int> components(parent.begin(), parent.end());
+	int color = 0;
 
 	BOOST_FOREACH(int component, components) {
 		// FIXME: find the number of elements in the component
@@ -124,6 +136,7 @@ void FindObstacles(PointCloudXYZ const &src, PointCloudXYZ &dst,
 			pt_dst.y = pt_src.y;
 			pt_dst.z = pt_src.z;
 		}
+		color = (color + 1) % m_colors_num;
 	}
 
 	dst.width  = src.width;
@@ -156,7 +169,7 @@ int main(int argc, char **argv)
 	ros::NodeHandle nh;
 	ros::NodeHandle nh_priv("~");
 
-	nh_priv.param<int>("height_min",    m_pmin,  25);
+	nh_priv.param<int>("points_min",    m_pmin,  25);
 	nh_priv.param<double>("height_min", m_hmin,  0.3);
 	nh_priv.param<double>("height_max", m_hmax,  2.0);
 	nh_priv.param<double>("theta",      m_theta, M_PI / 4);
@@ -166,7 +179,7 @@ int main(int argc, char **argv)
 	mf::TimeSynchronizer<PointCloudXYZ, CameraInfo> sub_sync(sub_pts, sub_info, 10);
 	sub_sync.registerCallback(&Callback);
 
-	m_pub_pts = nh.advertise<PointCloudXYZ>("obstacle_points", 10);
+	m_pub_pts = nh.advertise<PointCloud2>("obstacle_points", 10);
 
 	ros::spin();
 	return 0;
