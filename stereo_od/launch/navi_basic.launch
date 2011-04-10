@@ -6,7 +6,7 @@
 			<param name="points_min"   value="100"/>
 			<param name="height_min"   value="0.5"/>
 			<param name="height_max"   value="1.0"/>
-			<param name="distance_max" value="7.0"/>
+			<param name="distance_max" value="10.0"/>
 			<param name="theta"        value="1.04719755"/>
 		</node>
 	</group>
