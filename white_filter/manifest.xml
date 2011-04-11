@@ -1,0 +1,12 @@
+<package>
+	<description brief="white_filter">
+		Implementation of the "white filter" described by Yu.
+	</description>
+	<author>Michael Koval</author>
+	<license>BSD</license>
+	<review status="unreviewed" notes=""/>
+	<depend package="cv_bridge"/>
+	<depend package="image_transport"/>
+	<depend package="opencv2"/>
+	<depend package="sensor_msgs"/>
+</package>
