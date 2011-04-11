@@ -2,7 +2,13 @@
 	<node pkg="joint_state_publisher" type="joint_state_publisher" name="joint_publisher"/>
 	<node pkg="robot_state_publisher" type="state_publisher" name="state_publisher"/>
 	<include file="$(find navi_model)/launch/model_upload.launch"/>
+
+	<!-- Monocular Vision Subsystem -->
+	<include file="$(find white_filter)/launch/navi_basic.launch"/>
 	<include file="$(find line_detection)/launch/navi_basic.launch"/>
+
+	<!-- Stereo Vision Subsystem -->
 	<include file="$(find stereo_webcam)/launch/navi_basic.launch"/>
-	<include file="$(find stereo_plane)/launch/navi_basic.launch"/>
+	<!--<include file="$(find stereo_plane)/launch/navi_basic.launch"/>-->
+	<include file="$(find stereo_od)/launch/navi_basic.launch"/>
 </launch>
