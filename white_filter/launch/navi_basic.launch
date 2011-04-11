@@ -1,0 +1,11 @@
+<launch>
+	<group ns="vision">
+		<node pkg="white_filter" type="white_node" name="white_filter">
+			<param name="use_low"  value="true"/>
+			<param name="use_high" value="false"/>
+			<param name="threshold_hue" value="180"/>
+			<param name="threshold_sat" value="127"/>
+			<remap from="image" to="narrow/left/image_rect_color"/>
+		</node>
+	</group>
+</launch>

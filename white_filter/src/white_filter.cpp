@@ -22,6 +22,8 @@ private:
 	it::Subscriber     m_sub_rgb;
 	it::Publisher      m_pub_white;
 
+	bool m_use_low;
+	bool m_use_high;
 	int m_threshold_hue;
 	int m_threshold_sat;
 };
@@ -34,6 +36,8 @@ WhiteFilterNode::WhiteFilterNode(ros::NodeHandle nh, ros::NodeHandle nh_priv)
 	m_sub_rgb   = m_it.subscribe("image", 1, &WhiteFilterNode::Callback, this);
 	m_pub_white = m_it.advertise("white", 1);
 
+	nh_priv.param<bool>("use_low",  m_use_low,  true);
+	nh_priv.param<bool>("use_high", m_use_high, true);
 	nh_priv.param<int>("threshold_hue", m_threshold_hue, 180);
 	nh_priv.param<int>("threshold_sat", m_threshold_sat, 127);
 }
@@ -72,14 +76,15 @@ void WhiteFilterNode::Callback(sensor_msgs::Image::ConstPtr const &msg_img)
 	// For pixels with high saturation, remove all those with hue below less
 	// than blue/green. White pixels in a shadow generally have high hue, where
 	// other colors in the image primarily have low hue.
-	cv::Mat hue_hi, white_lo;
+	cv::Mat hue_hi, white_hi;
 	cv::threshold(hue, hue_hi, m_threshold_hue, 255, cv::THRESH_BINARY);
-	cv::min(sat_hi, hue_hi, white_lo);
+	cv::min(sat_hi, hue_hi, white_hi);
 
 	// Merge the results of the "low sat" and "high sat" filters.
-	cv::Mat &white_hi = sat_lo;
-	cv::Mat  white;
-	cv::max(white_lo, white_hi, white);
+	cv::Mat white(src.rows, src.cols, CV_8UC1, cv::Scalar(0));
+	cv::Mat &white_lo = sat_lo;
+	if (m_use_low)  cv::max(white, white_lo, white);
+	if (m_use_high) cv::max(white, white_hi, white);
 
 	// Use this binary "white" indicator to mask the value image.
 	cv::Mat whiteness;
