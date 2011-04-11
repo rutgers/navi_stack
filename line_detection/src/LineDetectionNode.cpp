@@ -1,4 +1,5 @@
 #include <limits>
+#include <pcl_ros/point_cloud.h>
 #include <tf/transform_datatypes.h>
 #include <visualization_msgs/Marker.h>
 #include <visualization_msgs/MarkerArray.h>
@@ -20,8 +21,7 @@ LineDetectionNode::LineDetectionNode(ros::NodeHandle nh, std::string ground_id,
 	  m_it(nh)
 {
 	m_sub_cam = m_it.subscribeCamera("image", 1, &LineDetectionNode::ImageCallback, this);
-	m_pub_max = m_it.advertise("line_maxima", 10);
-	m_pub_pts = m_nh.advertise<PointCloud>("line_points", 10);
+	m_pub_pts = m_nh.advertise<PointCloudXYZ>("line_points", 10);
 
 	if (m_debug) {
 		ROS_WARN("debugging topics are enabled; performance may be degraded");
@@ -93,15 +93,23 @@ void LineDetectionNode::SetResolution(int width, int height)
 	m_rows  = height;
 }
 
-void LineDetectionNode::NonMaxSupr(cv::Mat src_hor, cv::Mat src_ver,
-                                   std::list<cv::Point2i> &dst)
+void LineDetectionNode::NonMaxSupr(cv::Mat src_hor, cv::Mat src_ver, PointCloudXYZ &dst)
 {
 	ROS_ASSERT(src_hor.rows == src_ver.rows && src_hor.cols == src_ver.cols);
 	ROS_ASSERT(src_hor.type() == CV_64FC1 && src_ver.type() == CV_64FC1);
 	ROS_ASSERT(m_valid);
 
+	float nan = std::numeric_limits<float>::quiet_NaN();
+
+	dst.width    = src_hor.cols;
+	dst.height   = src_hor.rows;
+	dst.is_dense = false;
+	dst.points.resize(src_hor.cols * src_hor.rows);
+
 	for (int y = 1; y < src_hor.rows - 1; ++y)
 	for (int x = 1; x < src_hor.cols - 1; ++x) {
+		pcl::PointXYZ &pt = dst.points[y * src_hor.cols + x];
+
 		double val_hor   = src_hor.at<double>(y, x);
 		double val_left  = src_hor.at<double>(y, x - 1);
 		double val_right = src_hor.at<double>(y, x + 1);
@@ -113,8 +121,18 @@ void LineDetectionNode::NonMaxSupr(cv::Mat src_hor, cv::Mat src_ver,
 		bool is_hor = val_hor > val_left && val_hor > val_right && val_hor > m_threshold;
 		bool is_ver = val_ver > val_top  && val_ver > val_bot   && val_ver > m_threshold;
 
+		// Found a line; project it into 3D using the ground plane.
 		if (is_hor || is_ver) {
-			dst.push_back(cv::Point2i(x, y));
+			cv::Point3d pt_3d = GetGroundPoint(cv::Point2d(x, y));
+			pt.x = pt_3d.x;
+			pt.y = pt_3d.y;
+			pt.z = pt_3d.z;
+		}
+		// Fill areas that are "not line" with NaN.
+		else {
+			pt.x = nan;
+			pt.y = nan;
+			pt.z = nan;
 		}
 	}
 }
@@ -164,97 +182,39 @@ void LineDetectionNode::ImageCallback(ImageConstPtr const &msg_img,
 
 	// Convert the ROS Image and CameraInfo messages into OpenCV datatypes for
 	// processing. This avoids copying the data when possible.
-	cv::Mat img_src8;
+	cv::Mat img_src;
 	try {
 		m_model.fromCameraInfo(msg_cam);
 		cv_bridge::CvImageConstPtr src_tmp = cv_bridge::toCvShare(msg_img, enc::MONO8);
-		img_src8 = src_tmp->image;
+
+		// TODO: Directly process the 8-bit image to avoid this type conversion.
+		cv::Mat img_src8 = src_tmp->image;
+		img_src8.convertTo(img_src, CV_64FC1);
 	} catch (cv_bridge::Exception &e) {
 		ROS_WARN_THROTTLE(10, "unable to parse image message");
 		return;
 	}
 
-	// Switch to floating point numbers to avoid saturation arithmetic.
-	cv::Mat img_src;
-	img_src8.convertTo(img_src, CV_64FC1);
-
-	// Update pre-computed values that were cached (only if necessary!).
+	// Update cached values. If any values change, the filter kernel will be
+	// recomputed.
 	SetGroundPlane(plane);
 	SetResolution(msg_img->width, msg_img->height);
 	UpdateCache();
 
-	// Processing
-	std::list<cv::Point2i> maxima;
 	cv::Mat img_hor, img_ver;
-	cv::Mat img_pre;
-
 	PulseFilter(img_src, img_hor, m_kernel_hor, m_offset_hor, true);
 	PulseFilter(img_src, img_ver, m_kernel_ver, m_offset_ver, false);
+
+	PointCloudXYZ maxima;
 	NonMaxSupr(img_hor, img_ver, maxima);
 
-	// Publish a three-dimensional point cloud in the camera frame by converting
-	// each maximum's pixel coordinates to camera coordinates using the camera's
-	// intrinsics and knowledge of the ground plane.
-	// TODO: Scrap the std::list middleman.
-	// TODO: Do this directly in NonMaxSupr().
-	// TODO: Precompute the mapping from 2D to 3D.
-	PointCloud::Ptr msg_pts(new PointCloud);
-	std::list<cv::Point2i>::iterator it;
+	sensor_msgs::PointCloud2 msg_maxima;
+	pcl::toROSMsg(maxima, msg_maxima);
+	msg_maxima.header.stamp    = msg_img->header.stamp;
+	msg_maxima.header.frame_id = msg_img->header.frame_id;
+	m_pub_pts.publish(msg_maxima);
 
-	// Use a row vector to store unordered points (as per PCL documentation).
-	// FIXME: use PCL to create the destination pointcloud.
-	// FIXME: data is not dense (some values will be NaN)
-	msg_pts->header.stamp    = msg_img->header.stamp;
-	msg_pts->header.frame_id = msg_img->header.frame_id;
-	msg_pts->height   = img_src.rows;
-	msg_pts->width    = img_src.cols;
-	msg_pts->is_dense = true;
-	msg_pts->points.resize(img_src.rows * img_src.cols);
-
-	for (int y = 0; y < img_src.rows; ++y)
-	for (int x = 0; x < img_src.cols; ++x) {
-		pcl::PointXYZ &pt = msg_pts->points[y * img_src.cols + x];
-		pt.x = std::numeric_limits<double>::quiet_NaN();
-		pt.y = std::numeric_limits<double>::quiet_NaN();
-		pt.z = std::numeric_limits<double>::quiet_NaN();
-	}
-
-	int i;
-	for (it = maxima.begin(), i = 0; it != maxima.end(); ++it, ++i) {
-		cv::Point3d    pt_world = GetGroundPoint(*it);
-		pcl::PointXYZ &pt_cloud = msg_pts->points[it->y * img_src.cols + it->x];
-		pt_cloud.x = pt_world.x;
-		pt_cloud.y = pt_world.y;
-		pt_cloud.z = pt_world.z;
-	}
-
-	m_pub_pts.publish(msg_pts);
-
-	// Two dimensional local maxima as a binary image. Detected line pixels are
-	// white (255) and all other pixels are black (0).
-	cv::Mat img_max(img_src.rows, img_src.cols, CV_8U, cv::Scalar(0));
-	for (it = maxima.begin(); it != maxima.end(); ++it) {
-		img_max.at<uint8_t>(it->y, it->x) = 255;
-	}
-
-	cv_bridge::CvImage msg_max;
-	msg_max.header.stamp    = msg_img->header.stamp;
-	msg_max.header.frame_id = msg_img->header.frame_id;
-	msg_max.encoding = image_encodings::MONO8;
-	msg_max.image    = img_max;
-	m_pub_max.publish(msg_max.toImageMsg());
 	if (m_debug) {
-		// Preprocessing output.
-		cv::Mat img_pre_8u;
-		img_pre.convertTo(img_pre_8u, CV_8UC1);
-
-		cv_bridge::CvImage msg_pre;
-		msg_pre.header.stamp    = msg_img->header.stamp;
-		msg_pre.header.frame_id = msg_img->header.frame_id;
-		msg_pre.encoding = image_encodings::MONO8;
-		msg_pre.image    = img_pre_8u;
-		m_pub_pre.publish(msg_pre.toImageMsg());
-
 		// Render lines every 1 m on the ground plane and render them in 3D!
 		cv::Mat img_distance  = img_src.clone();
 		cv::Point3d P_ground  = m_plane.point;

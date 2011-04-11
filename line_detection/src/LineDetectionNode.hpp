@@ -29,8 +29,7 @@ using sensor_msgs::ImageConstPtr;
 using sensor_msgs::CameraInfo;
 using sensor_msgs::Image;
 
-typedef pcl::PointCloud<pcl::PointXYZ>    PointCloud;
-typedef pcl::PointCloud<pcl::PointNormal> PointNormalCloud;
+typedef pcl::PointCloud<pcl::PointXYZ> PointCloudXYZ;
 
 class LineDetectionNode
 {
@@ -76,7 +75,7 @@ public:
 	 * \param src_ver vertical filter response from MatchedFilter()
 	 * \param pts list of local maxima in the filter response
 	 */
-	void NonMaxSupr(cv::Mat src_hor, cv::Mat src_ver, std::list<cv::Point2i> &dst);
+	void NonMaxSupr(cv::Mat src_hor, cv::Mat src_ver, PointCloudXYZ &dst);
 
 	/**
 	 * Update cached information to match the current algorithmic parameters.
@@ -119,9 +118,8 @@ private:
 	image_transport::ImageTransport    m_it;
 	image_geometry::PinholeCameraModel m_model;
 
-	CameraSubscriber           m_sub_cam;
-	image_transport::Publisher m_pub_max;
-	ros::Publisher             m_pub_pts;
+	CameraSubscriber m_sub_cam;
+	ros::Publisher   m_pub_pts;
 
 	// Debug topics; only enabled if m_debug is true.
 	image_transport::Publisher m_pub_pre;
