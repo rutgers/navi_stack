@@ -15,24 +15,13 @@
 #include <pcl/kdtree/kdtree_flann.h>
 #include <pcl/point_types.h>
 
-#define COLOR_RED(_x_)    ((uint8_t)(((_x_) & 0x000000FF) >>  0))
-#define COLOR_GREEN(_x_)  ((uint8_t)(((_x_) & 0x0000FF00) >>  8))
-#define COLOR_BLUE(_x_)   ((uint8_t)(((_x_) & 0x00FF0000) >> 16))
-#define COLOR_ALPHA(_x_)  ((uint8_t)(((_x_) & 0xFF000000) >> 24))
-
 namespace mf = message_filters;
 
 using image_geometry::PinholeCameraModel;
 using sensor_msgs::CameraInfo;
 using sensor_msgs::PointCloud2;
 
-typedef pcl::PointCloud<pcl::PointXYZ>    PointCloudXYZ;
-
-static uint32_t const m_colors[]   = {
-	0xFF0000FF, 0x00FF00FF, 0x0000FFFF,
-	0xFFFF00FF, 0x00FFFFFF, 0xFF00FFFF
-};
-static size_t const   m_colors_num = 6;
+typedef pcl::PointCloud<pcl::PointXYZ> PointCloudXYZ;
 
 static int    m_pmin;
 static double m_dmax;
@@ -124,14 +113,12 @@ void FindObstacles(PointCloudXYZ const &src, PointCloudXYZ &dst,
 	}
 
 	boost::component_index<int> components(parent.begin(), parent.end());
-	int color = 0;
 
 	BOOST_FOREACH(int component, components) {
-		// FIXME: find the number of elements in the component
+		// Ignore components that are too small.
+		// FIXME: don't use a loop to check the size of each component
 		int component_size = 0;
 		BOOST_FOREACH(int index, components[component]) ++component_size;
-
-		// Ignore components that are too small.
 		if (component_size < m_pmin) continue;
 
 		BOOST_FOREACH(int index, components[component]) {
@@ -141,7 +128,6 @@ void FindObstacles(PointCloudXYZ const &src, PointCloudXYZ &dst,
 			pt_dst.y = pt_src.y;
 			pt_dst.z = pt_src.z;
 		}
-		color = (color + 1) % m_colors_num;
 	}
 
 	dst.width  = src.width;
