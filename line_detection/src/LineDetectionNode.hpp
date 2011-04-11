@@ -1,35 +1,20 @@
 #ifndef LINE_DETECTION_NODE_HPP_
 #define LINE_DETECTION_NODE_HPP_
 
-#include <climits>
-#include <cmath>
 #include <string>
 #include <vector>
 
-#include <opencv/cv.h>
-#include <ros/console.h>
 #include <ros/ros.h>
-#include <cv_bridge/cv_bridge.h>
+#include <opencv/cv.h>
 #include <pcl_ros/point_cloud.h>
 #include <pcl/point_types.h>
 #include <image_geometry/pinhole_camera_model.h>
 #include <image_transport/image_transport.h>
 #include <sensor_msgs/CameraInfo.h>
 #include <sensor_msgs/Image.h>
-#include <sensor_msgs/PointCloud2.h>
-#include <sensor_msgs/image_encodings.h>
 #include <tf/transform_listener.h>
+
 #include "util.hpp"
-
-namespace image_encodings = sensor_msgs::image_encodings;
-
-using image_transport::CameraSubscriber;
-using sensor_msgs::CameraInfoConstPtr;
-using sensor_msgs::ImageConstPtr;
-using sensor_msgs::CameraInfo;
-using sensor_msgs::Image;
-
-typedef pcl::PointCloud<pcl::PointXYZ> PointCloudXYZ;
 
 class LineDetectionNode
 {
@@ -75,14 +60,16 @@ public:
 	 * \param src_ver vertical filter response from MatchedFilter()
 	 * \param pts list of local maxima in the filter response
 	 */
-	void NonMaxSupr(cv::Mat src_hor, cv::Mat src_ver, PointCloudXYZ &dst);
+	void NonMaxSupr(cv::Mat src_hor, cv::Mat src_ver,
+	                pcl::PointCloud<pcl::PointXYZ> &dst);
 
 	/**
 	 * Update cached information to match the current algorithmic parameters.
 	 */
 	void UpdateCache(void);
 
-	void ImageCallback(ImageConstPtr const &msg_img, CameraInfoConstPtr const &msg_cam);
+	void ImageCallback(sensor_msgs::ImageConstPtr const &msg_img,
+	                   sensor_msgs::CameraInfoConstPtr const &msg_cam);
 
 protected:
 	struct Offset {
@@ -115,11 +102,10 @@ private:
 
 	ros::NodeHandle                    m_nh;
 	tf::TransformListener              m_tf;
-	image_transport::ImageTransport    m_it;
 	image_geometry::PinholeCameraModel m_model;
 
-	CameraSubscriber m_sub_cam;
-	ros::Publisher   m_pub_pts;
+	image_transport::CameraSubscriber m_sub_cam;
+	ros::Publisher                    m_pub_pts;
 
 	// Debug topics; only enabled if m_debug is true.
 	image_transport::Publisher m_pub_pre;

@@ -1,12 +1,22 @@
+#include <cmath>
 #include <limits>
+#include <string>
+#include <vector>
+
+#include <ros/ros.h>
+#include <ros/console.h>
+#include <cv_bridge/cv_bridge.h>
 #include <pcl_ros/point_cloud.h>
+#include <sensor_msgs/PointCloud2.h>
+#include <sensor_msgs/image_encodings.h>
 #include <tf/transform_datatypes.h>
 #include <visualization_msgs/Marker.h>
-#include <visualization_msgs/MarkerArray.h>
+
 #include "LineDetectionNode.hpp"
 
+typedef pcl::PointCloud<pcl::PointXYZ> PointCloudXYZ;
+
 using visualization_msgs::Marker;
-using visualization_msgs::MarkerArray;
 
 // TODO: Convert the direction of principal curvature to real-world coordinates.
 
@@ -17,21 +27,22 @@ LineDetectionNode::LineDetectionNode(ros::NodeHandle nh, std::string ground_id,
 	  m_valid(false),
 	  m_num_prev(0),
 	  m_ground_id(ground_id),
-	  m_nh(nh),
-	  m_it(nh)
+	  m_nh(nh)
 {
-	m_sub_cam = m_it.subscribeCamera("image", 1, &LineDetectionNode::ImageCallback, this);
+	image_transport::ImageTransport it(nh);
+
+	m_sub_cam = it.subscribeCamera("image", 1, &LineDetectionNode::ImageCallback, this);
 	m_pub_pts = m_nh.advertise<PointCloudXYZ>("line_points", 10);
 
 	if (m_debug) {
 		ROS_WARN("debugging topics are enabled; performance may be degraded");
 
-		m_pub_pre        = m_it.advertise("line_pre",        10);
-		m_pub_distance   = m_it.advertise("line_distance",   10);
-		m_pub_ker_hor    = m_it.advertise("line_kernel_hor", 10);
-		m_pub_ker_ver    = m_it.advertise("line_kernel_ver", 10);
-		m_pub_filter_hor = m_it.advertise("line_filter_hor", 10);
-		m_pub_filter_ver = m_it.advertise("line_filter_ver", 10);
+		m_pub_pre        = it.advertise("line_pre",        10);
+		m_pub_distance   = it.advertise("line_distance",   10);
+		m_pub_ker_hor    = it.advertise("line_kernel_hor", 10);
+		m_pub_ker_ver    = it.advertise("line_kernel_ver", 10);
+		m_pub_filter_hor = it.advertise("line_filter_hor", 10);
+		m_pub_filter_ver = it.advertise("line_filter_ver", 10);
 		m_pub_visual_one = m_nh.advertise<Marker>("/visualization_marker", 1);
 	}
 }
@@ -257,7 +268,7 @@ void LineDetectionNode::ImageCallback(ImageConstPtr const &msg_img,
 		cv_bridge::CvImage msg_distance;
 		msg_distance.header.stamp    = msg_img->header.stamp;
 		msg_distance.header.frame_id = msg_img->header.frame_id;
-		msg_distance.encoding = image_encodings::RGB8;
+		msg_distance.encoding = enc::BGR8;
 		msg_distance.image    = img_distance;
 		m_pub_distance.publish(msg_distance.toImageMsg());
 		m_pub_visual_one.publish(msg_contour);
@@ -269,7 +280,7 @@ void LineDetectionNode::ImageCallback(ImageConstPtr const &msg_img,
 		cv_bridge::CvImage msg_ker_hor;
 		msg_ker_hor.header.stamp    = msg_img->header.stamp;
 		msg_ker_hor.header.frame_id = msg_img->header.frame_id;
-		msg_ker_hor.encoding = image_encodings::MONO8;
+		msg_ker_hor.encoding = enc::MONO8;
 		msg_ker_hor.image    = img_ker_hor;
 		m_pub_ker_hor.publish(msg_ker_hor.toImageMsg());
 
@@ -279,7 +290,7 @@ void LineDetectionNode::ImageCallback(ImageConstPtr const &msg_img,
 		cv_bridge::CvImage msg_ker_ver;
 		msg_ker_ver.header.stamp    = msg_img->header.stamp;
 		msg_ker_ver.header.frame_id = msg_img->header.frame_id;
-		msg_ker_ver.encoding = image_encodings::MONO8;
+		msg_ker_ver.encoding = enc::MONO8;
 		msg_ker_ver.image    = img_ker_ver;
 		m_pub_ker_ver.publish(msg_ker_ver.toImageMsg());
 
@@ -290,7 +301,7 @@ void LineDetectionNode::ImageCallback(ImageConstPtr const &msg_img,
 		cv_bridge::CvImage msg_filter_hor;
 		msg_filter_hor.header.stamp    = msg_img->header.stamp;
 		msg_filter_hor.header.frame_id = msg_img->header.frame_id;
-		msg_filter_hor.encoding = image_encodings::MONO8;
+		msg_filter_hor.encoding = enc::MONO8;
 		msg_filter_hor.image    = img_filter_hor;
 		m_pub_filter_hor.publish(msg_filter_hor.toImageMsg());
 
@@ -300,7 +311,7 @@ void LineDetectionNode::ImageCallback(ImageConstPtr const &msg_img,
 		cv_bridge::CvImage msg_filter_ver;
 		msg_filter_ver.header.stamp    = msg_img->header.stamp;
 		msg_filter_ver.header.frame_id = msg_img->header.frame_id;
-		msg_filter_ver.encoding = image_encodings::MONO8;
+		msg_filter_ver.encoding = enc::MONO8;
 		msg_filter_ver.image    = img_filter_ver;
 		m_pub_filter_ver.publish(msg_filter_ver.toImageMsg());
 	}
