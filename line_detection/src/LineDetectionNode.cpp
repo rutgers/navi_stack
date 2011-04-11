@@ -149,46 +149,43 @@ void LineDetectionNode::UpdateCache(void)
 void LineDetectionNode::ImageCallback(ImageConstPtr const &msg_img,
                                       CameraInfoConstPtr const &msg_cam)
 {
+	namespace enc = sensor_msgs::image_encodings;
+
 	// Keep the ground plane in sync with the latest TF data.
 	Plane plane;
 	try {
 		std::string ground_id = m_ground_id;
 		std::string camera_id = msg_img->header.frame_id;
-
 		GuessGroundPlane(m_tf, ground_id, camera_id, msg_img->header.stamp, plane);
 	} catch (tf::TransformException ex) {
 		ROS_ERROR_THROTTLE(30, "%s", ex.what());
 		return;
 	}
 
-	// Convert ROS messages to OpenCV data types.
-	cv_bridge::CvImagePtr img_ptr;
-	cv::Mat img_input;
-
+	// Convert the ROS Image and CameraInfo messages into OpenCV datatypes for
+	// processing. This avoids copying the data when possible.
+	cv::Mat img_src;
 	try {
-		img_ptr = cv_bridge::toCvCopy(msg_img, image_encodings::BGR8);
+		m_model.fromCameraInfo(msg_cam);
+		cv_bridge::CvImageConstPtr src_tmp = cv_bridge::toCvShare(msg_img, enc::MONO8);
+		img_src = src_tmp->image;
 	} catch (cv_bridge::Exception &e) {
-		ROS_ERROR_THROTTLE(30, "%s", e.what());
+		ROS_WARN_THROTTLE(10, "unable to parse image message");
 		return;
 	}
-
-	// FIXME: Flush the cache when camerainfo changes.
-	m_model.fromCameraInfo(msg_cam);
-	img_input = img_ptr->image;
 
 	// Update pre-computed values that were cached (only if necessary!).
 	SetGroundPlane(plane);
 	SetResolution(msg_img->width, msg_img->height);
 	UpdateCache();
 
-	// Processing...
+	// Processing
 	std::list<cv::Point2i> maxima;
 	cv::Mat img_hor, img_ver;
 	cv::Mat img_pre;
 
-	LineColorTransform(img_input, img_pre, m_invert);
-	PulseFilter(img_pre, img_hor, m_kernel_hor, m_offset_hor, true);
-	PulseFilter(img_pre, img_ver, m_kernel_ver, m_offset_ver, false);
+	PulseFilter(img_src, img_hor, m_kernel_hor, m_offset_hor, true);
+	PulseFilter(img_src, img_ver, m_kernel_ver, m_offset_ver, false);
 	NonMaxSupr(img_hor, img_ver, maxima);
 
 	// Publish a three-dimensional point cloud in the camera frame by converting
@@ -201,16 +198,18 @@ void LineDetectionNode::ImageCallback(ImageConstPtr const &msg_img,
 	std::list<cv::Point2i>::iterator it;
 
 	// Use a row vector to store unordered points (as per PCL documentation).
+	// FIXME: use PCL to create the destination pointcloud.
+	// FIXME: data is not dense (some values will be NaN)
 	msg_pts->header.stamp    = msg_img->header.stamp;
 	msg_pts->header.frame_id = msg_img->header.frame_id;
-	msg_pts->height   = img_input.rows;
-	msg_pts->width    = img_input.cols;
+	msg_pts->height   = img_src.rows;
+	msg_pts->width    = img_src.cols;
 	msg_pts->is_dense = true;
-	msg_pts->points.resize(img_input.rows * img_input.cols);
+	msg_pts->points.resize(img_src.rows * img_src.cols);
 
-	for (int y = 0; y < img_input.rows; ++y)
-	for (int x = 0; x < img_input.cols; ++x) {
-		pcl::PointXYZ &pt = msg_pts->points[y * img_input.cols + x];
+	for (int y = 0; y < img_src.rows; ++y)
+	for (int x = 0; x < img_src.cols; ++x) {
+		pcl::PointXYZ &pt = msg_pts->points[y * img_src.cols + x];
 		pt.x = std::numeric_limits<double>::quiet_NaN();
 		pt.y = std::numeric_limits<double>::quiet_NaN();
 		pt.z = std::numeric_limits<double>::quiet_NaN();
@@ -219,7 +218,7 @@ void LineDetectionNode::ImageCallback(ImageConstPtr const &msg_img,
 	int i;
 	for (it = maxima.begin(), i = 0; it != maxima.end(); ++it, ++i) {
 		cv::Point3d    pt_world = GetGroundPoint(*it);
-		pcl::PointXYZ &pt_cloud = msg_pts->points[it->y * img_input.cols + it->x];
+		pcl::PointXYZ &pt_cloud = msg_pts->points[it->y * img_src.cols + it->x];
 		pt_cloud.x = pt_world.x;
 		pt_cloud.y = pt_world.y;
 		pt_cloud.z = pt_world.z;
@@ -229,7 +228,7 @@ void LineDetectionNode::ImageCallback(ImageConstPtr const &msg_img,
 
 	// Two dimensional local maxima as a binary image. Detected line pixels are
 	// white (255) and all other pixels are black (0).
-	cv::Mat img_max(img_input.rows, img_input.cols, CV_8U, cv::Scalar(0));
+	cv::Mat img_max(img_src.rows, img_src.cols, CV_8U, cv::Scalar(0));
 	for (it = maxima.begin(); it != maxima.end(); ++it) {
 		img_max.at<uint8_t>(it->y, it->x) = 255;
 	}
@@ -253,7 +252,7 @@ void LineDetectionNode::ImageCallback(ImageConstPtr const &msg_img,
 		m_pub_pre.publish(msg_pre.toImageMsg());
 
 		// Render lines every 1 m on the ground plane and render them in 3D!
-		cv::Mat img_distance  = img_input.clone();
+		cv::Mat img_distance  = img_src.clone();
 		cv::Point3d P_ground  = m_plane.point;
 		cv::Point3d P_forward = m_plane.forward;
 		P_forward *= 1.0 / sqrt(P_forward.dot(P_forward));
