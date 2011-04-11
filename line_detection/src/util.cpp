@@ -39,12 +39,12 @@ void LineColorTransform(cv::Mat src, cv::Mat &dst, bool invert)
 }
 
 void GuessGroundPlane(tf::TransformListener &tf,
-                      std::string fr_gnd, std::string fr_cam,
+                      std::string fr_gnd, std::string fr_cam, ros::Time stamp,
                       Plane &plane)
 {
 	// Assume the origin of the base_footprint frame is on the ground plane.
 	PointStamped point_gnd, point_cam;
-	point_gnd.header.stamp    = ros::Time(0);
+	point_gnd.header.stamp    = stamp;
 	point_gnd.header.frame_id = fr_gnd;
 	point_gnd.point.x = 0.0;
 	point_gnd.point.y = 0.0;
@@ -53,7 +53,7 @@ void GuessGroundPlane(tf::TransformListener &tf,
 	// Assume the positive z-axis of the base_footprint frame is "up", implying
 	// that it is normal to the ground plane.
 	Vector3Stamped normal_gnd, normal_cam;
-	normal_gnd.header.stamp    = ros::Time(0);
+	normal_gnd.header.stamp    = stamp;
 	normal_gnd.header.frame_id = fr_gnd;
 	normal_gnd.vector.x = 0.0;
 	normal_gnd.vector.y = 0.0;
@@ -61,7 +61,7 @@ void GuessGroundPlane(tf::TransformListener &tf,
 
 	// Forward direction of the robot.
 	Vector3Stamped forward_gnd, forward_cam;
-	forward_gnd.header.stamp    = ros::Time(0);
+	forward_gnd.header.stamp    = stamp;
 	forward_gnd.header.frame_id = fr_gnd;
 	forward_gnd.vector.x = 1.0;
 	forward_gnd.vector.y = 0.0;

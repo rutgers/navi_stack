@@ -155,7 +155,7 @@ void LineDetectionNode::ImageCallback(ImageConstPtr const &msg_img,
 		std::string ground_id = m_ground_id;
 		std::string camera_id = msg_img->header.frame_id;
 
-		GuessGroundPlane(m_tf, ground_id, camera_id, plane);
+		GuessGroundPlane(m_tf, ground_id, camera_id, msg_img->header.stamp, plane);
 	} catch (tf::TransformException ex) {
 		ROS_ERROR_THROTTLE(30, "%s", ex.what());
 		return;
