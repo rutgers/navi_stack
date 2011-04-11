@@ -12,7 +12,7 @@ xmlns:rendering="http://playerstage.sourceforge.net/gazebo/xmlschema/#rendering"
 xmlns:physics="http://playerstage.sourceforge.net/gazebo/xmlschema/#physics">
     <xyz>0 0 0</xyz>
     <rpy>0 0 0</rpy>
-    <static>false</static>
+    <static>true</static>
     <body:box name="cone">
         <xyz>0 0 0</xyz>
         <rpy>0 0 0</rpy>

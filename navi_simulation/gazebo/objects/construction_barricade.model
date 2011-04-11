@@ -14,7 +14,7 @@ xmlns:rendering="http://playerstage.sourceforge.net/gazebo/xmlschema/#rendering"
 xmlns:physics="http://playerstage.sourceforge.net/gazebo/xmlschema/#physics">
     <xyz>0 0 0</xyz>
     <rpy>0 0 0</rpy>
-    <static>false</static>
+    <static>true</static>
     <body:box name="barrel">
         <xyz>0 0 0</xyz>
         <rpy>0 0 0</rpy>
@@ -26,7 +26,7 @@ xmlns:physics="http://playerstage.sourceforge.net/gazebo/xmlschema/#physics">
                 <xyz>0 0 0</xyz>
                 <rpy>0 0 0</rpy>
                 <scale>0.0254 0.0254  0.0254 </scale>
-                <mesh>construction_baricade.dae</mesh>
+                <mesh>construction_barricade.dae</mesh>
             </visual>
         </geom:box>
         
