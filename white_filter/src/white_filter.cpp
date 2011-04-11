@@ -18,16 +18,14 @@ void WhiteNodelet::onInit(void)
 	ros::NodeHandle &nh      = getNodeHandle();
 	ros::NodeHandle &nh_priv = getPrivateNodeHandle();
 
-	ROS_ERROR("init");
-
 	nh_priv.param<bool>("use_low",  m_use_low,  true);
 	nh_priv.param<bool>("use_high", m_use_high, true);
 	nh_priv.param<int>("threshold_hue", m_threshold_hue, 180);
 	nh_priv.param<int>("threshold_sat", m_threshold_sat, 127);
 
-	m_it  = boost::make_shared<image_transport::ImageTransport>(nh);
-	m_pub = m_it->advertise("white", 1);
-	m_sub = m_it->subscribe("image", 1, &WhiteNodelet::Callback, this);
+	image_transport::ImageTransport it(nh);
+	m_pub = it.advertise("white", 1);
+	m_sub = it.subscribe("image", 1, &WhiteNodelet::Callback, this);
 }
 
 void WhiteNodelet::Callback(sensor_msgs::Image::ConstPtr const &msg_img)
