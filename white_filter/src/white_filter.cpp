@@ -1,48 +1,36 @@
+#include "white_filter.hpp"
+
+#include <boost/shared_ptr.hpp>
+#include <boost/make_shared.hpp>
+
 #include <ros/ros.h>
 #include <cv_bridge/cv_bridge.h>
-#include <image_transport/image_transport.h>
-#include <sensor_msgs/Image.h>
+#include <pluginlib/class_list_macros.h>
 #include <sensor_msgs/image_encodings.h>
-
 #include <opencv/cv.h>
 
-namespace it = image_transport;
+PLUGINLIB_DECLARE_CLASS(white_filter, white_nodelet, white_node::WhiteNodelet, nodelet::Nodelet)
 
-class WhiteFilterNode {
-public:
-	WhiteFilterNode(ros::NodeHandle nh, ros::NodeHandle nh_priv);
-	void Callback(sensor_msgs::Image::ConstPtr const &ptr);
+namespace white_node {
 
-private:
-
-	ros::NodeHandle m_nh;
-	ros::NodeHandle m_nh_priv;
-
-	it::ImageTransport m_it;
-	it::Subscriber     m_sub_rgb;
-	it::Publisher      m_pub_white;
-
-	bool m_use_low;
-	bool m_use_high;
-	int m_threshold_hue;
-	int m_threshold_sat;
-};
-
-WhiteFilterNode::WhiteFilterNode(ros::NodeHandle nh, ros::NodeHandle nh_priv)
-	: m_nh(nh),
-	  m_nh_priv(nh_priv),
-	  m_it(nh)
+void WhiteNodelet::onInit(void)
 {
-	m_sub_rgb   = m_it.subscribe("image", 1, &WhiteFilterNode::Callback, this);
-	m_pub_white = m_it.advertise("white", 1);
+	ros::NodeHandle &nh      = getNodeHandle();
+	ros::NodeHandle &nh_priv = getPrivateNodeHandle();
+
+	ROS_ERROR("init");
 
 	nh_priv.param<bool>("use_low",  m_use_low,  true);
 	nh_priv.param<bool>("use_high", m_use_high, true);
 	nh_priv.param<int>("threshold_hue", m_threshold_hue, 180);
 	nh_priv.param<int>("threshold_sat", m_threshold_sat, 127);
+
+	m_it  = boost::make_shared<image_transport::ImageTransport>(nh);
+	m_pub = m_it->advertise("white", 1);
+	m_sub = m_it->subscribe("image", 1, &WhiteNodelet::Callback, this);
 }
 
-void WhiteFilterNode::Callback(sensor_msgs::Image::ConstPtr const &msg_img)
+void WhiteNodelet::Callback(sensor_msgs::Image::ConstPtr const &msg_img)
 {
 	namespace enc = sensor_msgs::image_encodings;
 
@@ -95,17 +83,6 @@ void WhiteFilterNode::Callback(sensor_msgs::Image::ConstPtr const &msg_img)
 	msg_white.header   = msg_img->header;
 	msg_white.encoding = enc::MONO8;
 	msg_white.image    = whiteness;
-	m_pub_white.publish(msg_white.toImageMsg());
+	m_pub.publish(msg_white.toImageMsg());
 }
-
-int main(int argc, char **argv)
-{
-	ros::init(argc, argv, "white_filter");
-
-	ros::NodeHandle nh;
-	ros::NodeHandle nh_priv("~");
-
-	WhiteFilterNode node(nh, nh_priv);
-	ros::spin();
-	return 0;
-}
+};

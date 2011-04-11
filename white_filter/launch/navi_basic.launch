@@ -1,6 +1,7 @@
 <launch>
 	<group ns="vision">
-		<node pkg="white_filter" type="white_node" name="white_filter">
+		<node pkg="nodelet" type="nodelet" name="standalone_nodelet"  args="manager"/>
+		<node pkg="nodelet" type="nodelet" name="white_filter" args="load white_filter/white_nodelet standalone_nodelet">
 			<param name="use_low"  value="true"/>
 			<param name="use_high" value="false"/>
 			<param name="threshold_hue" value="180"/>
