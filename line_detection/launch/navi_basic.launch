@@ -3,7 +3,6 @@
 		<node pkg="nodelet" type="nodelet" name="line_detection" args="load line_detection/line_nodelet standalone_nodelet">
 			<param name="thickness" value="0.0762"/>
 			<param name="border"    value="0.1452"/>
-			<param name="invert"    value="false"/>
 			<param name="threshold" value="40"/>
 			<param name="cutoff"    value="3"/>
 			<param name="frame"     value="/base_footprint"/>
