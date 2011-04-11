@@ -3,10 +3,14 @@
 	</description>
 	<author>Michael Koval</author>
 	<license>BSD</license>
+	<export>
+		<nodelet plugin="${prefix}/nodelet.xml"/>
+	</export>
 	<review status="unreviewed" notes=""/>
 	<depend package="image_geometry"/>
 	<depend package="message_filters"/>
 	<depend package="roscpp"/>
+	<depend package="nodelet"/>
 	<depend package="pcl"/>
 	<depend package="pcl_ros"/>
 	<depend package="sensor_msgs"/>

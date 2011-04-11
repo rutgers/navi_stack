@@ -1,6 +1,7 @@
 <launch>
 	<group ns="vision">
-		<node pkg="stereo_od" type="od_node" name="stereo_od">
+		<node pkg="nodelet" type="nodelet" name="standalone_nodelet"  args="manager"/>
+		<node pkg="nodelet" type="nodelet" name="stereo_od" args="load stereo_od/od_nodelet standalone_nodelet">
 			<remap from="points"      to="narrow/points2"/>
 			<remap from="camera_info" to="narrow/left/camera_info"/>
 			<param name="points_min"   value="100"/>
