@@ -8,6 +8,7 @@
 #include <opencv/cv.h>
 #include <pcl_ros/point_cloud.h>
 #include <pcl/point_types.h>
+#include <nodelet/nodelet.h>
 #include <image_geometry/pinhole_camera_model.h>
 #include <image_transport/image_transport.h>
 #include <sensor_msgs/CameraInfo.h>
@@ -16,19 +17,11 @@
 
 #include "util.hpp"
 
-class LineDetectionNode
-{
+namespace line_node {
+
+class LineNodelet : public nodelet::Nodelet {
 public:
-	/**
-	 * Build a matched pulse-width filter using a line width and dead width
-	 * specified in real-world coordinates. These are converted to camera
-	 * coordinates using the specified intrinsic matrix and ground plane.
-	 *
-	 * \param nh        public node handle
-	 * \param ground_id TF frame id for the ground plane
-	 * \param debug     enable debugging topics
-	 */
-	LineDetectionNode(ros::NodeHandle nh, std::string ground_id, bool debug = false);
+	virtual void onInit(void);
 
 	void SetCutoffWidth(int  width);
 	void SetDeadWidth(double width);
@@ -89,10 +82,10 @@ private:
 	int m_rows;
 	int m_cols;
 	size_t m_num_prev;
-	int    m_width_cutoff;
 	double m_width_dead;
 	double m_width_line;
-	double m_threshold;
+	int    m_width_cutoff;
+	int m_threshold;
 	Plane m_plane;
 	std::string m_ground_id;
 
@@ -116,5 +109,5 @@ private:
 	image_transport::Publisher m_pub_ker_ver;
 	ros::Publisher             m_pub_visual_one;
 };
-
+};
 #endif
