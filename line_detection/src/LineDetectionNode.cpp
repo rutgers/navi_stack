@@ -164,15 +164,19 @@ void LineDetectionNode::ImageCallback(ImageConstPtr const &msg_img,
 
 	// Convert the ROS Image and CameraInfo messages into OpenCV datatypes for
 	// processing. This avoids copying the data when possible.
-	cv::Mat img_src;
+	cv::Mat img_src8;
 	try {
 		m_model.fromCameraInfo(msg_cam);
 		cv_bridge::CvImageConstPtr src_tmp = cv_bridge::toCvShare(msg_img, enc::MONO8);
-		img_src = src_tmp->image;
+		img_src8 = src_tmp->image;
 	} catch (cv_bridge::Exception &e) {
 		ROS_WARN_THROTTLE(10, "unable to parse image message");
 		return;
 	}
+
+	// Switch to floating point numbers to avoid saturation arithmetic.
+	cv::Mat img_src;
+	img_src8.convertTo(img_src, CV_64FC1);
 
 	// Update pre-computed values that were cached (only if necessary!).
 	SetGroundPlane(plane);

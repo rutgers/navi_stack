@@ -8,7 +8,8 @@
 			<param name="cutoff"    value="3"/>
 			<param name="frame"     value="/base_footprint"/>
 			<param name="debug"     value="true"/>
-			<remap from="image" to="narrow/left/image_rect_color"/>
+			<remap from="image"       to="white"/>
+			<remap from="camera_info" to="narrow/left/camera_info"/>
 		</node>
 	</group>
 </launch>
