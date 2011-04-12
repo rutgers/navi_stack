@@ -1,14 +1,61 @@
 <launch>
+	<!-- Static URDF -->
 	<node pkg="joint_state_publisher" type="joint_state_publisher" name="joint_publisher"/>
 	<node pkg="robot_state_publisher" type="state_publisher" name="state_publisher"/>
 	<include file="$(find navi_model)/launch/model_upload.launch"/>
 
-	<!-- Monocular Vision Subsystem -->
-	<include file="$(find white_filter)/launch/navi_basic.launch"/>
-	<include file="$(find line_detection)/launch/navi_basic.launch"/>
+	<!-- Vision -->
+	<group ns="vision">
+		<node pkg="nodelet" type="nodelet" name="vision_manager" args="manager"/>
 
-	<!-- Stereo Vision Subsystem -->
-	<include file="$(find stereo_webcam)/launch/navi_basic.launch"/>
-	<!--<include file="$(find stereo_plane)/launch/navi_basic.launch"/>-->
-	<include file="$(find stereo_od)/launch/navi_basic.launch"/>
+		<!-- Monocular Line Detection -->
+		<node pkg="nodelet" type="nodelet" name="white_filter" args="load white_filter/white_nodelet vision_manager">
+			<param name="use_low"  value="true"/>
+			<param name="use_high" value="false"/>
+			<param name="threshold_hue" value="180"/>
+			<param name="threshold_sat" value="127"/>
+			<remap from="image" to="narrow/left/image_rect_color"/>
+		</node>
+		<node pkg="nodelet" type="nodelet" name="line_detection" args="load line_detection/line_nodelet vision_manager">
+			<param name="thickness" value="0.0762"/>
+			<param name="border"    value="0.1452"/>
+			<param name="threshold" value="40"/>
+			<param name="cutoff"    value="3"/>
+			<param name="frame"     value="/base_footprint"/>
+			<param name="debug"     value="true"/>
+			<remap from="image"       to="white"/>
+			<remap from="camera_info" to="narrow/left/camera_info"/>
+		</node>
+
+		<!-- Stereo Obstacle Detection -->
+		<node pkg="nodelet" type="nodelet" name="stereo_od" args="load stereo_od/od_nodelet vision_manager">
+			<remap from="points"      to="narrow/points2"/>
+			<remap from="camera_info" to="narrow/left/camera_info"/>
+			<param name="points_min"   value="100"/>
+			<param name="height_min"   value="0.5"/>
+			<param name="height_max"   value="1.0"/>
+			<param name="distance_max" value="10.0"/>
+			<param name="theta"        value="1.04719755"/>
+		</node>
+		<group ns="narrow">
+			<node pkg="stereo_image_proc" type="stereo_image_proc" name="wide_proc">
+				<remap from="stereo" to="narrow"/>
+				<remap from="image"  to="image_color"/>
+				<remap from="left/image_raw"    to="left/image_raw"/>
+				<remap from="right/image_raw"   to="right/image_raw"/>
+				<remap from="left/camera_info"  to="left/camera_info"/>
+				<remap from="right/camera_info" to="right/camera_info"/>
+			</node>
+		</group>
+		<group ns="wide">
+			<node pkg="stereo_image_proc" type="stereo_image_proc" name="narrow_proc">
+				<remap from="stereo" to="narrow"/>
+				<remap from="image"  to="image_color"/>
+				<remap from="left/image_raw"    to="left/image_raw"/>
+				<remap from="right/image_raw"   to="right/image_raw"/>
+				<remap from="left/camera_info"  to="left/camera_info"/>
+				<remap from="right/camera_info" to="right/camera_info"/>
+			</node>
+		</group>
+	</group>
 </launch>
