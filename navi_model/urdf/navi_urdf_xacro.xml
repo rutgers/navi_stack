@@ -36,7 +36,7 @@
 	<stereo-camera prefix="narrow" topic="vision/narrow" baseline="${baseline_narrow}"/>
 	<stereo-camera prefix="wide"   topic="vision/wide"   baseline="${baseline_wide}"/>
 	
-	<wheel_camera prefix="lw" reflect="1"/>
-	<wheel_camera prefix="rw" reflect="-1"/>
+	<wheel_camera prefix="left"  reflect="1"/>
+	<wheel_camera prefix="right" reflect="-1"/>
 
 </robot>

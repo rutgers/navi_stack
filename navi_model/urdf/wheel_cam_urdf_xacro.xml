@@ -46,14 +46,14 @@
 
 <xacro:macro name="wheel_camera" params="prefix reflect">
 
-	<joint name="${prefix}_camera_base_joint" type="fixed">
+	<joint name="wheel_${prefix}_camera_base_joint" type="fixed">
 		  <axis xyz="0 0 0" />
 		  <origin xyz="${wcamera_x} ${reflect * wcamera_y} ${wcamera_z}" rpy="0 ${15/180*M_PI} ${reflect*35/180*M_PI}" />
 		  <parent link="base_link"/>
-		  <child link="${prefix}_camera_base_link"/>
+		  <child link="wheel_${prefix}_camera_base_link"/>
 	</joint>
 
-	<link name="${prefix}_camera_base_link">
+	<link name="wheel_${prefix}_camera_base_link">
 			<inertial>
 				<mass value="0.014036" />
 				<origin xyz="0 0 0" />
@@ -63,7 +63,7 @@
 	</link>
 
 
-	<link name="${prefix}_camera_link" >
+	<link name="wheel_${prefix}_camera_link" >
 		<inertial>
 			<mass value="0.014036" />
 			<origin xyz="0 0 0" />
@@ -71,22 +71,22 @@
 					  iyy="0.015218160428" iyz="-0.000004273467" izz="0.011763977943" />
 		  </inertial>
 	</link>
-	<gazebo reference="${prefix}_camera_link"/>
+	<gazebo reference="wheel_${prefix}_camera_link"/>
 
 	<joint name="${prefix}_camera_joint" type="fixed">
 		   <axis xyz="0 0 0" />
 		  <origin xyz="0 0 0" rpy="${camera_roll} ${camera_pitch} ${camera_yaw}" />
-		  <parent link="${prefix}_camera_base_link"/>
-		  <child link="${prefix}_camera_link"/>
+		  <parent link="wheel_${prefix}_camera_base_link"/>
+		  <child link="wheel_${prefix}_camera_link"/>
 	 </joint>  
 	  
-	 <joint name="${prefix}_camera_gazebo_joint" type="fixed">
+	 <joint name="wheel_${prefix}_camera_gazebo_joint" type="fixed">
 			<origin xyz="0 0 0" rpy="1.5707963267948966 -1.5707963267948966 0"/>
-			<parent link="${prefix}_camera_link"/>
-			<child link="${prefix}_camera_gazebo_link"/>
+			<parent link="wheel_${prefix}_camera_link"/>
+			<child link="wheel_${prefix}_camera_gazebo_link"/>
 	 </joint>
 	 
-	 <link name="${prefix}_camera_gazebo_link" >
+	 <link name="wheel_${prefix}_camera_gazebo_link" >
 		<inertial>
 			<mass value="0.014036" />
 			<origin xyz="0 0 0" />
@@ -95,22 +95,22 @@
 		  </inertial>
 	</link>
   
-	<gazebo reference="${prefix}_camera_gazebo_link">
+	<gazebo reference="wheel_${prefix}_camera_gazebo_link">
 			<material>Gazebo/Black</material>
 
-			<sensor:camera name="${prefix}_camera_sensor">
+			<sensor:camera name="wheel_${prefix}_camera_sensor">
 				<imageSize>${image_width} ${image_height}</imageSize>
 				<imageFormat>R8G8B8</imageFormat>
 				<hfov>${hfov}</hfov>
 				<nearClip>.1</nearClip>
 				<farClip>100</farClip>
 				<updateRate>${fps}</updateRate>
-				<controller:gazebo_ros_camera name="${prefix}_camera_controller" plugin="libgazebo_ros_camera.so">
+				<controller:gazebo_ros_camera name="wheel_${prefix}_camera_controller" plugin="libgazebo_ros_camera.so">
 					<alwaysOn>true</alwaysOn>
 					<updateRate>${fps}</updateRate>
-					<imageTopicName>${prefix}_camera/image_raw</imageTopicName>
-					<cameraInfoTopicName>${prefix}_camera/camera_info</cameraInfoTopicName>
-					<frameName>/${prefix}_camera_link</frameName>
+					<imageTopicName>/vision/wheel/${prefix}/image_raw</imageTopicName>
+					<cameraInfoTopicName>/vision/wheel/${prefix}/camera_info</cameraInfoTopicName>
+					<frameName>/wheel_${prefix}_camera_link</frameName>
 					<hackBaseline>0</hackBaseline>
 					<CxPrime>${(image_width+1)/2}</CxPrime>
 					<Cx>${(image_width+1)/2}</Cx>
@@ -123,7 +123,7 @@
 					<distortion_k3>0.00000001</distortion_k3>
 					<distortion_t1>0.00000001</distortion_t1>
 					<distortion_t2>0.00000001</distortion_t2>
-					<interface:camera name="${prefix}_camera_iface" />
+					<interface:camera name="wheel_${prefix}_camera_iface" />
 				</controller:gazebo_ros_camera>
 			</sensor:camera>
 		</gazebo>  
