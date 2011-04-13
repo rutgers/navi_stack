@@ -1,0 +1,7 @@
+<library path="lib/libline_nodelet">
+	<class name="line_detection/line_nodelet"
+	       type="line_node::LineNodelet"
+	       base_class_type="nodelet::Nodelet">
+		<description>Matched pulse-width filter for detecting lines in an image.</description>
+	</class>
+</library>

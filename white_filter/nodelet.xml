@@ -1,0 +1,7 @@
+<library path="lib/libwhite_nodelet">
+	<class name="white_filter/white_nodelet"
+	       type="white_node::WhiteNodelet"
+	       base_class_type="nodelet::Nodelet">
+		<description>Detect regions of white color in an image.</description>
+	</class>
+</library>

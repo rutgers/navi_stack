@@ -1,50 +1,27 @@
 #ifndef LINE_DETECTION_NODE_HPP_
 #define LINE_DETECTION_NODE_HPP_
 
-#include <climits>
-#include <cmath>
 #include <string>
 #include <vector>
 
-#include <opencv/cv.h>
-#include <ros/console.h>
 #include <ros/ros.h>
-#include <cv_bridge/cv_bridge.h>
+#include <opencv/cv.h>
 #include <pcl_ros/point_cloud.h>
 #include <pcl/point_types.h>
+#include <nodelet/nodelet.h>
 #include <image_geometry/pinhole_camera_model.h>
 #include <image_transport/image_transport.h>
 #include <sensor_msgs/CameraInfo.h>
 #include <sensor_msgs/Image.h>
-#include <sensor_msgs/PointCloud2.h>
-#include <sensor_msgs/image_encodings.h>
 #include <tf/transform_listener.h>
+
 #include "util.hpp"
 
-namespace image_encodings = sensor_msgs::image_encodings;
+namespace line_node {
 
-using image_transport::CameraSubscriber;
-using sensor_msgs::CameraInfoConstPtr;
-using sensor_msgs::ImageConstPtr;
-using sensor_msgs::CameraInfo;
-using sensor_msgs::Image;
-
-typedef pcl::PointCloud<pcl::PointXYZ>    PointCloud;
-typedef pcl::PointCloud<pcl::PointNormal> PointNormalCloud;
-
-class LineDetectionNode
-{
+class LineNodelet : public nodelet::Nodelet {
 public:
-	/**
-	 * Build a matched pulse-width filter using a line width and dead width
-	 * specified in real-world coordinates. These are converted to camera
-	 * coordinates using the specified intrinsic matrix and ground plane.
-	 *
-	 * \param nh        public node handle
-	 * \param ground_id TF frame id for the ground plane
-	 * \param debug     enable debugging topics
-	 */
-	LineDetectionNode(ros::NodeHandle nh, std::string ground_id, bool debug = false);
+	virtual void onInit(void);
 
 	void SetCutoffWidth(int  width);
 	void SetDeadWidth(double width);
@@ -76,14 +53,16 @@ public:
 	 * \param src_ver vertical filter response from MatchedFilter()
 	 * \param pts list of local maxima in the filter response
 	 */
-	void NonMaxSupr(cv::Mat src_hor, cv::Mat src_ver, std::list<cv::Point2i> &dst);
+	void NonMaxSupr(cv::Mat src_hor, cv::Mat src_ver,
+	                pcl::PointCloud<pcl::PointXYZ> &dst);
 
 	/**
 	 * Update cached information to match the current algorithmic parameters.
 	 */
 	void UpdateCache(void);
 
-	void ImageCallback(ImageConstPtr const &msg_img, CameraInfoConstPtr const &msg_cam);
+	void ImageCallback(sensor_msgs::ImageConstPtr const &msg_img,
+	                   sensor_msgs::CameraInfoConstPtr const &msg_cam);
 
 protected:
 	struct Offset {
@@ -103,10 +82,10 @@ private:
 	int m_rows;
 	int m_cols;
 	size_t m_num_prev;
-	int    m_width_cutoff;
 	double m_width_dead;
 	double m_width_line;
-	double m_threshold;
+	int    m_width_cutoff;
+	int m_threshold;
 	Plane m_plane;
 	std::string m_ground_id;
 
@@ -116,12 +95,10 @@ private:
 
 	ros::NodeHandle                    m_nh;
 	tf::TransformListener              m_tf;
-	image_transport::ImageTransport    m_it;
 	image_geometry::PinholeCameraModel m_model;
 
-	CameraSubscriber           m_sub_cam;
-	image_transport::Publisher m_pub_max;
-	ros::Publisher             m_pub_pts;
+	image_transport::CameraSubscriber m_sub_cam;
+	ros::Publisher                    m_pub_pts;
 
 	// Debug topics; only enabled if m_debug is true.
 	image_transport::Publisher m_pub_pre;
@@ -132,5 +109,5 @@ private:
 	image_transport::Publisher m_pub_ker_ver;
 	ros::Publisher             m_pub_visual_one;
 };
-
+};
 #endif

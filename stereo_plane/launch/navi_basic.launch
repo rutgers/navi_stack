@@ -1,6 +1,13 @@
 <launch>
 	<group ns="vision">
 		<node pkg="stereo_plane" type="ground_node" name="stereo_ground">
+			<param name="min_points"    value="150"/>
+			<param name="max_range"     value="5.000"/>
+			<param name="max_error"     value="0.050"/>
+			<param name="frequency"     value="10.00"/>
+			<param name="frame_fixed"   value="/base_link"/>
+			<param name="frame_ground"  value="/ground_link"/>
+			<param name="frame_default" value="/base_footprint"/>
 			<remap from="stereo_points" to="narrow/points2"/>
 		</node>
 	</group>

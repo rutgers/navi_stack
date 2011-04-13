@@ -26,7 +26,6 @@ struct Plane {
  */
 void LineColorTransform(cv::Mat src, cv::Mat &dst, bool invert);
 
-void GuessGroundPlane(tf::TransformListener &tf,
-                      std::string fr_gnd, std::string fr_cam, Plane &plane);
+void GuessGroundPlane(tf::TransformListener &tf, std::string fr_gnd, std::string fr_cam, ros::Time stamp, Plane &plane);
 
 #endif
