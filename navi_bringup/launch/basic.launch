@@ -9,32 +9,74 @@
 		<node pkg="nodelet" type="nodelet" name="vision_manager" args="manager"/>
 
 		<!-- Monocular Line Detection -->
-		<node pkg="nodelet" type="nodelet" name="white_filter" args="load white_filter/white_nodelet vision_manager">
+		<node pkg="nodelet" type="nodelet" name="center_white_filter" args="load white_filter/white_nodelet vision_manager">
 			<param name="use_low"  value="true"/>
 			<param name="use_high" value="false"/>
 			<param name="threshold_hue" value="180"/>
 			<param name="threshold_sat" value="127"/>
 			<remap from="image" to="narrow/left/image_rect_color"/>
+			<remap from="white" to="center_white"/>
 		</node>
-		<node pkg="nodelet" type="nodelet" name="line_detection" args="load line_detection/line_nodelet vision_manager">
+		<node pkg="nodelet" type="nodelet" name="center_lined" args="load line_detection/line_nodelet vision_manager">
 			<param name="thickness" value="0.0762"/>
 			<param name="border"    value="0.1452"/>
 			<param name="threshold" value="40"/>
 			<param name="cutoff"    value="3"/>
 			<param name="frame"     value="/base_footprint"/>
 			<param name="debug"     value="true"/>
-			<remap from="image"       to="white"/>
+			<remap from="image"       to="center_white"/>
 			<remap from="camera_info" to="narrow/left/camera_info"/>
+			<remap from="line_points" to="center_line"/>
+		</node>
+
+		<node pkg="nodelet" type="nodelet" name="left_white_filter" args="load white_filter/white_nodelet vision_manager">
+			<param name="use_low"  value="true"/>
+			<param name="use_high" value="false"/>
+			<param name="threshold_hue" value="180"/>
+			<param name="threshold_sat" value="127"/>
+			<remap from="image" to="wheel/left/image_raw"/>
+			<remap from="white" to="left_white"/>
+		</node>
+		<node pkg="nodelet" type="nodelet" name="left_lined" args="load line_detection/line_nodelet vision_manager">
+			<param name="thickness" value="0.0762"/>
+			<param name="border"    value="0.1452"/>
+			<param name="threshold" value="40"/>
+			<param name="cutoff"    value="3"/>
+			<param name="frame"     value="/base_footprint"/>
+			<param name="debug"     value="true"/>
+			<remap from="image"       to="left_white"/>
+			<remap from="camera_info" to="wheel/left/camera_info"/>
+			<remap from="line_points" to="left_line"/>
+		</node>
+
+		<node pkg="nodelet" type="nodelet" name="right_white_filter" args="load white_filter/white_nodelet vision_manager">
+			<param name="use_low"  value="true"/>
+			<param name="use_high" value="false"/>
+			<param name="threshold_hue" value="180"/>
+			<param name="threshold_sat" value="127"/>
+			<remap from="image" to="wheel/right/image_raw"/>
+			<remap from="white" to="right_white"/>
+		</node>
+		<node pkg="nodelet" type="nodelet" name="right_lined" args="load line_detection/line_nodelet vision_manager">
+			<param name="thickness" value="0.0762"/>
+			<param name="border"    value="0.1452"/>
+			<param name="threshold" value="40"/>
+			<param name="cutoff"    value="3"/>
+			<param name="frame"     value="/base_footprint"/>
+			<param name="debug"     value="true"/>
+			<remap from="image"       to="right_white"/>
+			<remap from="camera_info" to="wheel/right/camera_info"/>
+			<remap from="line_points" to="right_line"/>
 		</node>
 
 		<!-- Stereo Obstacle Detection -->
-		<node pkg="nodelet" type="nodelet" name="stereo_od" args="load stereo_od/od_nodelet vision_manager">
+		<node pkg="stereo_od" type="od_node" name="stereo_od">
 			<remap from="points"      to="narrow/points2"/>
 			<remap from="camera_info" to="narrow/left/camera_info"/>
 			<param name="points_min"   value="100"/>
 			<param name="height_min"   value="0.5"/>
 			<param name="height_max"   value="1.0"/>
-			<param name="distance_max" value="10.0"/>
+			<param name="distance_max" value="1000"/>
 			<param name="theta"        value="1.04719755"/>
 		</node>
 		<group ns="narrow">
