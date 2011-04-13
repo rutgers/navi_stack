@@ -1,7 +1,0 @@
-<library path="lib/libod_nodelet">
-	<class name="stereo_od/od_nodelet"
-	       type="od_node::StereoODNodelet"
-	       base_class_type="nodelet::Nodelet">
-		<description>Obstacle detection using a stereo pointcloud.</description>
-	</class>
-</library>

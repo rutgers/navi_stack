@@ -15,5 +15,5 @@ rosbuild_add_boost_directories()
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 
-rosbuild_add_library(od_nodelet src/od_node.cpp)
-rosbuild_link_boost(od_nodelet graph)
+rosbuild_add_executable(od_node src/od_node.cpp)
+rosbuild_link_boost(od_node graph)
