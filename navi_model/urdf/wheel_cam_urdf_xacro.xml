@@ -1,0 +1,133 @@
+<?xml version="1.0"?>
+<robot xmlns:body="http://playerstage.sourceforge.net/gazebo/xmlschema/#body"
+       xmlns:controller="http://playerstage.sourceforge.net/gazebo/xmlschema/#controller"
+       xmlns:geom="http://playerstage.sourceforge.net/gazebo/xmlschema/#geom"
+       xmlns:interface="http://playerstage.sourceforge.net/gazebo/xmlschema/#interface"
+       xmlns:joint="http://playerstage.sourceforge.net/gazebo/xmlschema/#slider"
+       xmlns:sensor="http://playerstage.sourceforge.net/gazebo/xmlschema/#sensor"
+       xmlns:xacro="http://ros.org/wiki/xacro">
+
+	<property name="M_PI" value="3.1415926535897931"/>
+
+	<!-- Position of the left camera w.r.t. the chassis -->
+	<property name="wcamera_x" value="0.43815"/>
+	<property name="wcamera_y" value="0.216"/>
+	<property name="wcamera_z" value="-0.035"/>
+	<!--<property name="camera_roll"  value="1.83259"/>-->
+	<!--<property name="camera_roll"  value="1.30899694"/>-->
+	<!--<property name="camera_roll"  value="1.04719755"/>-->
+	
+	<property name="wcamera_pitch" value="0.174532925"/>
+	<property name="wcamera_yaw" value="-0.174532925"/>
+	
+	
+	<property name="camera_roll"   value="1.57079633"/>
+	<property name="camera_pitch" value="3.14159265"/>
+	<property name="camera_yaw"   value="1.57079633"/>
+
+	<!-- Dimensions of the camera mount for visualization -->
+	<property name="camera_width"  value="0.30"/>
+	<property name="camera_length" value="0.05"/>
+	<property name="camera_height" value="0.05"/>
+	<property name="camera_offset" value="0.08"/>
+
+	<property name="camera_radius" value="0.010"/>
+	<property name="camera_depth"  value="0.001"/>
+
+	<!-- Modify camera intrinsics to match a PS3 Eye -->
+	<!-- TODO: What units is the focal length in!? -->
+	<property name="image_width"  value="320"/>
+	<property name="image_height" value="240"/>
+	<property name="focal_length" value="315"/>
+	<property name="hfov"         value="75"/>
+	<property name="fps"          value="10.0"/>
+
+
+
+<xacro:macro name="wheel_camera" params="prefix reflect">
+
+	<joint name="${prefix}_camera_base_joint" type="fixed">
+		  <axis xyz="0 0 0" />
+		  <origin xyz="${wcamera_x} ${reflect * wcamera_y} ${wcamera_z}" rpy="0 ${15/180*M_PI} ${reflect*35/180*M_PI}" />
+		  <parent link="base_link"/>
+		  <child link="${prefix}_camera_base_link"/>
+	</joint>
+
+	<link name="${prefix}_camera_base_link">
+			<inertial>
+				<mass value="0.014036" />
+				<origin xyz="0 0 0" />
+				<inertia  ixx="0.012411765597" ixy="-0.000711733678" ixz="0.00050272983"
+						  iyy="0.015218160428" iyz="-0.000004273467" izz="0.011763977943" />
+			  </inertial>
+	</link>
+
+
+	<link name="${prefix}_camera_link" >
+		<inertial>
+			<mass value="0.014036" />
+			<origin xyz="0 0 0" />
+			<inertia  ixx="0.012411765597" ixy="-0.000711733678" ixz="0.00050272983"
+					  iyy="0.015218160428" iyz="-0.000004273467" izz="0.011763977943" />
+		  </inertial>
+	</link>
+	<gazebo reference="${prefix}_camera_link"/>
+
+	<joint name="${prefix}_camera_joint" type="fixed">
+		   <axis xyz="0 0 0" />
+		  <origin xyz="0 0 0" rpy="${camera_roll} ${camera_pitch} ${camera_yaw}" />
+		  <parent link="${prefix}_camera_base_link"/>
+		  <child link="${prefix}_camera_link"/>
+	 </joint>  
+	  
+	 <joint name="${prefix}_camera_gazebo_joint" type="fixed">
+			<origin xyz="0 0 0" rpy="1.5707963267948966 -1.5707963267948966 0"/>
+			<parent link="${prefix}_camera_link"/>
+			<child link="${prefix}_camera_gazebo_link"/>
+	 </joint>
+	 
+	 <link name="${prefix}_camera_gazebo_link" >
+		<inertial>
+			<mass value="0.014036" />
+			<origin xyz="0 0 0" />
+			<inertia  ixx="0.012411765597" ixy="-0.000711733678" ixz="0.00050272983"
+					  iyy="0.015218160428" iyz="-0.000004273467" izz="0.011763977943" />
+		  </inertial>
+	</link>
+  
+	<gazebo reference="${prefix}_camera_gazebo_link">
+			<material>Gazebo/Black</material>
+
+			<sensor:camera name="${prefix}_camera_sensor">
+				<imageSize>${image_width} ${image_height}</imageSize>
+				<imageFormat>R8G8B8</imageFormat>
+				<hfov>${hfov}</hfov>
+				<nearClip>.1</nearClip>
+				<farClip>100</farClip>
+				<updateRate>${fps}</updateRate>
+				<controller:gazebo_ros_camera name="${prefix}_camera_controller" plugin="libgazebo_ros_camera.so">
+					<alwaysOn>true</alwaysOn>
+					<updateRate>${fps}</updateRate>
+					<imageTopicName>${prefix}_camera/image_raw</imageTopicName>
+					<cameraInfoTopicName>${prefix}_camera/camera_info</cameraInfoTopicName>
+					<frameName>/${prefix}_camera_link</frameName>
+					<hackBaseline>0</hackBaseline>
+					<CxPrime>${(image_width+1)/2}</CxPrime>
+					<Cx>${(image_width+1)/2}</Cx>
+					<Cy>${(image_height+1)/2}</Cy>
+					<!-- image_width / (2*tan(hfov_radian /2)) -->
+					<!-- 320 for wide and 772.55 for narrow stereo camera -->
+					<focal_length>${focal_length}</focal_length>
+					<distortion_k1>0.00000001</distortion_k1>
+					<distortion_k2>0.00000001</distortion_k2>
+					<distortion_k3>0.00000001</distortion_k3>
+					<distortion_t1>0.00000001</distortion_t1>
+					<distortion_t2>0.00000001</distortion_t2>
+					<interface:camera name="${prefix}_camera_iface" />
+				</controller:gazebo_ros_camera>
+			</sensor:camera>
+		</gazebo>  
+
+</xacro:macro>
+
+</robot>

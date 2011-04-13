@@ -22,13 +22,12 @@
 				<origin xyz=" 0 0 0" rpy="0 0 0"/>
 				<geometry name="base_link_visual_geom">
 					<mesh filename="package://navi_model/meshes/base_link.stl"/> 
-					<box size="0.9917 0.511175 0.358775"/>
 				</geometry>
 				<material name="Blue"/> 
 			</visual>
 			<collision>
 				<!-- collision origin is defined w.r.t. link local coordinate system -->
-				<origin xyz=" 0 0 0" rpy="0 0 0"/>
+				<origin xyz=" 0 0 0" rpy="0 0 -0.358775"/>
 				<geometry name="base_link_collision_geom">
 					<box size="0.9917 0.511175 0.358775"/>
 				</geometry>
@@ -69,6 +68,20 @@
 			<origin rpy="0 0 0" xyz="0 0 0.485775"/>
 			<child link="base_link"/>
 			<parent link="base_footprint"/>
+		</joint>
+		
+		<link name="drive_center">
+			<inertial>
+				<mass value="1"/>
+				<!-- center of mass (com) is defined w.r.t. link local coordinate system -->
+				<origin xyz="0 0 0"/> 
+				<inertia  ixx="1.0" ixy="0.0" ixz="0.0" iyy="100.0" iyz="0.0" izz="1.0"/>
+			</inertial>
+		</link>
+		<joint name="drive_center_joint" type="fixed">
+			<origin rpy="0 0 0" xyz="0.367 0 0"/>
+			<child link="drive_center"/>
+			<parent link="base_link"/>
 		</joint>
 	<gazebo>
 	

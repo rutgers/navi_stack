@@ -18,21 +18,17 @@
   xmlns:controller="http://playerstage.sourceforge.net/gazebo/xmlschema/#controller"
   xmlns:physics="http://playerstage.sourceforge.net/gazebo/xmlschema/#physics" >
 
-
   <thread>4</thread>
   <verbosity>5</verbosity>
 
   <!-- cfm is 1e-5 for single precision -->
-  <!-- erp (error reduction param is typically .1-.8 -->
-  <!-- here's the global contact cfm/erp 
-  Explains cfm and erp
-  http://opende.sourceforge.net/wiki/index.php/Manual_%28Concepts%29
-  -->
+  <!-- erp is typically .1-.8 -->
+  <!-- here's the global contact cfm/erp -->
   <physics:ode>
-    <stepTime>0.01</stepTime>
+    <stepTime>0.001</stepTime>
     <updateRate> -1</updateRate>
     <gravity>0 0 -9.8</gravity>
-    <cfm>0.000001</cfm>
+    <cfm>0.0000000001</cfm>
     <erp>0.2</erp>
     <quickStep>true</quickStep>
     <quickStepIters>10</quickStepIters>
@@ -70,4 +66,6 @@
     <shadowTechnique>none</shadowTechnique>
     <shadows>false</shadows>
   </rendering:ogre>
+  
+  
 </gazebo:world>
