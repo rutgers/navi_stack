@@ -114,6 +114,41 @@ void CreatePlaneSAC(pcl::ModelCoefficients::ConstPtr const& coef,
 	plane.normal.z = coef->values[2];
 }
 
+void CreatePlaneTF(std::string frame_id, ros::Time stamp, stereo_plane::Plane &plane)
+{
+	geometry_msgs::PointStamped pt_gnd;
+	geometry_msgs::PointStamped pt_fix;
+	pt_gnd.header.frame_id = m_fr_default;
+	pt_gnd.header.stamp    = stamp;
+	pt_gnd.point.x = 0.0;
+	pt_gnd.point.y = 0.0;
+	pt_gnd.point.z = 0.0;
+
+	geometry_msgs::Vector3Stamped vec_gnd;
+	geometry_msgs::Vector3Stamped vec_fix;
+	vec_gnd.header.frame_id = m_fr_default;
+	vec_gnd.header.stamp    = stamp;
+	vec_gnd.vector.x = 0.0;
+	vec_gnd.vector.y = 0.0;
+	vec_gnd.vector.z = 1.0;
+
+	try {
+		//m_sub_tf->waitForTransform(m_fr_default, pc_xyz->header.frame_id, pc_xyz->header.stamp, ros::Duration(1.0));
+		m_sub_tf->transformPoint(frame_id, pt_gnd, pt_fix);
+		m_sub_tf->transformVector(frame_id, vec_gnd, vec_fix);
+	} catch (tf::TransformException const &e) {
+		ROS_ERROR("unable to transform from \"%s\" to \"%s\": %s",
+				  m_fr_default.c_str(), frame_id.c_str(), e.what());
+		return;
+	}
+
+	plane.point.y = pt_fix.point.y;
+	plane.point.z = pt_fix.point.z;
+	plane.normal.x = vec_fix.vector.x;
+	plane.normal.y = vec_fix.vector.y;
+	plane.normal.z = vec_fix.vector.z;
+}
+
 void PointCloudCallback(PointCloudXYZ::ConstPtr const &pc_xyz)
 {
 	// Transform the point cloud into the base_link frame.
@@ -159,37 +194,8 @@ void PointCloudCallback(PointCloudXYZ::ConstPtr const &pc_xyz)
 	}
 	// Default to the static transform specified specified by the robot's URDF.
 	else {
-		geometry_msgs::PointStamped pt_gnd;
-		geometry_msgs::PointStamped pt_fix;
-		pt_gnd.header.frame_id = m_fr_default;
-		pt_gnd.header.stamp    = pc_xyz->header.stamp;
-		pt_gnd.point.x = 0.0;
-		pt_gnd.point.y = 0.0;
-		pt_gnd.point.z = 0.0;
-
-		geometry_msgs::Vector3Stamped vec_gnd;
-		geometry_msgs::Vector3Stamped vec_fix;
-		vec_gnd.header.frame_id = m_fr_default;
-		vec_gnd.header.stamp    = pc_xyz->header.stamp;
-		vec_gnd.vector.x = 0.0;
-		vec_gnd.vector.y = 0.0;
-		vec_gnd.vector.z = 1.0;
-
-		try {
-			//m_sub_tf->waitForTransform(m_fr_default, pc_xyz->header.frame_id, pc_xyz->header.stamp, ros::Duration(1.0));
-			m_sub_tf->transformPoint(pc_xyz->header.frame_id, pt_gnd, pt_fix);
-			m_sub_tf->transformVector(pc_xyz->header.frame_id, vec_gnd, vec_fix);
-		} catch (tf::TransformException const &e) {
-			ROS_ERROR("unable to transform from \"%s\" to \"%s\": %s",
-			          m_fr_default.c_str(), pc_xyz->header.frame_id.c_str(), e.what());
-			return;
-		}
-
-		plane->point.y = pt_fix.point.y;
-		plane->point.z = pt_fix.point.z;
-		plane->normal.x = vec_fix.vector.x;
-		plane->normal.y = vec_fix.vector.y;
-		plane->normal.z = vec_fix.vector.z;
+		CreatePlaneTF(pc_xyz->header.frame_id, pc_xyz->header.stamp, *plane);
+		// TODO: Update render without using the coefficients.
 	}
 	m_pub_plane.publish(plane);
 }
