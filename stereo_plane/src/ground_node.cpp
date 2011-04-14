@@ -31,8 +31,8 @@ static ros::Subscriber m_sub_pts;
 static tf::TransformListener    *m_sub_tf;
 static tf::TransformBroadcaster *m_pub_tf;
 
-void UpdateRender(std::string frame_id, stereo_plane::Plane plane,
-                  pcl::ModelCoefficients coef, bool fit)
+void UpdateRender(std::string frame_id, stereo_plane::Plane const &plane,
+                  std::vector<float> const &coef, bool fit)
 {
 	visualization_msgs::Marker::Ptr marker = boost::make_shared<visualization_msgs::Marker>();
 	marker->header.frame_id = frame_id;
@@ -65,30 +65,29 @@ void UpdateRender(std::string frame_id, stereo_plane::Plane plane,
 	}
 
 	std::vector<geometry_msgs::Point> &pts = marker->points;
-	std::vector<float> &val = coef.values;
 	size_t i = 0;
 
 	pts.resize(5);
 
 	pts[i].x = plane.point.x - 1.0;
 	pts[i].y = plane.point.y - 1.0;
-	pts[i].z = (-val[0] * pts[i].x + -val[1] * pts[i].y + -val[3]) / val[2];
+	pts[i].z = (-coef[0] * pts[i].x + -coef[1] * pts[i].y + -coef[3]) / coef[2];
 	++i;
 	pts[i].x = plane.point.x - 1.0;
 	pts[i].y = plane.point.y + 1.0;
-	pts[i].z = (-val[0] * pts[i].x + -val[1] * pts[i].y + -val[3]) / val[2];
+	pts[i].z = (-coef[0] * pts[i].x + -coef[1] * pts[i].y + -coef[3]) / coef[2];
 	++i;
 	pts[i].x = plane.point.x + 1.0;
 	pts[i].y = plane.point.y + 1.0;
-	pts[i].z = (-val[0] * pts[i].x + -val[1] * pts[i].y + -val[3]) / val[2];
+	pts[i].z = (-coef[0] * pts[i].x + -coef[1] * pts[i].y + -coef[3]) / coef[2];
 	++i;
 	pts[i].x = plane.point.x + 1.0;
 	pts[i].y = plane.point.y - 1.0;
-	pts[i].z = (-val[0] * pts[i].x + -val[1] * pts[i].y + -val[3]) / val[2];
+	pts[i].z = (-coef[0] * pts[i].x + -coef[1] * pts[i].y + -coef[3]) / coef[2];
 	++i;
 	pts[i].x = plane.point.x - 1.0;
 	pts[i].y = plane.point.y - 1.0;
-	pts[i].z = (-val[0] * pts[i].x + -val[1] * pts[i].y + -val[3]) / val[2];
+	pts[i].z = (-coef[0] * pts[i].x + -coef[1] * pts[i].y + -coef[3]) / coef[2];
 
 	m_pub_viz.publish(marker);
 }
@@ -150,7 +149,7 @@ void PointCloudCallback(PointCloudXYZ::ConstPtr const &pc_xyz)
 		plane->normal.x = coef->values[0];
 		plane->normal.y = coef->values[1];
 		plane->normal.z = coef->values[2];
-		UpdateRender(m_fr_fixed, *plane, *coef, fit);
+		UpdateRender(m_fr_fixed, *plane, coef->values, fit);
 	}
 	// Default to the static transform specified specified by the robot's URDF.
 	else {
