@@ -92,6 +92,28 @@ void UpdateRender(std::string frame_id, stereo_plane::Plane const &plane,
 	m_pub_viz.publish(marker);
 }
 
+void CreatePlaneSAC(pcl::ModelCoefficients::ConstPtr const& coef,
+                    stereo_plane::Plane &plane)
+{
+	pcl::PointXYZ pt_ori(0.0, 0.0, 0.0);
+	PointCloudXYZ pc_origin;
+	pc_origin.points.push_back(pt_ori);
+
+	PointCloudXYZ pc_proj;
+	pcl::ProjectInliers<pcl::PointXYZ> proj;
+	proj.setModelType(pcl::SACMODEL_PLANE);
+	proj.setInputCloud(pc_origin.makeShared());
+	proj.setModelCoefficients(coef);
+	proj.filter(pc_proj);
+
+	plane.point.x = pc_proj.points[0].x;
+	plane.point.y = pc_proj.points[0].y;
+	plane.point.z = pc_proj.points[0].z;
+	plane.normal.x = coef->values[0];
+	plane.normal.y = coef->values[1];
+	plane.normal.z = coef->values[2];
+}
+
 void PointCloudCallback(PointCloudXYZ::ConstPtr const &pc_xyz)
 {
 	// Transform the point cloud into the base_link frame.
@@ -132,23 +154,7 @@ void PointCloudCallback(PointCloudXYZ::ConstPtr const &pc_xyz)
 
 	bool fit = (int)inliers.indices.size() >= m_points_min;
 	if (fit) {
-		pcl::PointXYZ pt_ori(0.0, 0.0, 0.0);
-		PointCloudXYZ pc_origin;
-		pc_origin.points.push_back(pt_ori);
-
-		PointCloudXYZ pc_proj;
-		pcl::ProjectInliers<pcl::PointXYZ> proj;
-		proj.setModelType(pcl::SACMODEL_PLANE);
-		proj.setInputCloud(pc_origin.makeShared());
-		proj.setModelCoefficients(coef);
-		proj.filter(pc_proj);
-
-		plane->point.x = pc_proj.points[0].x;
-		plane->point.y = pc_proj.points[0].y;
-		plane->point.z = pc_proj.points[0].z;
-		plane->normal.x = coef->values[0];
-		plane->normal.y = coef->values[1];
-		plane->normal.z = coef->values[2];
+		CreatePlaneSAC(coef, *plane);
 		UpdateRender(m_fr_fixed, *plane, coef->values, fit);
 	}
 	// Default to the static transform specified specified by the robot's URDF.
