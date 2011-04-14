@@ -32,8 +32,10 @@ static tf::TransformListener    *m_sub_tf;
 static tf::TransformBroadcaster *m_pub_tf;
 
 void UpdateRender(std::string frame_id, stereo_plane::Plane plane,
-                  pcl::ModelCoefficients coef)
+                  pcl::ModelCoefficients coef, bool fit)
 {
+	ROS_ERROR("PT1");
+
 	visualization_msgs::Marker marker;
 	marker.header.frame_id = frame_id;
 	marker.header.stamp    = ros::Time::now();
@@ -41,6 +43,8 @@ void UpdateRender(std::string frame_id, stereo_plane::Plane plane,
 	marker.action = visualization_msgs::Marker::ADD;
 	marker.ns = "ground_plane";
 	marker.id = 0;
+
+	ROS_ERROR("PT2");
 
 	marker.pose.position.x = 0.0;
 	marker.pose.position.y = 0.0;
@@ -51,37 +55,60 @@ void UpdateRender(std::string frame_id, stereo_plane::Plane plane,
 	marker.pose.orientation.w = 1.0;
 
 	marker.scale.x = 0.1;
-	marker.color.r = 0.0;
-	marker.color.g = 1.0;
-	marker.color.b = 0.0;
-	marker.color.a = 1.0;
+
+	if (fit) {
+		marker.color.r = 0.0;
+		marker.color.g = 1.0;
+		marker.color.b = 0.0;
+		marker.color.a = 1.0;
+	} else {
+		marker.color.r = 1.0;
+		marker.color.g = 0.0;
+		marker.color.b = 0.0;
+		marker.color.a = 1.0;
+	}
+
+	ROS_ERROR("PT3");
 
 	std::vector<geometry_msgs::Point> &pts = marker.points;
-	std::vector<float>                &val = coef.values;
-	pts.resize(5);
-	pts[0].x = plane.point.x - 1.0;
-	pts[0].y = plane.point.y - 1.0;
-	pts[0].z = (-val[0] * pts[0].x + -val[1] * pts[0].y + -val[3]) / val[2];
-	pts[1].x = plane.point.x + 1.0;
-	pts[1].y = plane.point.y - 1.0;
-	pts[1].z = (-val[0] * pts[1].x + -val[1] * pts[1].y + -val[3]) / val[2];
-	pts[2].x = plane.point.x + 1.0;
-	pts[2].y = plane.point.y + 1.0;
-	pts[2].z = (-val[0] * pts[2].x + -val[1] * pts[2].y + -val[3]) / val[2];
-	pts[3].x = plane.point.x - 1.0;
-	pts[3].y = plane.point.y + 1.0;
-	pts[3].z = (-val[0] * pts[3].x + -val[1] * pts[3].y + -val[3]) / val[2];
-	pts[4].x = plane.point.x - 1.0;
-	pts[4].y = plane.point.y - 1.0;
-	pts[4].z = (-val[0] * pts[4].x + -val[1] * pts[4].y + -val[3]) / val[2];
+	std::vector<float> &val = coef.values;
+
+	geometry_msgs::Point pt1;
+	pt1.x = plane.point.x;
+	pt1.y = plane.point.y;
+	pt1.z = plane.point.z;
+	pts.push_back(pt1);
+
+	geometry_msgs::Point pt2;
+	pt2.x = plane.point.x + val[0];
+	pt2.y = plane.point.y + val[1];
+	pt2.z = plane.point.z + val[2];
+	pts.push_back(pt2);
+
+	ROS_ERROR("PT4");
+
+#if 0
+	pts[i].x = plane.point.x - 1.0;
+	pts[i].z = plane.point.z - 1.0;
+	pts[i].y = (-val[0] * pts[i].x + -val[2] * pts[i].z + -val[3]) / val[1];
+	++i;
+#endif
 	m_pub_viz.publish(marker);
 }
 
 void PointCloudCallback(PointCloudXYZ::ConstPtr const &pc_xyz)
 {
+	ROS_ERROR("callback");
 	// Transform the point cloud into the base_link frame.
 	PointCloudXYZ pc_frame;
-	pcl_ros::transformPointCloud(m_fr_fixed, *pc_xyz, pc_frame, *m_sub_tf);
+	try {
+		//m_sub_tf->waitForTransform(pc_xyz->header.frame_id, m_fr_fixed, pc_xyz->header.stamp, ros::Duration(1.0));
+		pcl_ros::transformPointCloud(m_fr_fixed, *pc_xyz, pc_frame, *m_sub_tf);
+	} catch (tf::TransformException const &e) {
+		ROS_ERROR("unable to transform from \"%s\" to \"%s\": %s",
+		          pc_xyz->header.frame_id.c_str(), m_fr_fixed.c_str(), e.what());
+		return;
+	}
 
 	// Prune points beyond the maximum range.
 	pcl::PassThrough<pcl::PointXYZ> filter_pass;
@@ -108,23 +135,11 @@ void PointCloudCallback(PointCloudXYZ::ConstPtr const &pc_xyz)
 	plane.header.frame_id = pc_xyz->header.frame_id;
 	plane.header.stamp    = pc_xyz->header.stamp;
 
-	if ((int)inliers.indices.size() >= m_points_min) {
-		// Transform the origin of the fixed frame into the current frame.
-		geometry_msgs::PointStamped pt_fix_ori;
-		geometry_msgs::PointStamped pt_cam_ori;
-		pt_fix_ori.header.frame_id = m_fr_fixed;
-		pt_fix_ori.header.stamp    = pc_xyz->header.stamp;
-		pt_fix_ori.point.x = 0.0;
-		pt_fix_ori.point.y = 0.0;
-		pt_fix_ori.point.z = 0.0;
-		m_sub_tf->transformPoint(pc_xyz->header.frame_id, pt_fix_ori, pt_cam_ori);
+	bool fit = (int)inliers.indices.size() >= m_points_min;
+	if (fit) {
+		ROS_ERROR("PLANE fit");
 
-		// Project the origin of the fixed frame onto the plane model.
-		pcl::PointXYZ pt_ori;
-		pt_ori.x = pt_cam_ori.point.x;
-		pt_ori.y = pt_cam_ori.point.y;
-		pt_ori.z = pt_cam_ori.point.z;
-
+		pcl::PointXYZ pt_ori(0.0, 0.0, 0.0);
 		PointCloudXYZ pc_origin;
 		pc_origin.points.push_back(pt_ori);
 
@@ -144,6 +159,8 @@ void PointCloudCallback(PointCloudXYZ::ConstPtr const &pc_xyz)
 	}
 	// Default to the static transform specified specified by the robot's URDF.
 	else {
+		ROS_ERROR("PLANE def");
+
 		geometry_msgs::PointStamped pt_gnd;
 		geometry_msgs::PointStamped pt_cam;
 		pt_gnd.header.frame_id = m_fr_default;
@@ -151,7 +168,6 @@ void PointCloudCallback(PointCloudXYZ::ConstPtr const &pc_xyz)
 		pt_gnd.point.x = 0.0;
 		pt_gnd.point.y = 0.0;
 		pt_gnd.point.z = 0.0;
-		m_sub_tf->transformPoint(pc_xyz->header.frame_id, pt_gnd, pt_cam);
 
 		geometry_msgs::Vector3Stamped vec_gnd;
 		geometry_msgs::Vector3Stamped vec_cam;
@@ -160,7 +176,16 @@ void PointCloudCallback(PointCloudXYZ::ConstPtr const &pc_xyz)
 		vec_gnd.vector.x = 0.0;
 		vec_gnd.vector.y = 0.0;
 		vec_gnd.vector.z = 1.0;
-		m_sub_tf->transformVector(pc_xyz->header.frame_id, vec_gnd, vec_cam);
+
+		try {
+			//m_sub_tf->waitForTransform(m_fr_default, pc_xyz->header.frame_id, pc_xyz->header.stamp, ros::Duration(1.0));
+			m_sub_tf->transformPoint(pc_xyz->header.frame_id, pt_gnd, pt_cam);
+			m_sub_tf->transformVector(pc_xyz->header.frame_id, vec_gnd, vec_cam);
+		} catch (tf::TransformException const &e) {
+			ROS_ERROR("unable to transform from \"%s\" to \"%s\": %s",
+			          m_fr_default.c_str(), pc_xyz->header.frame_id.c_str(), e.what());
+			return;
+		}
 
 		plane.point.x = pt_cam.point.x;
 		plane.point.y = pt_cam.point.y;
@@ -169,9 +194,8 @@ void PointCloudCallback(PointCloudXYZ::ConstPtr const &pc_xyz)
 		plane.normal.y = vec_cam.vector.y;
 		plane.normal.z = vec_cam.vector.z;
 	}
+	UpdateRender(pc_xyz->header.frame_id, plane, *coef, fit);
 	m_pub_plane.publish(plane);
-
-	UpdateRender(pc_xyz->header.frame_id, plane, *coef);
 }
 
 int main(int argc, char **argv)
