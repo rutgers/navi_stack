@@ -31,12 +31,20 @@ static ros::Subscriber m_sub_pts;
 static tf::TransformListener    *m_sub_tf;
 static tf::TransformBroadcaster *m_pub_tf;
 
-void UpdateRender(std::string frame_id, stereo_plane::Plane const &plane,
-                  std::vector<float> const &coef, bool fit)
+void UpdateRender(std::string frame_id, ros::Time stamp, stereo_plane::Plane const &plane, bool fit)
 {
+	// Calculate the a*x + b*y + c*z + d = 0 form of the plane.
+	std::vector<float> coef(4);
+	coef[0] = plane.normal.x;
+	coef[1] = plane.normal.y;
+	coef[2] = plane.normal.z;
+	coef[3] = -plane.normal.x * plane.point.x
+	        + -plane.normal.y * plane.point.y
+	        + -plane.normal.z * plane.point.z;
+
 	visualization_msgs::Marker::Ptr marker = boost::make_shared<visualization_msgs::Marker>();
 	marker->header.frame_id = frame_id;
-	marker->header.stamp    = ros::Time::now();
+	marker->header.stamp    = stamp;
 	marker->type   = visualization_msgs::Marker::LINE_STRIP;
 	marker->action = visualization_msgs::Marker::ADD;
 	marker->ns = "ground_plane";
@@ -114,8 +122,16 @@ void CreatePlaneSAC(pcl::ModelCoefficients::ConstPtr const& coef,
 	plane.normal.z = coef->values[2];
 }
 
-void CreatePlaneTF(std::string frame_id, ros::Time stamp, stereo_plane::Plane &plane)
+bool CreatePlaneTF(std::string frame_id, ros::Time stamp, stereo_plane::Plane &plane)
 {
+	// Defaults (just in case there is no tf transform).
+	plane.point.x = 0.0;
+	plane.point.y = 0.0;
+	plane.point.z = 0.0;
+	plane.normal.x = 0.0;
+	plane.normal.y = 0.0;
+	plane.normal.z = 1.0;
+
 	geometry_msgs::PointStamped pt_gnd;
 	geometry_msgs::PointStamped pt_fix;
 	pt_gnd.header.frame_id = m_fr_default;
@@ -139,14 +155,16 @@ void CreatePlaneTF(std::string frame_id, ros::Time stamp, stereo_plane::Plane &p
 	} catch (tf::TransformException const &e) {
 		ROS_ERROR("unable to transform from \"%s\" to \"%s\": %s",
 				  m_fr_default.c_str(), frame_id.c_str(), e.what());
-		return;
+		return false;
 	}
 
+	plane.point.x = pt_fix.point.x;
 	plane.point.y = pt_fix.point.y;
 	plane.point.z = pt_fix.point.z;
 	plane.normal.x = vec_fix.vector.x;
 	plane.normal.y = vec_fix.vector.y;
 	plane.normal.z = vec_fix.vector.z;
+	return true;
 }
 
 void PointCloudCallback(PointCloudXYZ::ConstPtr const &pc_xyz)
@@ -190,13 +208,10 @@ void PointCloudCallback(PointCloudXYZ::ConstPtr const &pc_xyz)
 	bool fit = (int)inliers.indices.size() >= m_points_min;
 	if (fit) {
 		CreatePlaneSAC(coef, *plane);
-		UpdateRender(m_fr_fixed, *plane, coef->values, fit);
+	} else {
+		CreatePlaneTF(m_fr_fixed, pc_xyz->header.stamp, *plane);
 	}
-	// Default to the static transform specified specified by the robot's URDF.
-	else {
-		CreatePlaneTF(pc_xyz->header.frame_id, pc_xyz->header.stamp, *plane);
-		// TODO: Update render without using the coefficients.
-	}
+	UpdateRender(m_fr_fixed, pc_xyz->header.stamp, *plane, fit);
 	m_pub_plane.publish(plane);
 }
 
