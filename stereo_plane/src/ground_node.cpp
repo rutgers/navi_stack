@@ -20,6 +20,8 @@ static int m_points_min;
 static double m_freq;
 static double m_range_max;
 static double m_error_max;
+static double m_valid_distance;
+static double m_valid_angle;
 static std::string m_fr_ground;
 static std::string m_fr_fixed;
 static std::string m_fr_default;
@@ -30,6 +32,9 @@ static ros::Subscriber m_sub_pts;
 
 static tf::TransformListener    *m_sub_tf;
 static tf::TransformBroadcaster *m_pub_tf;
+
+#define DOT(_a_, _b_) ((_a_).x * (_b_).x + (_a_).y * (_b_).y + (_a_).z * (_b_).z)
+#define NORM(_a_)     (sqrt(DOT(_a_, _a_)))
 
 void UpdateRender(std::string frame_id, ros::Time stamp, stereo_plane::Plane const &plane, bool fit)
 {
@@ -199,18 +204,35 @@ void PointCloudCallback(PointCloudXYZ::ConstPtr const &pc_xyz)
 	filter_seg.setInputCloud(pc_pass);
 	filter_seg.segment(inliers, *coef);
 
-	// Only accept a model if it has a sufficient number of inliers. This helps
-	// to reject ground planes that have been fit to obstacles or noise.
+	// Default plane specified by the user. This is used as a fallback when
+	// the best-fit plane has too high error to be considered reliable.
 	stereo_plane::Plane::Ptr plane = boost::make_shared<stereo_plane::Plane>();
+	CreatePlaneTF(m_fr_fixed, pc_xyz->header.stamp, *plane);
+
+	// Evaluate the fit against the default before accepting it. Only planes
+	// within a user-defined angle and distance should be accepted.
+	bool fit = false;
+
+	if ((int)inliers.indices.size() >= m_points_min) {
+		stereo_plane::Plane::Ptr plane_fit = boost::make_shared<stereo_plane::Plane>();
+		CreatePlaneSAC(coef, *plane_fit);
+
+		geometry_msgs::Point &pt1 = plane->point;
+		geometry_msgs::Point &pt2 = plane_fit->point;
+		double distance = sqrt(pow(pt2.x - pt1.x, 2) + pow(pt2.y - pt1.y, 2) + pow(pt2.z - pt1.z, 2));
+
+		geometry_msgs::Vector3 &n1 = plane->normal;
+		geometry_msgs::Vector3 &n2 = plane_fit->normal;
+		double angle = acos(DOT(n1, n2) / (NORM(n1) * NORM(n2)));
+
+		if (distance <= m_valid_distance && angle <= m_valid_angle) {
+			plane = plane_fit;
+			fit   = true;
+		}
+	}
+
 	plane->header.frame_id = m_fr_fixed;
 	plane->header.stamp    = pc_xyz->header.stamp;
-
-	bool fit = (int)inliers.indices.size() >= m_points_min;
-	if (fit) {
-		CreatePlaneSAC(coef, *plane);
-	} else {
-		CreatePlaneTF(m_fr_fixed, pc_xyz->header.stamp, *plane);
-	}
 	UpdateRender(m_fr_fixed, pc_xyz->header.stamp, *plane, fit);
 	m_pub_plane.publish(plane);
 }
@@ -230,6 +252,8 @@ int main(int argc, char **argv)
 	nh_priv.param<int>("min_points", m_points_min, 10);
 	nh_priv.param<double>("max_range", m_range_max, 3.00);
 	nh_priv.param<double>("max_error", m_error_max, 0.05);
+	nh_priv.param<double>("valid_angle",    m_valid_angle,    M_PI / 6);
+	nh_priv.param<double>("valid_distance", m_valid_distance, 0.20);
 	nh_priv.param<double>("frequency", m_freq,      0.50);
 	nh_priv.param<std::string>("frame_fixed",   m_fr_fixed,   "/base_link");
 	nh_priv.param<std::string>("frame_ground",  m_fr_ground,  "/ground_link");
