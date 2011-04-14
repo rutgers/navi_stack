@@ -54,16 +54,7 @@ void UpdateRender(std::string frame_id, ros::Time stamp, stereo_plane::Plane con
 	marker->action = visualization_msgs::Marker::ADD;
 	marker->ns = "ground_plane";
 	marker->id = 0;
-
-	marker->pose.position.x = 0.0;
-	marker->pose.position.y = 0.0;
-	marker->pose.position.z = 0.0;
-	marker->pose.orientation.x = 0.0;
-	marker->pose.orientation.y = 0.0;
-	marker->pose.orientation.z = 0.0;
-	marker->pose.orientation.w = 1.0;
-
-	marker->scale.x = 0.1;
+	marker->scale.x = 0.05;
 
 	if (fit) {
 		marker->color.r = 0.0;
@@ -207,7 +198,12 @@ void PointCloudCallback(PointCloudXYZ::ConstPtr const &pc_xyz)
 	// Default plane specified by the user. This is used as a fallback when
 	// the best-fit plane has too high error to be considered reliable.
 	stereo_plane::Plane::Ptr plane = boost::make_shared<stereo_plane::Plane>();
-	CreatePlaneTF(m_fr_fixed, pc_xyz->header.stamp, *plane);
+	bool valid = CreatePlaneTF(m_fr_fixed, pc_xyz->header.stamp, *plane);
+
+	if (!valid) {
+		// TODO: Publish the last known good ground plane.
+		return;
+	}
 
 	// Evaluate the fit against the default before accepting it. Only planes
 	// within a user-defined angle and distance should be accepted.
@@ -230,7 +226,6 @@ void PointCloudCallback(PointCloudXYZ::ConstPtr const &pc_xyz)
 			fit   = true;
 		}
 	}
-
 	plane->header.frame_id = m_fr_fixed;
 	plane->header.stamp    = pc_xyz->header.stamp;
 	UpdateRender(m_fr_fixed, pc_xyz->header.stamp, *plane, fit);
