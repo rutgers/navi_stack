@@ -34,71 +34,67 @@ static tf::TransformBroadcaster *m_pub_tf;
 void UpdateRender(std::string frame_id, stereo_plane::Plane plane,
                   pcl::ModelCoefficients coef, bool fit)
 {
-	ROS_ERROR("PT1");
+	visualization_msgs::Marker::Ptr marker = boost::make_shared<visualization_msgs::Marker>();
+	marker->header.frame_id = frame_id;
+	marker->header.stamp    = ros::Time::now();
+	marker->type   = visualization_msgs::Marker::LINE_STRIP;
+	marker->action = visualization_msgs::Marker::ADD;
+	marker->ns = "ground_plane";
+	marker->id = 0;
 
-	visualization_msgs::Marker marker;
-	marker.header.frame_id = frame_id;
-	marker.header.stamp    = ros::Time::now();
-	marker.type   = visualization_msgs::Marker::LINE_STRIP;
-	marker.action = visualization_msgs::Marker::ADD;
-	marker.ns = "ground_plane";
-	marker.id = 0;
+	marker->pose.position.x = 0.0;
+	marker->pose.position.y = 0.0;
+	marker->pose.position.z = 0.0;
+	marker->pose.orientation.x = 0.0;
+	marker->pose.orientation.y = 0.0;
+	marker->pose.orientation.z = 0.0;
+	marker->pose.orientation.w = 1.0;
 
-	ROS_ERROR("PT2");
-
-	marker.pose.position.x = 0.0;
-	marker.pose.position.y = 0.0;
-	marker.pose.position.z = 0.0;
-	marker.pose.orientation.x = 0.0;
-	marker.pose.orientation.y = 0.0;
-	marker.pose.orientation.z = 0.0;
-	marker.pose.orientation.w = 1.0;
-
-	marker.scale.x = 0.1;
+	marker->scale.x = 0.1;
 
 	if (fit) {
-		marker.color.r = 0.0;
-		marker.color.g = 1.0;
-		marker.color.b = 0.0;
-		marker.color.a = 1.0;
+		marker->color.r = 0.0;
+		marker->color.g = 1.0;
+		marker->color.b = 0.0;
+		marker->color.a = 1.0;
 	} else {
-		marker.color.r = 1.0;
-		marker.color.g = 0.0;
-		marker.color.b = 0.0;
-		marker.color.a = 1.0;
+		marker->color.r = 1.0;
+		marker->color.g = 0.0;
+		marker->color.b = 0.0;
+		marker->color.a = 1.0;
 	}
 
-	ROS_ERROR("PT3");
-
-	std::vector<geometry_msgs::Point> &pts = marker.points;
+	std::vector<geometry_msgs::Point> &pts = marker->points;
 	std::vector<float> &val = coef.values;
+	size_t i = 0;
 
-	geometry_msgs::Point pt1;
-	pt1.x = plane.point.x;
-	pt1.y = plane.point.y;
-	pt1.z = plane.point.z;
-	pts.push_back(pt1);
+	pts.resize(5);
 
-	geometry_msgs::Point pt2;
-	pt2.x = plane.point.x + val[0];
-	pt2.y = plane.point.y + val[1];
-	pt2.z = plane.point.z + val[2];
-	pts.push_back(pt2);
-
-	ROS_ERROR("PT4");
-
-#if 0
 	pts[i].x = plane.point.x - 1.0;
-	pts[i].z = plane.point.z - 1.0;
-	pts[i].y = (-val[0] * pts[i].x + -val[2] * pts[i].z + -val[3]) / val[1];
+	pts[i].y = plane.point.y - 1.0;
+	pts[i].z = (-val[0] * pts[i].x + -val[1] * pts[i].y + -val[3]) / val[2];
 	++i;
-#endif
+	pts[i].x = plane.point.x - 1.0;
+	pts[i].y = plane.point.y + 1.0;
+	pts[i].z = (-val[0] * pts[i].x + -val[1] * pts[i].y + -val[3]) / val[2];
+	++i;
+	pts[i].x = plane.point.x + 1.0;
+	pts[i].y = plane.point.y + 1.0;
+	pts[i].z = (-val[0] * pts[i].x + -val[1] * pts[i].y + -val[3]) / val[2];
+	++i;
+	pts[i].x = plane.point.x + 1.0;
+	pts[i].y = plane.point.y - 1.0;
+	pts[i].z = (-val[0] * pts[i].x + -val[1] * pts[i].y + -val[3]) / val[2];
+	++i;
+	pts[i].x = plane.point.x - 1.0;
+	pts[i].y = plane.point.y - 1.0;
+	pts[i].z = (-val[0] * pts[i].x + -val[1] * pts[i].y + -val[3]) / val[2];
+
 	m_pub_viz.publish(marker);
 }
 
 void PointCloudCallback(PointCloudXYZ::ConstPtr const &pc_xyz)
 {
-	ROS_ERROR("callback");
 	// Transform the point cloud into the base_link frame.
 	PointCloudXYZ pc_frame;
 	try {
@@ -112,11 +108,11 @@ void PointCloudCallback(PointCloudXYZ::ConstPtr const &pc_xyz)
 
 	// Prune points beyond the maximum range.
 	pcl::PassThrough<pcl::PointXYZ> filter_pass;
-	PointCloudXYZ pc_pass;
+	PointCloudXYZ::Ptr pc_pass = boost::make_shared<PointCloudXYZ>();
 	filter_pass.setInputCloud(pc_frame.makeShared());
 	filter_pass.setFilterFieldName("x");
 	filter_pass.setFilterLimits(0.0, m_range_max);
-	filter_pass.filter(pc_pass);
+	filter_pass.filter(*pc_pass);
 
 	// Fit a plane to the remaining points.
 	pcl::ModelCoefficients::Ptr coef = boost::make_shared<pcl::ModelCoefficients>();
@@ -126,19 +122,17 @@ void PointCloudCallback(PointCloudXYZ::ConstPtr const &pc_xyz)
 	filter_seg.setModelType(pcl::SACMODEL_PLANE);
 	filter_seg.setMethodType(pcl::SAC_RANSAC);
 	filter_seg.setDistanceThreshold(m_error_max);
-	filter_seg.setInputCloud(pc_pass.makeShared());
+	filter_seg.setInputCloud(pc_pass);
 	filter_seg.segment(inliers, *coef);
 
 	// Only accept a model if it has a sufficient number of inliers. This helps
 	// to reject ground planes that have been fit to obstacles or noise.
-	stereo_plane::Plane plane;
-	plane.header.frame_id = pc_xyz->header.frame_id;
-	plane.header.stamp    = pc_xyz->header.stamp;
+	stereo_plane::Plane::Ptr plane = boost::make_shared<stereo_plane::Plane>();
+	plane->header.frame_id = m_fr_fixed;
+	plane->header.stamp    = pc_xyz->header.stamp;
 
 	bool fit = (int)inliers.indices.size() >= m_points_min;
 	if (fit) {
-		ROS_ERROR("PLANE fit");
-
 		pcl::PointXYZ pt_ori(0.0, 0.0, 0.0);
 		PointCloudXYZ pc_origin;
 		pc_origin.points.push_back(pt_ori);
@@ -150,19 +144,18 @@ void PointCloudCallback(PointCloudXYZ::ConstPtr const &pc_xyz)
 		proj.setModelCoefficients(coef);
 		proj.filter(pc_proj);
 
-		plane.point.x = pc_proj.points[0].x;
-		plane.point.y = pc_proj.points[0].y;
-		plane.point.z = pc_proj.points[0].z;
-		plane.normal.x = coef->values[0];
-		plane.normal.y = coef->values[1];
-		plane.normal.z = coef->values[2];
+		plane->point.x = pc_proj.points[0].x;
+		plane->point.y = pc_proj.points[0].y;
+		plane->point.z = pc_proj.points[0].z;
+		plane->normal.x = coef->values[0];
+		plane->normal.y = coef->values[1];
+		plane->normal.z = coef->values[2];
+		UpdateRender(m_fr_fixed, *plane, *coef, fit);
 	}
 	// Default to the static transform specified specified by the robot's URDF.
 	else {
-		ROS_ERROR("PLANE def");
-
 		geometry_msgs::PointStamped pt_gnd;
-		geometry_msgs::PointStamped pt_cam;
+		geometry_msgs::PointStamped pt_fix;
 		pt_gnd.header.frame_id = m_fr_default;
 		pt_gnd.header.stamp    = pc_xyz->header.stamp;
 		pt_gnd.point.x = 0.0;
@@ -170,7 +163,7 @@ void PointCloudCallback(PointCloudXYZ::ConstPtr const &pc_xyz)
 		pt_gnd.point.z = 0.0;
 
 		geometry_msgs::Vector3Stamped vec_gnd;
-		geometry_msgs::Vector3Stamped vec_cam;
+		geometry_msgs::Vector3Stamped vec_fix;
 		vec_gnd.header.frame_id = m_fr_default;
 		vec_gnd.header.stamp    = pc_xyz->header.stamp;
 		vec_gnd.vector.x = 0.0;
@@ -179,22 +172,20 @@ void PointCloudCallback(PointCloudXYZ::ConstPtr const &pc_xyz)
 
 		try {
 			//m_sub_tf->waitForTransform(m_fr_default, pc_xyz->header.frame_id, pc_xyz->header.stamp, ros::Duration(1.0));
-			m_sub_tf->transformPoint(pc_xyz->header.frame_id, pt_gnd, pt_cam);
-			m_sub_tf->transformVector(pc_xyz->header.frame_id, vec_gnd, vec_cam);
+			m_sub_tf->transformPoint(pc_xyz->header.frame_id, pt_gnd, pt_fix);
+			m_sub_tf->transformVector(pc_xyz->header.frame_id, vec_gnd, vec_fix);
 		} catch (tf::TransformException const &e) {
 			ROS_ERROR("unable to transform from \"%s\" to \"%s\": %s",
 			          m_fr_default.c_str(), pc_xyz->header.frame_id.c_str(), e.what());
 			return;
 		}
 
-		plane.point.x = pt_cam.point.x;
-		plane.point.y = pt_cam.point.y;
-		plane.point.z = pt_cam.point.z;
-		plane.normal.x = vec_cam.vector.x;
-		plane.normal.y = vec_cam.vector.y;
-		plane.normal.z = vec_cam.vector.z;
+		plane->point.y = pt_fix.point.y;
+		plane->point.z = pt_fix.point.z;
+		plane->normal.x = vec_fix.vector.x;
+		plane->normal.y = vec_fix.vector.y;
+		plane->normal.z = vec_fix.vector.z;
 	}
-	UpdateRender(pc_xyz->header.frame_id, plane, *coef, fit);
 	m_pub_plane.publish(plane);
 }
 
