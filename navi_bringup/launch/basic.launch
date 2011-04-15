@@ -23,7 +23,7 @@
 			<param name="threshold" value="40"/>
 			<param name="cutoff"    value="3"/>
 			<param name="frame"     value="/base_footprint"/>
-			<param name="debug"     value="true"/>
+			<param name="debug"     value="false"/>
 			<remap from="image"       to="center_white"/>
 			<remap from="camera_info" to="narrow/left/camera_info"/>
 			<remap from="line_points" to="center_line"/>
@@ -43,7 +43,7 @@
 			<param name="threshold" value="40"/>
 			<param name="cutoff"    value="3"/>
 			<param name="frame"     value="/base_footprint"/>
-			<param name="debug"     value="true"/>
+			<param name="debug"     value="false"/>
 			<remap from="image"       to="left_white"/>
 			<remap from="camera_info" to="wheel/left/camera_info"/>
 			<remap from="line_points" to="left_line"/>
@@ -63,17 +63,27 @@
 			<param name="threshold" value="40"/>
 			<param name="cutoff"    value="3"/>
 			<param name="frame"     value="/base_footprint"/>
-			<param name="debug"     value="true"/>
+			<param name="debug"     value="false"/>
 			<remap from="image"       to="right_white"/>
 			<remap from="camera_info" to="wheel/right/camera_info"/>
 			<remap from="line_points" to="right_line"/>
 		</node>
 
-		<!-- Stereo Obstacle Detection -->
+		<!-- Stereo Vision -->
+		<node pkg="nodelet" type="nodelet" name="stereo_ground" args="load stereo_plane/ground_nodelet vision_manager">
+			<param name="inliers_min"   value="150"/>
+			<param name="range_max"     value="5.000"/>
+			<param name="error_default" value="0.20"/>
+			<param name="error_inlier"  value="0.05"/>
+			<param name="error_angle"   value="0.523598776"/>
+			<param name="frame_fixed"   value="/base_link"/>
+			<param name="frame_default" value="/base_footprint"/>
+			<remap from="points" to="narrow/points2"/>
+		</node>
 		<node pkg="stereo_od" type="od_node" name="stereo_od">
 			<remap from="points"      to="narrow/points2"/>
 			<remap from="camera_info" to="narrow/left/camera_info"/>
-			<param name="points_min"   value="100"/>
+			<param name="points_min"   value="500"/>
 			<param name="height_min"   value="0.5"/>
 			<param name="height_max"   value="1.0"/>
 			<param name="distance_max" value="1000"/>
