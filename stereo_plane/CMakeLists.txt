@@ -17,4 +17,4 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 rosbuild_genmsg()
 #rosbuild_gensrv()
 
-rosbuild_add_executable(ground_node src/ground_node.cpp)
+rosbuild_add_library(ground_nodelet src/ground_node.cpp)
