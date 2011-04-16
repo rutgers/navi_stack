@@ -42,8 +42,6 @@ void GroundNodelet::onInit(void)
 	m_pub_tf = boost::make_shared<tf::TransformBroadcaster>();
 	m_sub_tf = boost::make_shared<tf::TransformListener>(nh, ros::Duration(m_cache_time));
 
-	ROS_ERROR("GroundNodelet INIT");
-
 	m_pub_plane = nh.advertise<stereo_plane::Plane>("ground_plane", 10);
 	m_pub_viz   = nh.advertise<visualization_msgs::Marker>("visualization_marker", 1);
 	m_sub_pts   = nh.subscribe<PointCloudXYZ>("points", 1, &GroundNodelet::Callback, this);
