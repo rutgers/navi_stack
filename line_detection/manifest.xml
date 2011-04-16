@@ -19,6 +19,7 @@
 	<depend package="pcl_ros"/>
 	<depend package="rosconsole"/>
 	<depend package="sensor_msgs"/>
+	<depend package="geometry_msgs"/>
 	<depend package="stereo_plane"/>
 	<depend package="tf"/>
 </package>

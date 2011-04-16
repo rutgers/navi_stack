@@ -89,6 +89,8 @@ protected:
 		int neg, pos;
 	};
 
+	void TransformPlane(Plane const &src, Plane &dst, std::string frame_id);
+
 	cv::Point3d GetGroundPoint(cv::Point2d pt);
 	double ProjectDistance(cv::Point2d pt, cv::Point3d offset);
 	double ReprojectDistance(cv::Point2d pt, cv::Point2d offset);

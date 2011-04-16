@@ -205,13 +205,36 @@ void LineNodelet::UpdateCache(void)
 	m_valid = true;
 }
 
+void LineNodelet::TransformPlane(Plane const &src, Plane &dst, std::string frame_id)
+{
+	geometry_msgs::PointStamped src_point;
+	geometry_msgs::PointStamped dst_point;
+	src_point.header = src.header;
+	src_point.point  = src.point;
+
+	geometry_msgs::Vector3Stamped src_normal;
+	geometry_msgs::Vector3Stamped dst_normal;
+	src_normal.header = src.header;
+	src_normal.vector = src.normal;
+
+	m_tf.transformPoint(frame_id, src_point, dst_point);
+	m_tf.transformVector(frame_id, src_normal, dst_normal);
+
+	dst.header = src.header;
+	dst.point  = dst_point.point;
+	dst.normal = dst_normal.vector;
+	dst.type   = src.type;
+}
+
 void LineNodelet::ImageCallback(Image::ConstPtr const &msg_img,
                                 CameraInfo::ConstPtr const &msg_cam,
                                 Plane::ConstPtr const &msg_plane)
 {
 	namespace enc = sensor_msgs::image_encodings;
 
-	// TODO: transform msg_plane into the image coordinate frame
+	// Transform msg_plane into the camera's coordinate frame.
+	Plane plane;
+	TransformPlane(*msg_plane, plane, msg_img->header.frame_id);
 
 	// Convert the ROS Image and CameraInfo messages into OpenCV datatypes for
 	// processing. This avoids copying the data when possible.
@@ -230,7 +253,7 @@ void LineNodelet::ImageCallback(Image::ConstPtr const &msg_img,
 
 	// Update cached values. If any values change, the filter kernel will be
 	// recomputed.
-	SetGroundPlane(*msg_plane);
+	SetGroundPlane(plane);
 	SetResolution(msg_img->width, msg_img->height);
 	UpdateCache();
 
