@@ -49,8 +49,7 @@ void GroundNodelet::onInit(void)
 
 void GroundNodelet::Callback(pcl::PointCloud<pcl::PointXYZ>::ConstPtr const &msg_pts)
 {
-	std::string const &msg_frame = msg_pts->header.frame_id;
-	ros::Time   const &msg_stamp = msg_pts->header.stamp;
+	ros::Time const &msg_stamp = msg_pts->header.stamp;
 
 	// Get the default ground plane from TF (most likely a static transform in
 	// in the robot's URDF). This is used as a sanity check.
