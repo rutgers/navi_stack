@@ -14,6 +14,7 @@ public:
 	void Callback(sensor_msgs::Image::ConstPtr const &ptr);
 
 private:
+	boost::shared_ptr<image_transport::ImageTransport> m_it;
 	image_transport::Subscriber m_sub;
 	image_transport::Publisher  m_pub;
 
