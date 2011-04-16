@@ -5,9 +5,12 @@
 #include <vector>
 
 #include <ros/ros.h>
+#include <boost/smart_ptr.hpp>
 #include <opencv/cv.h>
 #include <pcl_ros/point_cloud.h>
 #include <pcl/point_types.h>
+#include <message_filters/subscriber.h>
+#include <message_filters/time_synchronizer.h>
 #include <nodelet/nodelet.h>
 #include <image_geometry/pinhole_camera_model.h>
 #include <image_transport/image_transport.h>
@@ -15,9 +18,25 @@
 #include <sensor_msgs/Image.h>
 #include <tf/transform_listener.h>
 
-#include "util.hpp"
+#include <sensor_msgs/CameraInfo.h>
+#include <sensor_msgs/Image.h>
+#include <stereo_plane/Plane.h>
+
+#include <message_filters/subscriber.h>
+#include <message_filters/time_synchronizer.h>
+#include <image_transport/subscriber_filter.h>
 
 namespace line_node {
+
+namespace it = image_transport;
+namespace mf = message_filters;
+
+using sensor_msgs::CameraInfo;
+using sensor_msgs::Image;
+using stereo_plane::Plane;
+
+typedef pcl::PointCloud<pcl::PointXYZ> PointCloudXYZ;
+typedef message_filters::TimeSynchronizer<sensor_msgs::Image, sensor_msgs::CameraInfo, stereo_plane::Plane> Synchronizer;
 
 class LineNodelet : public nodelet::Nodelet {
 public:
@@ -27,7 +46,7 @@ public:
 	void SetDeadWidth(double width);
 	void SetLineWidth(double width);
 	void SetInvert(bool invert);
-	void SetGroundPlane(Plane plane);
+	void SetGroundPlane(stereo_plane::Plane plane);
 	void SetResolution(int width, int height);
 	void SetThreshold(double threshold);
 
@@ -61,8 +80,9 @@ public:
 	 */
 	void UpdateCache(void);
 
-	void ImageCallback(sensor_msgs::ImageConstPtr const &msg_img,
-	                   sensor_msgs::CameraInfoConstPtr const &msg_cam);
+	void ImageCallback(sensor_msgs::Image::ConstPtr const &msg_img,
+	                   sensor_msgs::CameraInfo::ConstPtr const &msg_cam,
+	                   stereo_plane::Plane::ConstPtr const &msg_plane);
 
 protected:
 	struct Offset {
@@ -86,7 +106,7 @@ private:
 	double m_width_line;
 	int    m_width_cutoff;
 	int m_threshold;
-	Plane m_plane;
+	stereo_plane::Plane m_plane;
 	std::string m_ground_id;
 
 	int                 m_horizon_ver, m_horizon_hor;
@@ -97,8 +117,12 @@ private:
 	tf::TransformListener              m_tf;
 	image_geometry::PinholeCameraModel m_model;
 
-	image_transport::CameraSubscriber m_sub_cam;
-	ros::Publisher                    m_pub_pts;
+	ros::Publisher m_pub_pts;
+	it::ImageTransport         *m_it;
+	it::SubscriberFilter       *m_sub_img;
+	mf::Subscriber<CameraInfo> *m_sub_info;
+	mf::Subscriber<Plane>      *m_sub_plane;
+	boost::shared_ptr<Synchronizer> m_sub;
 
 	// Debug topics; only enabled if m_debug is true.
 	image_transport::Publisher m_pub_pre;
@@ -107,7 +131,6 @@ private:
 	image_transport::Publisher m_pub_filter_ver;
 	image_transport::Publisher m_pub_ker_hor;
 	image_transport::Publisher m_pub_ker_ver;
-	ros::Publisher             m_pub_visual_one;
 };
 };
 #endif
