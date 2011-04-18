@@ -1,0 +1,7 @@
+<library path="lib/libtracker_nodelet">
+	<class name="line_tracking/tracker_node"
+	       type="tracker_node::TrackerNodelet"
+	       base_class_type="nodelet::Nodelet">
+		<description>Track detected lines over time.</description>
+	</class>
+</library>
