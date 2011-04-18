@@ -18,14 +18,13 @@ namespace tracker_node {
 
 void TrackerNodelet::onInit(void)
 {
-	ROS_ERROR("TRACKER init");
-
 	ros::NodeHandle &nh      = getNodeHandle();
 	ros::NodeHandle &nh_priv = getPrivateNodeHandle();
 
 	nh_priv.param<int>("grid_width",  m_grid_width,  2000);
 	nh_priv.param<int>("grid_height", m_grid_height, 2000);
 	nh_priv.param<double>("grid_size", m_grid_size, 0.10);
+	nh_priv.param<double>("range_max", m_range_max, 10.0);
 	nh_priv.param<std::string>("frame_robot", m_fr_robot, "/base_link");
 	nh_priv.param<std::string>("frame_fixed", m_fr_fixed, "/map");
 
@@ -40,6 +39,11 @@ void TrackerNodelet::onInit(void)
 	m_sub_pts = nh.subscribe<PointCloud3D>("line_points", 10, &TrackerNodelet::AddPoints, this);
 }
 
+double TrackerNodelet::Distance(Point2D const &p1, Point2D const &p2) const
+{
+	return sqrt(pow(p2.x - p1.x, 2) + pow(p2.y - p1.y, 2));
+}
+
 void TrackerNodelet::ProjectPoint(Point3D const &pt_3d, Point2D &pt_2d) const
 {
 	// FIXME: Mantain a constant distance along the ground plane.
@@ -47,10 +51,27 @@ void TrackerNodelet::ProjectPoint(Point3D const &pt_3d, Point2D &pt_2d) const
 	pt_2d.y = pt_3d.y;
 }
 
+void TrackerNodelet::GetRobotCenter(ros::Time stamp, Point2D &pt_2d) const
+{
+	geometry_msgs::PointStamped pt_robot;
+	pt_robot.header.frame_id = m_fr_robot;
+	pt_robot.header.stamp    = stamp;
+	pt_robot.point.x = 0.0;
+	pt_robot.point.y = 0.0;
+	pt_robot.point.z = 0.0;
+
+	geometry_msgs::PointStamped pt_fixed;
+	m_tf->transformPoint(m_fr_fixed, pt_robot, pt_fixed);
+
+	Point3D pt_3d;
+	pt_3d.x = pt_fixed.point.x;
+	pt_3d.y = pt_fixed.point.y;
+	pt_3d.z = pt_fixed.point.z;
+	ProjectPoint(pt_3d, pt_2d);
+}
+
 void TrackerNodelet::AddPoints(PointCloud3D::ConstPtr const &pts_3d)
 {
-	ROS_ERROR("TRACKER callback");
-
 	// Convert all the points to a frame that is fixed w.r.t. the world.
 	PointCloud3D::Ptr pts_fixed = boost::make_shared<PointCloud3D>();
 	pcl_ros::transformPointCloud(m_fr_fixed, *pts_3d, *pts_fixed, *m_tf);
@@ -69,16 +90,18 @@ void TrackerNodelet::AddPoints(PointCloud3D::ConstPtr const &pts_3d)
 	// Render the map in RViz as a nav_msgs::GridCell message. Unfortunately
 	// there is no non-binary equivant that can be easily visualized.
 	GridCells::Ptr msg_ren = boost::make_shared<GridCells>();
+	Point2D pt_robot;
+	GetRobotCenter(pts_3d->header.stamp, pt_robot);
 
 	for (int grid_y = 0; grid_y < m_grid_height; ++grid_y)
 	for (int grid_x = 0; grid_x < m_grid_width;  ++grid_x) {
-		Point2D center    = GetCellCenter(grid_x, grid_y);
-		uint8_t intensity = m_grid[grid_y * m_grid_width + grid_x];
+		Point2D point = GetCellCenter(grid_x, grid_y);
+		Value   value = m_grid[grid_y * m_grid_width + grid_x];
 
-		if (intensity > 0) {
+		if (value > 0 && Distance(point, pt_robot) <= m_range_max) {
 			geometry_msgs::Point cell;
-			cell.x = center.x;
-			cell.y = center.y;
+			cell.x = point.x;
+			cell.y = point.y;
 			cell.z = 0.0;
 			msg_ren->cells.push_back(cell);
 		}
@@ -99,7 +122,7 @@ Point2D TrackerNodelet::GetCellCenter(int grid_x, int grid_y) const
 	return pt;
 }
 
-uint8_t TrackerNodelet::GetCell(double x, double y) const
+Value TrackerNodelet::GetCell(double x, double y) const
 {
 	int grid_x = (x) / m_grid_size;
 	int grid_y = (y) / m_grid_size;
