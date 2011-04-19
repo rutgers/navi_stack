@@ -3,11 +3,11 @@
 
 	<!-- Vision -->
 	<group ns="vision">
-		<node pkg="stereo_webcam" type="stereo_node" name="driver">
+		<node pkg="stereo_webcam" type="stereo_node" name="stereo_driver">
 			<param name="cameras" value="3"/>
-			<param name="device0" value="/dev/video_left"/>
-			<param name="device1" value="/dev/video_middle"/>
-			<param name="device2" value="/dev/video_right"/>
+			<param name="device0" value="/dev/video_stereo_left"/>
+			<param name="device1" value="/dev/video_stereo_middle"/>
+			<param name="device2" value="/dev/video_stereo_right"/>
 			<param name="params0" value="file://$(find navi_bringup)/calibration/mono_l.yaml"/>
 			<param name="params1" value="file://$(find navi_bringup)/calibration/mono_m.yaml"/>
 			<param name="params2" value="file://$(find navi_bringup)/calibration/mono_r.yaml"/>
@@ -28,6 +28,42 @@
 			<remap from="left/image"   to="left/image_raw"/>
 			<remap from="middle/image" to="middle/image_raw"/>
 			<remap from="right/image"  to="right/image_raw"/>
+		</node>
+		<node pkg="stereo_webcam" type="stereo_node" name="wheel_left_driver">
+			<param name="cameras" value="1"/>
+			<param name="device0" value="/dev/video_wheel_left"/>
+			<param name="params0" value="file://$(find navi_bringup)/calibration/wheel_l.yaml"/>
+
+			<param name="auto_gain"  value="false"/>
+			<param name="auto_white" value="false"/>
+			<param name="hflip"      value="false"/>
+			<param name="vflip"      value="false"/>
+			<param name="width"      value="320"/>
+			<param name="height"     value="240"/>
+			<param name="nbuf"       value="10"/>
+			<param name="fps"        value="10"/>
+			<param name="frame"      value="/camera_wheel_left_link"/>
+
+			<remap from="camera0"          to="wheel_left"/>
+			<remap from="wheel_left/image" to="wheel_left/image_raw"/>
+		</node>
+		<node pkg="stereo_webcam" type="stereo_node" name="wheel_right_driver">
+			<param name="cameras" value="1"/>
+			<param name="device0" value="/dev/video_wheel_right"/>
+			<param name="params0" value="file://$(find navi_bringup)/calibration/wheel_r.yaml"/>
+
+			<param name="auto_gain"  value="false"/>
+			<param name="auto_white" value="false"/>
+			<param name="hflip"      value="false"/>
+			<param name="vflip"      value="false"/>
+			<param name="width"      value="320"/>
+			<param name="height"     value="240"/>
+			<param name="nbuf"       value="10"/>
+			<param name="fps"        value="10"/>
+			<param name="frame"      value="/camera_wheel_right_link"/>
+
+			<remap from="camera0"           to="wheel_right"/>
+			<remap from="wheel_right/image" to="wheel_right/image_raw"/>
 		</node>
 		<node pkg="stereo_mux" type="mux_node" name="stereo_mux">
 			<param name="fps" value="10"/>
