@@ -1,5 +1,9 @@
 <launch>
-	<include file="$(find gazebo_worlds)/launch/empty_world.launch"/>
-	<param name="simple_description" command="$(find xacro)/xacro.py $(find navi_test)/urdf/simple.xml"/>
-	<node name="spawn_simple" pkg="gazebo" type="spawn_model" args="-urdf -param simple_description -z 1 -model simple_model" respawn="false"/>
+	<param name="robot_description" command="$(find xacro)/xacro.py $(find navi_test)/urdf/simple.xml"/>
+	<param name="use_sim_time" value="true"/>
+
+	<node pkg="joint_state_publisher" type="joint_state_publisher" name="joint_publisher"/>
+	<node pkg="robot_state_publisher" type="state_publisher" name="state_publisher"/>
+	<node name="spawn_simple" pkg="gazebo" type="spawn_model" args="-urdf -param robot_description -z 1 -model simple_model" respawn="false"/>
+	<node name="gazebo" pkg="gazebo" type="gazebo" args="$(find navi_test)/worlds/empty.world" respawn="false"/>
 </launch>
