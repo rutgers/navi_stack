@@ -20,7 +20,7 @@
 		<node pkg="nodelet" type="nodelet" name="center_lined" args="load line_detection/line_nodelet vision_manager">
 			<param name="thickness" value="0.0762"/>
 			<param name="border"    value="0.1452"/>
-			<param name="threshold" value="40"/>
+			<param name="threshold" value="60"/>
 			<param name="cutoff"    value="3"/>
 			<param name="frame"     value="/base_footprint"/>
 			<param name="debug"     value="false"/>
@@ -40,7 +40,7 @@
 		<node pkg="nodelet" type="nodelet" name="left_lined" args="load line_detection/line_nodelet vision_manager">
 			<param name="thickness" value="0.0762"/>
 			<param name="border"    value="0.1452"/>
-			<param name="threshold" value="40"/>
+			<param name="threshold" value="60"/>
 			<param name="cutoff"    value="3"/>
 			<param name="frame"     value="/base_footprint"/>
 			<param name="debug"     value="false"/>
@@ -60,13 +60,20 @@
 		<node pkg="nodelet" type="nodelet" name="right_lined" args="load line_detection/line_nodelet vision_manager">
 			<param name="thickness" value="0.0762"/>
 			<param name="border"    value="0.1452"/>
-			<param name="threshold" value="40"/>
+			<param name="threshold" value="60"/>
 			<param name="cutoff"    value="3"/>
 			<param name="frame"     value="/base_footprint"/>
 			<param name="debug"     value="false"/>
 			<remap from="image"       to="right_white"/>
 			<remap from="camera_info" to="wheel/right/camera_info"/>
 			<remap from="line_points" to="right_line"/>
+		</node>
+
+		<node pkg="nodelet" type="nodelet" name="line_tracker" args="load line_tracking/tracker_node vision_manager">
+			<param name="inputs" value="3"/>
+			<remap from="points0" to="left_line"/>
+			<remap from="points1" to="center_line"/>
+			<remap from="points2" to="right_line"/>
 		</node>
 
 		<!-- Stereo Vision -->
