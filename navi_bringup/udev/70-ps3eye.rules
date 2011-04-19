@@ -1,6 +1,0 @@
-# /etc/udev/rules.d/53-ps3eye.rules
-SUBSYSTEM=="video4linux", ATTRS{idVendor}=="1415", ATTRS{idProduct}=="2000", ATTRS{devpath}=="[0-9].1.1", SYMLINK="video_stereo_left"
-SUBSYSTEM=="video4linux", ATTRS{idVendor}=="1415", ATTRS{idProduct}=="2000", ATTRS{devpath}=="[0-9].1.2", SYMLINK="video_stereo_middle"
-SUBSYSTEM=="video4linux", ATTRS{idVendor}=="1415", ATTRS{idProduct}=="2000", ATTRS{devpath}=="[0-9].1.3", SYMLINK="video_stereo_right"
-SUBSYSTEM=="video4linux", ATTRS{idVendor}=="1415", ATTRS{idProduct}=="2000", ATTRS{devpath}=="[0-9].3",   SYMLINK="video_wheel_left"
-SUBSYSTEM=="video4linux", ATTRS{idVendor}=="1415", ATTRS{idProduct}=="2000", ATTRS{devpath}=="[0-9].4",   SYMLINK="video_wheel_right"
