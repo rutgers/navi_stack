@@ -1,0 +1,107 @@
+<?xml version="1.0"?>
+<robot xmlns:sensor="http://playerstage.sourceforge.net/gazebo/xmlschema/#sensor"
+       xmlns:controller="http://playerstage.sourceforge.net/gazebo/xmlschema/#controller"
+       xmlns:interface="http://playerstage.sourceforge.net/gazebo/xmlschema/#interface"
+       xmlns:xacro="http://playerstage.sourceforge.net/gazebo/xmlschema/#interface"
+	   name="simple_box">
+	<link name="base_link">
+		<inertial>
+			<origin xyz="2 0 0" />
+			<mass value="1.0" />
+			<inertia  ixx="1.0" ixy="0.0"  ixz="0.0"  iyy="100.0"  iyz="0.0"  izz="1.0" />
+		</inertial>
+		<visual>
+			<origin xyz="2 0 0"/>
+			<geometry>
+				<box size="1 1 2" />
+			</geometry>
+		</visual>
+		<collision>
+			<origin xyz="2 0 0"/>
+			<geometry>
+				<box size="1 1 2" />
+			</geometry>
+		</collision>
+	</link>
+
+	<link name="camera_link">
+		<inertial>
+			<mass value="0.01" />
+			<origin xyz="0 0 0" />
+			<inertia ixx="0.001" ixy="0.0" ixz="0.0"
+			         iyy="0.001" iyz="0.0" izz="0.001" />
+		</inertial>
+		<visual>
+			<origin xyz="0 0 0" rpy="0 0 0"/>
+			<geometry>
+			<box size="0.1 0.1 0.1" />
+			</geometry>
+		</visual>
+		<collision>
+			<origin xyz="0 0 0" rpy="0 0 0"/>
+			<geometry>
+				<box size="0.1 0.1 0.1" />
+			</geometry>
+		</collision>
+	</link>
+
+	<link name="camera_optical_frame">
+		<inertial>
+		<mass value="0.01" />
+		<origin xyz="0 0 0" />
+		<inertia ixx="0.001" ixy="0.0" ixz="0.0"
+		         iyy="0.001" iyz="0.0" izz="0.001"/>
+		</inertial>
+		<visual>
+			<origin xyz="0 0 0" rpy="0 0 0"/>
+			<geometry>
+				<box size="0.001 0.001 0.001" />
+			</geometry>
+		</visual>
+		<collision>
+			<origin xyz="0 0 0" rpy="0 0 0"/>
+			<geometry>
+				<box size="0.001 0.001 0.001" />
+			</geometry>
+		</collision>
+	</link>
+
+	<gazebo reference="camera_link">
+		<sensor:camera name="camera_sensor">
+			<imageSize>640 480</imageSize>
+			<imageFormat>L8</imageFormat>
+			<hfov>90</hfov>
+			<nearClip>0.01</nearClip>
+			<farClip>100</farClip>
+			<updateRate>20.0</updateRate>
+			<controller:ros_camera name="camera_controller" plugin="libros_camera.so">
+				<alwaysOn>true</alwaysOn>
+				<updateRate>20.0</updateRate>
+				<topicName>camera/image</topicName>
+				<frameName>camera_link</frameName>
+				<interface:camera name="camera_iface" />
+			</controller:ros_camera>
+		</sensor:camera>
+		<turnGravityOff>true</turnGravityOff>
+		<material>Gazebo/Blue</material>
+	</gazebo>
+
+	<joint name="camera_joint" type="fixed">
+		<origin xyz="1.5 0 3" rpy="0 0 0" />
+		<parent link="base_link" />
+		<child link="camera_link"/>
+	</joint>
+
+	<joint name="camera_optical_joint" type="fixed">
+		<origin xyz="0 0 0" rpy="-1.570796 0.0 -1.570796" />
+		<parent link="camera_link" />
+		<child link="camera_optical_frame"/>
+	</joint>
+
+	<gazebo reference="base_link">
+		<material>Gazebo/Blue</material>
+	</gazebo>
+	<gazebo reference="camera_link">
+		<material>Gazebo/Red</material>
+	</gazebo>
+</robot>

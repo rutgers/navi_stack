@@ -1,0 +1,5 @@
+<launch>
+	<include file="$(find gazebo_worlds)/launch/empty_world.launch"/>
+	<param name="simple_description" command="$(find xacro)/xacro.py $(find navi_test)/urdf/simple.xml"/>
+	<node name="spawn_simple" pkg="gazebo" type="spawn_model" args="-urdf -param simple_description -z 1 -model simple_model" respawn="false"/>
+</launch>

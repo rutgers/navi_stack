@@ -1,0 +1,16 @@
+<package>
+  <description brief="navi_test">
+
+     navi_test
+
+  </description>
+  <author>Michael Koval</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/navi_test</url>
+<depend package="xacro"/>
+<depend package="urdf"/>
+<depend package="gazebo_tools"/>
+<depend package="gazebo_plugins"/>
+<depend package="erratic_gazebo_plugins"/>
+</package>
