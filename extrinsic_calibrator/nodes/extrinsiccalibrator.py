@@ -130,8 +130,8 @@ class ExtrinsicNode:
 		img2_bgr = cv.CreateMat(img2.rows, img2.cols, cv.CV_8UC3)
 		cv.Set(img1_bgr, 0)
 		cv.Set(img2_bgr, 0)
-		#cv.cvtColor(img1, img1_bgr, cv.CV_GRAY2RGB)
-		#cv.cvtColor(img2, img2_bgr, cv.CV_GRAY2RGB)
+		cv.CvtColor(img1, img1_bgr, cv.CV_GRAY2RGB)
+		cv.CvtColor(img2, img2_bgr, cv.CV_GRAY2RGB)
 
 		cv.DrawChessboardCorners(img1_bgr, (self.board_rows, self.board_cols), corners1, True)
 		cv.DrawChessboardCorners(img2_bgr, (self.board_rows, self.board_cols), corners2, True)
