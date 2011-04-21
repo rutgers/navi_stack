@@ -118,24 +118,27 @@ class ExtrinsicNode:
 
 		# TODO: Calculate reprojection error. Save the transform with minimum error.
 
+
 		# Visualize the detected chessboards.
 		# TODO: Overlay the reprojection error.
 		# TODO: Overlay the center of the reprojected chessboard.
 		viz_rows = max(img1.rows, img2.rows)
 		viz_cols = img1.cols + img2.cols
-		viz_bgr  = cv.CreateMat(viz_rows, viz_cols, cv.CV_8UC1)
 
+		viz_bgr  = cv.CreateMat(viz_rows, viz_cols, cv.CV_8UC3)
 		img1_bgr = cv.CreateMat(img1.rows, img1.cols, cv.CV_8UC3)
 		img2_bgr = cv.CreateMat(img2.rows, img2.cols, cv.CV_8UC3)
-		cv.cvtColor(img1, img1_bgr, cv.CV_GRAY2BGR)
-		cv.cvtColor(img2, img2_bgr, cv.CV_GRAY2BGR)
+		cv.Set(img1_bgr, 0)
+		cv.Set(img2_bgr, 0)
+		#cv.cvtColor(img1, img1_bgr, cv.CV_GRAY2RGB)
+		#cv.cvtColor(img2, img2_bgr, cv.CV_GRAY2RGB)
 
 		cv.DrawChessboardCorners(img1_bgr, (self.board_rows, self.board_cols), corners1, True)
 		cv.DrawChessboardCorners(img2_bgr, (self.board_rows, self.board_cols), corners2, True)
 
-		viz_bgr.Set(viz, 0)
+		cv.Set(viz_bgr, 0)
 		cv.Copy(img1_bgr, viz_bgr[0:img1.rows, 0:img1.cols])
-		cv.Copy(img2_bgr, viz_bgr[0:img2.rows, (img1.cols + 1):(img1.cols + img2.cols + 1)])
+		cv.Copy(img2_bgr, viz_bgr[0:img2.rows, img1.cols:(img1.cols + img2.cols)])
 
 		# Update the GUI.
 		# TODO: Cleanly exit when ENTER or ESC is pressed.
