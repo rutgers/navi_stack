@@ -15,11 +15,12 @@ mf = message_filters
 
 class ExtrinsicNode:
 	def __init__(self):
+		self.bridge = cv_bridge.CvBridge()
 		self.model1 = image_geometry.PinholeCameraModel()
 		self.model2 = image_geometry.PinholeCameraModel()
 
-		self.board_rows = rospy.get_param('~board_rows', 7),
-		self.board_cols = rospy.get_param('~board_cols', 7),
+		self.board_rows = rospy.get_param('~board_rows', 7)
+		self.board_cols = rospy.get_param('~board_cols', 7)
 		self.board_size = rospy.get_param('~board_size', 0.10)
 		self.border     = rospy.get_param('~border', 8)
 
@@ -40,7 +41,7 @@ class ExtrinsicNode:
 		self.gui_delay = 1
 		self.gui_win   = cv.NamedWindow(self.gui_name)
 
-	def GetCorners(mono, subpix = True):
+	def GetCorners(self, mono, subpix = True):
 		(ok, corners) = cv.FindChessboardCorners(mono, (self.board_cols, self.board_rows), cv.CV_CALIB_CB_ADAPTIVE_THRESH
 		                                         | cv.CV_CALIB_CB_NORMALIZE_IMAGE | cv.CALIB_CB_FAST_CHECK)
 
@@ -54,7 +55,7 @@ class ExtrinsicNode:
 			                              (cv.CV_TERMCRIT_EPS+cv.CV_TERMCRIT_ITER, 30, 0.1))
 		return (ok, corners)
 
-	def FindTransformation(corners, model):
+	def FindTransformation(self, corners, model):
 		n = len(corners)
 
 		# Camera intrinsics used for chessboard localization.
@@ -86,14 +87,19 @@ class ExtrinsicNode:
 		cv.Copy(tvec, tmat[0:3, 3:4])
 		return tmat
 
-	def UpdateImage(self, msg_img1, msg_info1, msg_cam2, msg_info2):
-		img1 = cv_bridge.imgmsg_to_cv(msg_img1, encoding="mono8")
-		img2 = cv_bridge.imgmsg_to_cv(msg_img2, encoding="mono8")
+	def UpdateImage(self, msg_img1, msg_info1, msg_img2, msg_info2):
+		img1 = self.bridge.imgmsg_to_cv(msg_img1, "mono8")
+		img2 = self.bridge.imgmsg_to_cv(msg_img2, "mono8")
 		self.model1.fromCameraInfo(msg_info1)
 		self.model2.fromCameraInfo(msg_info2)
 
-		ok1, corners1 = GetCorners(img, True)
-		ok2, corners2 = GetCorners(img, True)
+		ok1, corners1 = self.GetCorners(img1, True)
+		ok2, corners2 = self.GetCorners(img2, True)
+
+		print (ok1, ok2)
+
+		if not ok1 or not ok2:
+			return
 
 		# Verify that the chessboards have the same orientation.
 		l0, l1 = (corners1[0], corners1[-1])
@@ -101,38 +107,40 @@ class ExtrinsicNode:
 		x_same = (l0[0] < l1[0] and r0[0] < r1[0]) or (l0[0] > l1[0] and r0[0] > r1[0])
 		y_same = (l0[1] < l1[1] and r0[1] < r1[1]) or (l0[1] > l1[1] and r0[1] > r1[1])
 
-		if ok1 and ok2 and x_same and y_same:
-			T_1M = self.FindTransformation(corners1, self.model1)
-			T_2M = self.FindTransformation(corners2, self.model2)
-			T_M2 = cv.CreateMat(3, 4, cv.CVFC1)
-			cv.Invert(T_2M, T_M2, cv.CV_LU)
-			T_12 = T_1M * T_M2
+		if not x_same or not y_same:
+			return
 
-			# TODO: Calculate reprojection error. Save the transform with minimum error.
+		T_1M = self.FindTransformation(corners1, self.model1)
+		T_2M = self.FindTransformation(corners2, self.model2)
+		T_M2 = cv.CreateMat(3, 4, cv.CVFC1)
+		cv.Invert(T_2M, T_M2, cv.CV_LU)
+		T_12 = T_1M * T_M2
 
-			# Visualize the detected chessboards.
-			# TODO: Overlay the reprojection error.
-			# TODO: Overlay the center of the reprojected chessboard.
-			viz_rows = max(msg_img1.rows, msg_img2.rows)
-			viz_cols = msg_img1.cols + msg_img2.cols
-			viz_bgr  = cv.CreateMat(viz_rows, viz_cols, cv.CV_8UC1)
+		# TODO: Calculate reprojection error. Save the transform with minimum error.
 
-			img1_bgr = cv.CreateMat(img1.rows, img1.cols, cv.CV_8UC3)
-			img2_bgr = cv.CreateMat(img2.rows, img2.cols, cv.CV_8UC3)
-			cv.cvtColor(img1, img1_bgr, cv.CV_GRAY2BGR)
-			cv.cvtColor(img2, img2_bgr, cv.CV_GRAY2BGR)
+		# Visualize the detected chessboards.
+		# TODO: Overlay the reprojection error.
+		# TODO: Overlay the center of the reprojected chessboard.
+		viz_rows = max(msg_img1.rows, msg_img2.rows)
+		viz_cols = msg_img1.cols + msg_img2.cols
+		viz_bgr  = cv.CreateMat(viz_rows, viz_cols, cv.CV_8UC1)
 
-			cv.DrawChessboardCorners(img1_bgr, (self.board_rows, self.board_cols), corners1, True)
-			cv.DrawChessboardCorners(img2_bgr, (self.board_rows, self.board_cols), corners2, True)
+		img1_bgr = cv.CreateMat(img1.rows, img1.cols, cv.CV_8UC3)
+		img2_bgr = cv.CreateMat(img2.rows, img2.cols, cv.CV_8UC3)
+		cv.cvtColor(img1, img1_bgr, cv.CV_GRAY2BGR)
+		cv.cvtColor(img2, img2_bgr, cv.CV_GRAY2BGR)
 
-			viz_bgr.Set(viz, 0)
-			cv.Copy(img1_bgr, viz_bgr[0:img1.rows, 0:img1.cols])
-			cv.Copy(img2_bgr, viz_bgr[0:img2.rows, (img1.cols + 1):(img1.cols + img2.cols + 1)])
+		cv.DrawChessboardCorners(img1_bgr, (self.board_rows, self.board_cols), corners1, True)
+		cv.DrawChessboardCorners(img2_bgr, (self.board_rows, self.board_cols), corners2, True)
 
-			# Update the GUI.
-			# TODO: Cleanly exit when ENTER or ESC is pressed.
-			cv.ShowImage(self.gui_name, viz_bgr)
-			cv.WaitKey(self.gui_delay)
+		viz_bgr.Set(viz, 0)
+		cv.Copy(img1_bgr, viz_bgr[0:img1.rows, 0:img1.cols])
+		cv.Copy(img2_bgr, viz_bgr[0:img2.rows, (img1.cols + 1):(img1.cols + img2.cols + 1)])
+
+		# Update the GUI.
+		# TODO: Cleanly exit when ENTER or ESC is pressed.
+		cv.ShowImage(self.gui_name, viz_bgr)
+		cv.WaitKey(self.gui_delay)
 
 def main():
 	rospy.init_node('extrinsic_calibration')
