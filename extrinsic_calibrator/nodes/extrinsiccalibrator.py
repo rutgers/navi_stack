@@ -97,52 +97,46 @@ class ExtrinsicNode:
 		self.model1.fromCameraInfo(msg_info1)
 		self.model2.fromCameraInfo(msg_info2)
 
-		ok1, corners1 = self.GetCorners(img1, True)
-		ok2, corners2 = self.GetCorners(img2, True)
-
-		if not ok1 or not ok2:
-			return
-
-		# Verify that the chessboards have the same orientation.
-		l0, l1 = (corners1[0], corners1[-1])
-		r0, r1 = (corners2[0], corners2[-1])
-		x_same = (l0[0] < l1[0] and r0[0] < r1[0]) or (l0[0] > l1[0] and r0[0] > r1[0])
-		y_same = (l0[1] < l1[1] and r0[1] < r1[1]) or (l0[1] > l1[1] and r0[1] > r1[1])
-
-		if not x_same or not y_same:
-			return
-
-		T_1M = numpy.asarray(self.FindTransformation(corners1, self.model1))
-		T_2M = numpy.asarray(self.FindTransformation(corners2, self.model2))
-		T_M2 = T_1M * numpy.linalg.inv(T_2M)
-
-		# TODO: Calculate reprojection error. Save the transform with minimum error.
-
-
-		# Visualize the detected chessboards.
-		# TODO: Overlay the reprojection error.
-		# TODO: Overlay the center of the reprojected chessboard.
+		# Empty visualization; information will be superimposed later.
 		viz_rows = max(img1.rows, img2.rows)
 		viz_cols = img1.cols + img2.cols
 
-		viz_bgr  = cv.CreateMat(viz_rows, viz_cols, cv.CV_8UC3)
+		self.viz = cv.CreateMat(viz_rows, viz_cols, cv.CV_8UC3)
 		img1_bgr = cv.CreateMat(img1.rows, img1.cols, cv.CV_8UC3)
 		img2_bgr = cv.CreateMat(img2.rows, img2.cols, cv.CV_8UC3)
 		cv.Set(img1_bgr, 0)
 		cv.Set(img2_bgr, 0)
-		cv.CvtColor(img1, img1_bgr, cv.CV_GRAY2RGB)
-		cv.CvtColor(img2, img2_bgr, cv.CV_GRAY2RGB)
+		cv.CvtColor(img1, img1_bgr, cv.CV_GRAY2BGR)
+		cv.CvtColor(img2, img2_bgr, cv.CV_GRAY2BGR)
 
-		cv.DrawChessboardCorners(img1_bgr, (self.board_rows, self.board_cols), corners1, True)
-		cv.DrawChessboardCorners(img2_bgr, (self.board_rows, self.board_cols), corners2, True)
+		cv.Set(self.viz, 0)
+		cv.Copy(img1_bgr, self.viz[0:img1.rows, 0:img1.cols])
+		cv.Copy(img2_bgr, self.viz[0:img2.rows, img1.cols:(img1.cols + img2.cols)])
 
-		cv.Set(viz_bgr, 0)
-		cv.Copy(img1_bgr, viz_bgr[0:img1.rows, 0:img1.cols])
-		cv.Copy(img2_bgr, viz_bgr[0:img2.rows, img1.cols:(img1.cols + img2.cols)])
+		# Find corresponding chessboard corners in the two images.
+		ok1, corners1 = self.GetCorners(img1, True)
+		ok2, corners2 = self.GetCorners(img2, True)
 
-		# Update the GUI.
-		# TODO: Cleanly exit when ENTER or ESC is pressed.
-		cv.ShowImage(self.gui_name, viz_bgr)
+		if ok1 and ok2:
+			# Verify that the chessboards have the same orientation.
+			l0, l1 = (corners1[0], corners1[-1])
+			r0, r1 = (corners2[0], corners2[-1])
+			x_same = (l0[0] < l1[0] and r0[0] < r1[0]) or (l0[0] > l1[0] and r0[0] > r1[0])
+			y_same = (l0[1] < l1[1] and r0[1] < r1[1]) or (l0[1] > l1[1] and r0[1] > r1[1])
+
+			if x_same and y_same:
+				T_1M = numpy.asarray(self.FindTransformation(corners1, self.model1))
+				T_2M = numpy.asarray(self.FindTransformation(corners2, self.model2))
+				T_M2 = T_1M * numpy.linalg.inv(T_2M)
+
+				# TODO: Calculate reprojection error. Save the transform with minimum error.
+				cv.DrawChessboardCorners(img1_bgr, (self.board_rows, self.board_cols), corners1, True)
+				cv.DrawChessboardCorners(img2_bgr, (self.board_rows, self.board_cols), corners2, True)
+
+				cv.Copy(img1_bgr, self.viz[0:img1.rows, 0:img1.cols])
+				cv.Copy(img2_bgr, self.viz[0:img2.rows, img1.cols:(img1.cols + img2.cols)])
+
+		cv.ShowImage(self.gui_name, self.viz)
 		cv.WaitKey(self.gui_delay)
 
 def main():
