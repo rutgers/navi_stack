@@ -11,6 +11,10 @@ import message_filters
 import sensor_msgs.msg
 import sensor_msgs.srv
 
+
+import math
+import numpy
+
 mf = message_filters
 
 class ExtrinsicNode:
@@ -38,7 +42,7 @@ class ExtrinsicNode:
 
 		# Visualization of calibration.
 		self.gui_name  = 'Extrinsic Calibration'
-		self.gui_delay = 1
+		self.gui_delay = 10
 		self.gui_win   = cv.NamedWindow(self.gui_name)
 
 	def GetCorners(self, mono, subpix = True):
@@ -59,10 +63,9 @@ class ExtrinsicNode:
 		n = len(corners)
 
 		# Camera intrinsics used for chessboard localization.
-		mat_cam = cv.CreateMatHeader(3, 3, cv.CV_64FC1)
-		mat_dis = cv.CreateMatHeader(5, 1, cv.CV_64FC1)
-		mat_cam.SetData(model.intrinsicMatrix())
-		mat_dis.SetData(model.distortionCoeffs())
+		mat_cam = cv.fromarray(model.intrinsicMatrix())
+		mat_dis = cv.fromarray(model.distortionCoeffs())
+		cv.Reshape(mat_cam, 0, 3)
 
 		# Corresponding two-dimensional and three-dimensional points.
 		pts_2d = cv.CreateMat(n, 2, cv.CV_64FC1)
@@ -70,8 +73,8 @@ class ExtrinsicNode:
 
 		for i in range(0, n):
 			(pts_2d[i, 0], pts_2d[i, 1]) = corners[i]
-			pts_3d[i, 0] = floor(i / self.board_cols) * self.board_size
-			pts_3d[i, 1] = floor(i % self.board_cols) * self.board_size
+			pts_3d[i, 0] = math.floor(i / self.board_cols) * self.board_size
+			pts_3d[i, 1] = math.floor(i % self.board_cols) * self.board_size
 			pts_3d[i, 2] = 0.0
 
 		# Solve for the transformation from the model frame to the camera frame.
@@ -82,7 +85,8 @@ class ExtrinsicNode:
 		cv.Rodrigues2(rvec, rmat)
 
 		# Merge the rotation and translation into a single transformation matrix.
-		tmat = cv.CreateMat(3, 4, cv.CV_64FC1)
+		tmat = cv.CreateMat(4, 4, cv.CV_64FC1)
+		cv.SetIdentity(tmat)
 		cv.Copy(rmat, tmat[0:3, 0:3])
 		cv.Copy(tvec, tmat[0:3, 3:4])
 		return tmat
@@ -96,8 +100,6 @@ class ExtrinsicNode:
 		ok1, corners1 = self.GetCorners(img1, True)
 		ok2, corners2 = self.GetCorners(img2, True)
 
-		print (ok1, ok2)
-
 		if not ok1 or not ok2:
 			return
 
@@ -110,19 +112,17 @@ class ExtrinsicNode:
 		if not x_same or not y_same:
 			return
 
-		T_1M = self.FindTransformation(corners1, self.model1)
-		T_2M = self.FindTransformation(corners2, self.model2)
-		T_M2 = cv.CreateMat(3, 4, cv.CVFC1)
-		cv.Invert(T_2M, T_M2, cv.CV_LU)
-		T_12 = T_1M * T_M2
+		T_1M = numpy.asarray(self.FindTransformation(corners1, self.model1))
+		T_2M = numpy.asarray(self.FindTransformation(corners2, self.model2))
+		T_M2 = T_1M * numpy.linalg.inv(T_2M)
 
 		# TODO: Calculate reprojection error. Save the transform with minimum error.
 
 		# Visualize the detected chessboards.
 		# TODO: Overlay the reprojection error.
 		# TODO: Overlay the center of the reprojected chessboard.
-		viz_rows = max(msg_img1.rows, msg_img2.rows)
-		viz_cols = msg_img1.cols + msg_img2.cols
+		viz_rows = max(img1.rows, img2.rows)
+		viz_cols = img1.cols + img2.cols
 		viz_bgr  = cv.CreateMat(viz_rows, viz_cols, cv.CV_8UC1)
 
 		img1_bgr = cv.CreateMat(img1.rows, img1.cols, cv.CV_8UC3)
