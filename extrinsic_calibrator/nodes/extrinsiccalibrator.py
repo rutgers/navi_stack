@@ -102,16 +102,11 @@ class ExtrinsicNode:
 		viz_cols = img1.cols + img2.cols
 
 		self.viz = cv.CreateMat(viz_rows, viz_cols, cv.CV_8UC3)
-		img1_bgr = cv.CreateMat(img1.rows, img1.cols, cv.CV_8UC3)
-		img2_bgr = cv.CreateMat(img2.rows, img2.cols, cv.CV_8UC3)
-		cv.Set(img1_bgr, 0)
-		cv.Set(img2_bgr, 0)
+		cv.Set(self.viz, 0)
+		img1_bgr = self.viz[0:img1.rows, 0:img1.cols]
+		img2_bgr = self.viz[0:img2.rows, img1.cols:(img1.cols + img2.cols)]
 		cv.CvtColor(img1, img1_bgr, cv.CV_GRAY2BGR)
 		cv.CvtColor(img2, img2_bgr, cv.CV_GRAY2BGR)
-
-		cv.Set(self.viz, 0)
-		cv.Copy(img1_bgr, self.viz[0:img1.rows, 0:img1.cols])
-		cv.Copy(img2_bgr, self.viz[0:img2.rows, img1.cols:(img1.cols + img2.cols)])
 
 		# Find corresponding chessboard corners in the two images.
 		ok1, corners1 = self.GetCorners(img1, True)
@@ -132,9 +127,6 @@ class ExtrinsicNode:
 				# TODO: Calculate reprojection error. Save the transform with minimum error.
 				cv.DrawChessboardCorners(img1_bgr, (self.board_rows, self.board_cols), corners1, True)
 				cv.DrawChessboardCorners(img2_bgr, (self.board_rows, self.board_cols), corners2, True)
-
-				cv.Copy(img1_bgr, self.viz[0:img1.rows, 0:img1.cols])
-				cv.Copy(img2_bgr, self.viz[0:img2.rows, img1.cols:(img1.cols + img2.cols)])
 
 		cv.ShowImage(self.gui_name, self.viz)
 		cv.WaitKey(self.gui_delay)
