@@ -54,7 +54,13 @@ void GroundNodelet::Callback(pcl::PointCloud<pcl::PointXYZ>::ConstPtr const &msg
 	// Get the default ground plane from TF (most likely a static transform in
 	// in the robot's URDF). This is used as a sanity check.
 	Plane::Ptr plane_def = boost::make_shared<Plane>();
-	bool valid_def = GetTFPlane(msg_stamp, m_fr_fixed, m_fr_default, *plane_def);
+	bool valid_def;
+	try {
+		valid_def = GetTFPlane(msg_stamp, m_fr_fixed, m_fr_default, *plane_def);
+	} catch (tf::TransformException const &e) {
+		ROS_WARN("%s", e.what());
+		return;
+	}
 
 	// Detect the ground plane by using RANSAC to fit a plane to the stereo data.
 	Plane::Ptr plane_fit = boost::make_shared<Plane>();
