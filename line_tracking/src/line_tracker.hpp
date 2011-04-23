@@ -29,8 +29,7 @@ public:
 	void ProjectPoint(Point3D const &pt_3d, Point2D &pt_2d) const;
 	void GetRobotCenter(ros::Time stamp, Point2D &pt_2d) const;
 
-	Point2D GetCellCenter(int grid_x, int grid_y) const;
-	Value GetCell(double x, double y) const;
+	Value GetCellValue(double x, double y) const;
 	void IncrementCell(double x, double y);
 
 private:
@@ -46,6 +45,16 @@ private:
 
 	ros::Publisher  m_pub_ren;
 	ros::Subscriber m_sub_pts;
+
+	void Point2Grid(double x, double y, int &grid_x, int &grid_y) const;
+	int  Point2Index(double x, double y) const;
+
+	void    Index2Grid(int i, int &grid_x, int &grid_y) const;
+	Point2D Index2Point(int i) const;
+
+	int     Grid2Index(int grid_x, int grid_y) const;
+	Point2D Grid2Point(int grid_x, int grid_y) const;
+
 };
 
 };

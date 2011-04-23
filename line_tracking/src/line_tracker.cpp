@@ -18,6 +18,7 @@ namespace tracker_node {
 
 void TrackerNodelet::onInit(void)
 {
+	ROS_ERROR("INIT line_tracker");
 	ros::NodeHandle &nh      = getNodeHandle();
 	ros::NodeHandle &nh_priv = getPrivateNodeHandle();
 
@@ -36,7 +37,7 @@ void TrackerNodelet::onInit(void)
 	}
 
 	m_pub_ren = nh.advertise<GridCells>("line_occupancy", 1);
-	m_sub_pts = nh.subscribe<PointCloud3D>("line_points", 10, &TrackerNodelet::AddPoints, this);
+	m_sub_pts = nh.subscribe<PointCloud3D>("points", 10, &TrackerNodelet::AddPoints, this);
 }
 
 double TrackerNodelet::Distance(Point2D const &p1, Point2D const &p2) const
@@ -74,7 +75,12 @@ void TrackerNodelet::AddPoints(PointCloud3D::ConstPtr const &pts_3d)
 {
 	// Convert all the points to a frame that is fixed w.r.t. the world.
 	PointCloud3D::Ptr pts_fixed = boost::make_shared<PointCloud3D>();
-	pcl_ros::transformPointCloud(m_fr_fixed, *pts_3d, *pts_fixed, *m_tf);
+	try {
+		pcl_ros::transformPointCloud(m_fr_fixed, *pts_3d, *pts_fixed, *m_tf);
+	} catch (tf::TransformException const &e) {
+		ROS_WARN("%s", e.what());
+		return;
+	}
 
 	// Superimpose these points on the fixed cost map.
 	for (size_t i = 0; i < pts_fixed->points.size(); ++i) {
@@ -93,10 +99,9 @@ void TrackerNodelet::AddPoints(PointCloud3D::ConstPtr const &pts_3d)
 	Point2D pt_robot;
 	GetRobotCenter(pts_3d->header.stamp, pt_robot);
 
-	for (int grid_y = 0; grid_y < m_grid_height; ++grid_y)
-	for (int grid_x = 0; grid_x < m_grid_width;  ++grid_x) {
-		Point2D point = GetCellCenter(grid_x, grid_y);
-		Value   value = m_grid[grid_y * m_grid_width + grid_x];
+	for (int i = 0; i < m_grid_width * m_grid_height; ++i) {
+		Point2D point = Index2Point(i);
+		Value   value = m_grid[i];
 
 		if (value > 0 && Distance(point, pt_robot) <= m_range_max) {
 			geometry_msgs::Point cell;
@@ -114,20 +119,9 @@ void TrackerNodelet::AddPoints(PointCloud3D::ConstPtr const &pts_3d)
 	m_pub_ren.publish(msg_ren);
 }
 
-Point2D TrackerNodelet::GetCellCenter(int grid_x, int grid_y) const
+Value TrackerNodelet::GetCellValue(double x, double y) const
 {
-	Point2D pt;
-	pt.x = (grid_x) * m_grid_size;
-	pt.y = (grid_y) * m_grid_size;
-	return pt;
-}
-
-Value TrackerNodelet::GetCell(double x, double y) const
-{
-	int grid_x = (x) / m_grid_size;
-	int grid_y = (y) / m_grid_size;
-	int index  = grid_y * m_grid_width + grid_x;
-
+	int index = Point2Index(x, y);
 	if (0 <= index && index <= m_grid_width * m_grid_height) {
 		return m_grid[index];
 	} else {
@@ -137,19 +131,56 @@ Value TrackerNodelet::GetCell(double x, double y) const
 
 void TrackerNodelet::IncrementCell(double x, double y)
 {
-	// FIXME: missing offset
-	int grid_x = (x) / m_grid_size;
-	int grid_y = (y) / m_grid_size;
-	int index  = grid_y * m_grid_width + grid_x;
+	int index = Point2Index(x, y);
 
-	//ROS_WARN("P(%f, %f) ---> [ %d, %d ]", x, y, grid_x, grid_y);
 	if (0 <= index && index <= m_grid_width * m_grid_height) {
-		//ROS_ERROR("INCREMENT [ %d, %d ]", grid_x, grid_y);
+		ROS_ERROR("increment %d", index);
 		if (m_grid[index] < 255) {
 			++m_grid[index];
 		}
 	}
 }
 
+/*
+ * PRIVATE
+ */
+void TrackerNodelet::Point2Grid(double x, double y, int &grid_x, int &grid_y) const
+{
+	grid_x = x / m_grid_size + (m_grid_width  / 2);
+	grid_y = y / m_grid_size + (m_grid_height / 2);
+}
+
+int TrackerNodelet::Grid2Index(int grid_x, int grid_y) const
+{
+	return grid_y * m_grid_width + grid_x;
+}
+
+int TrackerNodelet::Point2Index(double x, double y) const
+{
+	int grid_x, grid_y;
+	Point2Grid(x, y, grid_x, grid_y);
+	return Grid2Index(grid_x, grid_y);
+}
+
+void TrackerNodelet::Index2Grid(int i, int &grid_x, int &grid_y) const
+{
+	grid_x = (i % m_grid_width) - (m_grid_width  / 2);
+	grid_y = (i / m_grid_width) - (m_grid_height / 2);
+}
+
+Point2D TrackerNodelet::Grid2Point(int grid_x, int grid_y) const
+{
+	Point2D pt;
+	pt.x = grid_x * m_grid_size;
+	pt.y = grid_y * m_grid_size;
+	return pt;
+}
+
+Point2D TrackerNodelet::Index2Point(int i) const
+{
+	int grid_x, grid_y;
+	Index2Grid(i, grid_x, grid_y);
+	return Grid2Point(grid_x, grid_y);
+}
 
 };
