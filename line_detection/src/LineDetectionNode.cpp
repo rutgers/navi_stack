@@ -149,16 +149,9 @@ void LineNodelet::NonMaxSupr(cv::Mat src_hor, cv::Mat src_ver, PointCloudXYZ &ds
 	ROS_ASSERT(src_hor.type() == CV_64FC1 && src_ver.type() == CV_64FC1);
 	ROS_ASSERT(m_valid);
 
-	float nan = std::numeric_limits<float>::quiet_NaN();
-
-	dst.width    = src_hor.cols;
-	dst.height   = src_hor.rows;
-	dst.is_dense = false;
-	dst.points.resize(src_hor.cols * src_hor.rows);
-
 	for (int y = 1; y < src_hor.rows - 1; ++y)
 	for (int x = 1; x < src_hor.cols - 1; ++x) {
-		pcl::PointXYZ &pt = dst.points[y * src_hor.cols + x];
+		pcl::PointXYZ pt;
 
 		double val_hor   = src_hor.at<double>(y, x);
 		double val_left  = src_hor.at<double>(y, x - 1);
@@ -177,12 +170,7 @@ void LineNodelet::NonMaxSupr(cv::Mat src_hor, cv::Mat src_ver, PointCloudXYZ &ds
 			pt.x = pt_3d.x;
 			pt.y = pt_3d.y;
 			pt.z = pt_3d.z;
-		}
-		// Fill areas that are "not line" with NaN.
-		else {
-			pt.x = nan;
-			pt.y = nan;
-			pt.z = nan;
+			dst.push_back(pt);
 		}
 	}
 }
