@@ -222,7 +222,12 @@ void LineNodelet::ImageCallback(Image::ConstPtr const &msg_img,
 
 	// Transform msg_plane into the camera's coordinate frame.
 	Plane plane;
-	TransformPlane(*msg_plane, plane, msg_img->header.frame_id);
+	try {
+		TransformPlane(*msg_plane, plane, msg_img->header.frame_id);
+	} catch (tf::TransformException const &e) {
+		ROS_WARN_THROTTLE(10, "%s", e.what());
+		return;
+	}
 
 	// Convert the ROS Image and CameraInfo messages into OpenCV datatypes for
 	// processing. This avoids copying the data when possible.
