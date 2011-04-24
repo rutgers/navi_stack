@@ -7,6 +7,7 @@
 #include <pcl_ros/transforms.h>
 #include <pcl_ros/point_cloud.h>
 #include <pluginlib/class_list_macros.h>
+#include <visualization_msgs/Marker.h>
 
 #include "line_tracker.hpp"
 
@@ -18,7 +19,6 @@ namespace tracker_node {
 
 void TrackerNodelet::onInit(void)
 {
-	ROS_ERROR("INIT line_tracker");
 	ros::NodeHandle &nh      = getNodeHandle();
 	ros::NodeHandle &nh_priv = getPrivateNodeHandle();
 
@@ -37,6 +37,7 @@ void TrackerNodelet::onInit(void)
 	}
 
 	m_pub_ren = nh.advertise<GridCells>("line_occupancy", 1);
+	m_pub_viz = nh.advertise<Marker>("visualization_marker", 1);
 	m_sub_pts = nh.subscribe<PointCloud3D>("points", 10, &TrackerNodelet::AddPoints, this);
 }
 
@@ -73,6 +74,14 @@ void TrackerNodelet::GetRobotCenter(ros::Time stamp, Point2D &pt_2d) const
 
 void TrackerNodelet::AddPoints(PointCloud3D::ConstPtr const &pts_3d)
 {
+	Point2D pt_robot;
+	try {
+		GetRobotCenter(pts_3d->header.stamp, pt_robot);
+	} catch (tf::TransformException const &e) {
+		ROS_WARN("%s", e.what());
+		return;
+	}
+
 	// Convert all the points to a frame that is fixed w.r.t. the world.
 	PointCloud3D::Ptr pts_fixed = boost::make_shared<PointCloud3D>();
 	try {
@@ -93,11 +102,32 @@ void TrackerNodelet::AddPoints(PointCloud3D::ConstPtr const &pts_3d)
 		}
 	}
 
+	// Fit a model to the accumulated data.
+	std::vector<PointWeighted> pts;
+	for (int i = 0; i < m_grid_width * m_grid_height; ++i) {
+		Point2D point = Index2Point(i);
+		Value   value = m_grid[i];
+
+		if (value > 0 && Distance(point, pt_robot) <= m_range_max) {
+			PointWeighted pt;
+			pt.x = point.x;
+			pt.y = point.y;
+			pt.intensity = value;
+			pts.push_back(pt);
+		}
+	}
+
+	LinearModel model;
+	while ((int)pts.size() >= LinearModel::GetMinPoints()) {
+		int inliers = FitModel(pts, 500, 0.30, model);
+
+		// TODO: remove inliers and fit additional models
+		break;
+	}
+
 	// Render the map in RViz as a nav_msgs::GridCell message. Unfortunately
 	// there is no non-binary equivant that can be easily visualized.
 	GridCells::Ptr msg_ren = boost::make_shared<GridCells>();
-	Point2D pt_robot;
-	GetRobotCenter(pts_3d->header.stamp, pt_robot);
 
 	for (int i = 0; i < m_grid_width * m_grid_height; ++i) {
 		Point2D point = Index2Point(i);
@@ -111,6 +141,12 @@ void TrackerNodelet::AddPoints(PointCloud3D::ConstPtr const &pts_3d)
 			msg_ren->cells.push_back(cell);
 		}
 	}
+
+	// Render the line model in RViz.
+	Marker msg_viz = RenderModel(model);
+	msg_viz.header.frame_id = m_fr_fixed;
+	msg_viz.header.stamp    = pts_3d->header.stamp;
+	m_pub_viz.publish(msg_viz);
 
 	msg_ren->cell_width  = m_grid_size;
 	msg_ren->cell_height = m_grid_size;
@@ -134,11 +170,113 @@ void TrackerNodelet::IncrementCell(double x, double y)
 	int index = Point2Index(x, y);
 
 	if (0 <= index && index <= m_grid_width * m_grid_height) {
-		ROS_ERROR("increment %d", index);
 		if (m_grid[index] < 255) {
 			++m_grid[index];
 		}
 	}
+}
+
+#define GetPointWeight(_x_) ((_x_).intensity)
+
+template <class M>
+int TrackerNodelet::FitModel(std::vector<PointWeighted> const &pts, int iterations, double threshold, M &model)
+{
+	ROS_ASSERT((int)pts.size() >= M::GetMinPoints());
+	ROS_ASSERT(iterations >= 1);
+	ROS_ASSERT(threshold  >= 0.0);
+
+	M             best_model;
+	std::set<int> best_inliers;
+	int           best_support = 0;
+
+	for (int it = 0; it < iterations; ++it) {
+		M             maybe_model;
+		std::set<int> maybe_inliers;
+		int           maybe_support = 0;
+
+		// Fit a model to randomly selected points.
+		while ((int)maybe_inliers.size() < M::GetMinPoints()) {
+			int i = rand() * pts.size() / RAND_MAX;
+			maybe_inliers.insert(i);
+			maybe_support += GetPointWeight(pts[i]);
+		}
+
+		std::vector<PointWeighted> seeds;
+		std::set<int>::iterator seed_it;
+		for (seed_it = maybe_inliers.begin(); seed_it != maybe_inliers.end(); ++seed_it) {
+			seeds.push_back(pts[*seed_it]);
+		}
+		maybe_model.Fit(seeds);
+		maybe_inliers.clear();
+
+		// Add points that are sufficiently close to the model as inliers.
+		for (int i = 0; i < (int)pts.size(); ++i) {
+			if (maybe_model.Evaluate(pts[i]) <= threshold) {
+				maybe_inliers.insert(i);
+				maybe_support += GetPointWeight(pts[i]);
+			}
+		}
+
+		// This model is better than the old best-known model.
+		if (maybe_support > best_support) {
+			best_model   = maybe_model;
+			best_inliers = maybe_inliers;
+			best_support = maybe_support;
+		}
+	}
+
+	// TODO: Fit the model to all of the inliers.
+	model = best_model;
+	return best_support;
+}
+
+#define sgn(_x_) (((_x_) >= 0)?(+1):(-1))
+Marker TrackerNodelet::RenderModel(LinearModel const &model) const
+{
+	Marker viz;
+	viz.ns = "line_models";
+	viz.id = 0;
+
+	viz.type    = Marker::LINE_LIST;
+	viz.scale.x = 0.1;
+	viz.action  = Marker::ADD;
+
+	viz.color.r = 0.0;
+	viz.color.g = 1.0;
+	viz.color.b = 0.0;
+	viz.color.a = 1.0;
+
+	viz.points.resize(2);
+
+	double x1 = -100;
+	double y1 = (model.c - model.a * x1) / model.b;
+
+	double x2 = +100;
+	double y2 = (model.c - model.a * x2) / model.b;
+
+	viz.points[0].x = x1;
+	viz.points[0].y = y1;
+	viz.points[1].x = x2;
+	viz.points[1].y = y2;
+	return viz;
+}
+
+int LinearModel::GetMinPoints(void)
+{
+	return 2;
+}
+
+void LinearModel::Fit(std::vector<PointWeighted> const &pts)
+{
+	ROS_ASSERT(pts.size() == 2);
+	a = pts[1].x - pts[0].x;
+	b = pts[1].y - pts[0].y;
+	c = a*(pts[0].x) + b*(pts[0].y);
+}
+
+double LinearModel::Evaluate(PointWeighted const &pt) const
+{
+	return (a*pt.x + b*pt.y + c) / sqrt(pow(a, 2) + pow(b, 2));
 }
 
 /*

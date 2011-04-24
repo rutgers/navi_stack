@@ -13,12 +13,22 @@
 namespace tracker_node {
 
 using nav_msgs::GridCells;
+using visualization_msgs::Marker;
 
 typedef unsigned int   Value;
 typedef pcl::PointXY   Point2D;
 typedef pcl::PointXYZ  Point3D;
+typedef pcl::PointXYZI PointWeighted;
 typedef pcl::PointCloud<Point2D>  PointCloud2D;
 typedef pcl::PointCloud<Point3D>  PointCloud3D;
+
+struct LinearModel {
+	double a, b, c;
+
+	static int GetMinPoints(void);
+	void Fit(std::vector<PointWeighted> const &pts);
+	double Evaluate(PointWeighted const &pt) const;
+};
 
 class TrackerNodelet : public nodelet::Nodelet {
 public:
@@ -32,6 +42,10 @@ public:
 	Value GetCellValue(double x, double y) const;
 	void IncrementCell(double x, double y);
 
+	template <class M>
+	int FitModel(std::vector<PointWeighted> const &pts, int iterations, double threshold, M &model);
+	Marker RenderModel(LinearModel const &model) const;
+
 private:
 	int m_grid_width;
 	int m_grid_height;
@@ -43,7 +57,8 @@ private:
 	std::vector<Value> m_grid;
 	boost::shared_ptr<tf::TransformListener> m_tf;
 
-	ros::Publisher  m_pub_ren;
+	ros::Publisher m_pub_ren;
+	ros::Publisher m_pub_viz;
 	ros::Subscriber m_sub_pts;
 
 	void Point2Grid(double x, double y, int &grid_x, int &grid_y) const;
@@ -54,7 +69,6 @@ private:
 
 	int     Grid2Index(int grid_x, int grid_y) const;
 	Point2D Grid2Point(int grid_x, int grid_y) const;
-
 };
 
 };
