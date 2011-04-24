@@ -77,10 +77,11 @@ void WhiteNodelet::Callback(sensor_msgs::Image::ConstPtr const &msg_img)
 	cv::min(val, white, whiteness);
 
 	// Convert the OpenCV data to an output message without copying.
+	// FIXME: Just publishing saturation as a temporary stopgap.
 	cv_bridge::CvImage msg_white;
 	msg_white.header   = msg_img->header;
 	msg_white.encoding = enc::MONO8;
-	msg_white.image    = whiteness;
+	msg_white.image    = 255 - sat;
 	m_pub.publish(msg_white.toImageMsg());
 }
 };
