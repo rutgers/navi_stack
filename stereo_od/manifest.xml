@@ -5,9 +5,12 @@
 	<license>BSD</license>
 	<review status="unreviewed" notes=""/>
 	<depend package="image_geometry"/>
+	<depend package="geometry_msgs"/>
 	<depend package="message_filters"/>
 	<depend package="roscpp"/>
 	<depend package="pcl"/>
 	<depend package="pcl_ros"/>
 	<depend package="sensor_msgs"/>
+	<depend package="stereo_plane"/>
+	<depend package="tf"/>
 </package>

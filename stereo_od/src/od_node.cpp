@@ -9,17 +9,22 @@
 #include <image_geometry/pinhole_camera_model.h>
 #include <sensor_msgs/CameraInfo.h>
 #include <sensor_msgs/PointCloud2.h>
+#include <geometry_msgs/PointStamped.h>
+#include <geometry_msgs/Vector3Stamped.h>
 #include <message_filters/subscriber.h>
 #include <message_filters/time_synchronizer.h>
 #include <pcl_ros/point_cloud.h>
 #include <pcl/kdtree/kdtree_flann.h>
 #include <pcl/point_types.h>
+#include <stereo_plane/Plane.h>
+#include <tf/transform_listener.h>
 
 namespace mf = message_filters;
 
 using image_geometry::PinholeCameraModel;
 using sensor_msgs::CameraInfo;
 using sensor_msgs::PointCloud2;
+using stereo_plane::Plane;
 
 typedef pcl::PointCloud<pcl::PointXYZ> PointCloudXYZ;
 
@@ -27,8 +32,10 @@ static int    m_pmin;
 static double m_dmax;
 static double m_hmin;
 static double m_hmax;
+static double m_pmax;
 static double m_theta;
 static PinholeCameraModel m_model;
+static boost::shared_ptr<tf::TransformListener> m_tf;
 static float  float_nan = std::numeric_limits<float>::quiet_NaN();
 
 static ros::Publisher  m_pub_pts;
@@ -36,6 +43,36 @@ static ros::Publisher  m_pub_pts;
 float dist(pcl::PointXYZ const &pt1, pcl::PointXYZ const &pt2)
 {
 	return sqrt(pow(pt2.x - pt1.x, 2) + pow(pt2.y - pt1.y, 2) + pow(pt2.z - pt1.z, 2));
+}
+
+float dist(Plane const &plane, pcl::PointXYZ const &pt)
+{
+	double a = plane.normal.x;
+	double b = plane.normal.y;
+	double c = plane.normal.z;
+	double d = -(a * plane.point.x + b * plane.point.y + c * plane.point.z);
+	return abs(a*pt.x + b*pt.y + c*pt.z + d) / sqrt(pow(a, 2) + pow(b, 2) + pow(c, 2));
+}
+
+void TransformPlane(Plane const &src, Plane &dst, std::string frame_id)
+{
+	geometry_msgs::PointStamped src_point;
+	geometry_msgs::PointStamped dst_point;
+	src_point.header = src.header;
+	src_point.point  = src.point;
+
+	geometry_msgs::Vector3Stamped src_normal;
+	geometry_msgs::Vector3Stamped dst_normal;
+	src_normal.header = src.header;
+	src_normal.vector = src.normal;
+
+	m_tf->transformPoint(frame_id, src_point, dst_point);
+	m_tf->transformVector(frame_id, src_normal, dst_normal);
+
+	dst.header = src.header;
+	dst.point  = dst_point.point;
+	dst.normal = dst_normal.vector;
+	dst.type   = src.type;
 }
 
 void FindObstacles(PointCloudXYZ const &src, PointCloudXYZ &dst,
@@ -56,18 +93,6 @@ void FindObstacles(PointCloudXYZ const &src, PointCloudXYZ &dst,
 
 	float const sin_theta = sin(m_theta);
 	float const tan_theta = tan(m_theta);
-
-	dst.points.resize(src.width * src.height);
-	dst.width    = src.width;
-	dst.height   = src.height;
-	dst.is_dense = false;
-
-	// Initially mark all points as invalid (i.e. x = y = z = NaN).
-	for (size_t i = 0; i < src.width * src.height; ++i) {
-		dst.points[i].x = float_nan;
-		dst.points[i].y = float_nan;
-		dst.points[i].z = float_nan;
-	}
 
 	for (int y0 = src.height - 1; y0 >= 0; --y0)
 	for (int x0 = src.width  - 1; x0 >= 0; --x0) {
@@ -123,34 +148,56 @@ void FindObstacles(PointCloudXYZ const &src, PointCloudXYZ &dst,
 
 		BOOST_FOREACH(int index, components[component]) {
 			pcl::PointXYZ const &pt_src = src.points[index];
-			pcl::PointXYZ       &pt_dst = dst.points[index];
-			pt_dst.x = pt_src.x;
-			pt_dst.y = pt_src.y;
-			pt_dst.z = pt_src.z;
+			dst.points.push_back(pt_src);
 		}
 	}
-
-	dst.width  = src.width;
-	dst.height = src.height;
-	dst.is_dense = false;
 }
 
-void Callback(PointCloudXYZ::ConstPtr const &msg_pts, CameraInfo::ConstPtr const &msg_info)
+void RemovePlane(PointCloudXYZ const &msg_src, PointCloudXYZ &msg_dst,
+                 Plane const &plane, double height)
 {
+	// NOTE: msg_dst must be a copy of msg_src
+	for (size_t i = 0; i < msg_dst.points.size(); ++i) {
+		pcl::PointXYZ const &pt = msg_dst.points[i];
+
+		if (dist(plane, pt) <= height) {
+			msg_dst.points[i].x = float_nan;
+			msg_dst.points[i].y = float_nan;
+			msg_dst.points[i].z = float_nan;
+		}
+	}
+}
+
+
+void Callback(PointCloudXYZ::ConstPtr const &pts, CameraInfo::ConstPtr const &info,
+              Plane::ConstPtr const &msg_plane)
+{
+
+	Plane plane;
+	try {
+		TransformPlane(*msg_plane, plane, pts->header.frame_id);
+		ROS_ERROR("Transform OKAY");
+	} catch (tf::TransformException const &e) {
+		ROS_WARN("%s", e.what());
+		ROS_ERROR("Transform FAIL");
+		return;
+	}
+
 	// Extract the camera's focal length from the CameraInfo message. Because
 	// we are reprojecting a vertical distance, we can safely ignore fx().
-	m_model.fromCameraInfo(msg_info);
+	m_model.fromCameraInfo(info);
 	double flen = m_model.fy();
 
-	PointCloudXYZ obstacles;
-	FindObstacles(*msg_pts, obstacles, m_hmin, m_hmax, flen, m_theta);
+	// Remove points that are clearly on the ground plane to greatly speed up
+	// the Manduchi OD algorithm.
+	PointCloudXYZ::Ptr candidates = boost::make_shared<PointCloudXYZ>(*pts);
+	PointCloudXYZ::Ptr obstacles  = boost::make_shared<PointCloudXYZ>();
+	RemovePlane(*pts, *candidates, plane, m_pmax);
+	FindObstacles(*candidates, *obstacles, m_hmin, m_hmax, flen, m_theta);
 
-	PointCloud2 msg_obstacles;
-	pcl::toROSMsg(obstacles, msg_obstacles);
-
-	msg_obstacles.header.stamp    = msg_pts->header.stamp;
-	msg_obstacles.header.frame_id = msg_pts->header.frame_id;
-	m_pub_pts.publish(msg_obstacles);
+	obstacles->header.stamp    = pts->header.stamp;
+	obstacles->header.frame_id = pts->header.frame_id;
+	m_pub_pts.publish(obstacles);
 }
 
 int main(int argc, char **argv)
@@ -162,14 +209,18 @@ int main(int argc, char **argv)
 
 	nh_priv.param<int>("points_min",      m_pmin,  25);
 	nh_priv.param<double>("distance_max", m_dmax,  5.0);
-	nh_priv.param<double>("height_min",   m_hmin,  0.3);
+	nh_priv.param<double>("height_min",   m_hmin,  0.1);
 	nh_priv.param<double>("height_max",   m_hmax,  2.0);
+	nh_priv.param<double>("plane_max",    m_pmax,  0.3);
 	nh_priv.param<double>("theta",        m_theta, M_PI / 4);
 
 	mf::Subscriber<PointCloudXYZ> sub_pts(nh, "points", 1);
 	mf::Subscriber<CameraInfo>    sub_info(nh, "camera_info", 1);
-	mf::TimeSynchronizer<PointCloudXYZ, CameraInfo> sub_sync(sub_pts, sub_info, 10);
+	mf::Subscriber<Plane>         sub_plane(nh, "ground_plane", 1);
+	mf::TimeSynchronizer<PointCloudXYZ, CameraInfo, Plane> sub_sync(sub_pts, sub_info, sub_plane, 10);
 	sub_sync.registerCallback(&Callback);
+
+	m_tf = boost::make_shared<tf::TransformListener>(nh);
 
 	m_pub_pts = nh.advertise<PointCloud2>("obstacle_points", 10);
 
