@@ -176,10 +176,8 @@ void Callback(PointCloudXYZ::ConstPtr const &pts, CameraInfo::ConstPtr const &in
 	Plane plane;
 	try {
 		TransformPlane(*msg_plane, plane, pts->header.frame_id);
-		ROS_ERROR("Transform OKAY");
 	} catch (tf::TransformException const &e) {
 		ROS_WARN("%s", e.what());
-		ROS_ERROR("Transform FAIL");
 		return;
 	}
 
