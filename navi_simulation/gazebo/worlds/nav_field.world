@@ -45,6 +45,31 @@
     </body:plane>
   </model:physical>
 
+	<!-- obstacles -->
+	<model:physical name="barrel1">
+		<xyz>10 0 0</xyz>
+		<rpy>0.0 0.0 0.0</rpy>
+		<include embedded="true">
+			<xi:include href="../objects/barrel_construction.model" />
+		</include>
+	</model:physical>
+
+	<model:physical name="barrel2">
+		<xyz>10 1 0</xyz>
+		<rpy>0.0 0.0 0.0</rpy>
+		<include embedded="true">
+			<xi:include href="../objects/barrel_construction.model" />
+		</include>
+	</model:physical>
+
+	<model:physical name="barrel3">
+		<xyz>9 -1 0</xyz>
+		<rpy>0.0 0.0 0.0</rpy>
+		<include embedded="true">
+			<xi:include href="../objects/barrel_construction.model" />
+		</include>
+	</model:physical>
+
 <!--
   <model:physical name="walls">
     <include embedded="false">
