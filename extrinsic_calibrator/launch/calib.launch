@@ -3,7 +3,7 @@
 		<node pkg="extrinsic_calibrator" type="extrinsiccalibrator.py" name="extrinsic_calibrator">
 			<param name="board_cols" value="7"/>
 			<param name="board_rows" value="7"/>
-			<param name="board_size" value="0.08709"/>
+			<param name="board_size" value="0.06773"/>
 			<remap from="camera0" to="narrow/left"/>
 			<remap from="camera1" to="narrow/right"/>
 		</node>

@@ -1,5 +1,7 @@
 #!/usr/bin/python
 
+from __future__ import print_function
+
 import roslib
 roslib.load_manifest('extrinsic_calibrator')
 
@@ -72,8 +74,8 @@ class ExtrinsicNode:
 		cv.Reshape(mat_cam, 0, 3)
 
 		# Corresponding two-dimensional and three-dimensional points.
-		pts_2d = cv.CreateMat(n, 2, cv.CV_64FC1)
-		pts_3d = cv.CreateMat(n, 3, cv.CV_64FC1)
+		pts_2d = cv.CreateMat(n, 2, cv.CV_32FC1)
+		pts_3d = cv.CreateMat(n, 3, cv.CV_32FC1)
 
 		for i in range(0, n):
 			(pts_2d[i, 0], pts_2d[i, 1]) = corners[i]
@@ -82,15 +84,14 @@ class ExtrinsicNode:
 			pts_3d[i, 2] = 0.0
 
 		# Solve for the transformation from the model frame to the camera frame.
-		rmat = cv.CreateMat(3, 3, cv.CV_64FC1)
-		rvec = cv.CreateMat(3, 1, cv.CV_64FC1)
-		tvec = cv.CreateMat(3, 1, cv.CV_64FC1)
+		rmat = cv.CreateMat(3, 3, cv.CV_32FC1)
+		rvec = cv.CreateMat(3, 1, cv.CV_32FC1)
+		tvec = cv.CreateMat(3, 1, cv.CV_32FC1)
 		cv.FindExtrinsicCameraParams2(pts_3d, pts_2d, mat_cam, mat_dis, rvec, tvec, False)
 		cv.Rodrigues2(rvec, rmat)
-		cv.Transpose(rmat, rmat) # FIXME
 
 		# Merge the rotation and translation into a single transformation matrix.
-		tmat = cv.CreateMat(4, 4, cv.CV_64FC1)
+		tmat = cv.CreateMat(4, 4, cv.CV_32FC1)
 		cv.SetIdentity(tmat)
 		cv.Copy(rmat, tmat[0:3, 0:3])
 		cv.Copy(tvec, tmat[0:3, 3:4])
@@ -153,12 +154,12 @@ class ExtrinsicNode:
 				cv.DrawChessboardCorners(img2_bgr, (self.board_rows, self.board_cols), corners2, True)
 
 				# Estimated chessboard poses.
-				pose1 = self.TransformationToPose(numpy.linalg.inv(T_1M))
+				pose1 = self.TransformationToPose(T_1M)
 				pose1.header.stamp    = stamp
 				pose1.header.frame_id = msg_img1.header.frame_id
 				self.pub_pose1.publish(pose1)
 
-				pose2 = self.TransformationToPose(numpy.linalg.inv(T_2M))
+				pose2 = self.TransformationToPose(T_2M)
 				pose2.header.stamp    = stamp
 				pose2.header.frame_id = msg_img2.header.frame_id
 				self.pub_pose2.publish(pose2)
