@@ -158,6 +158,8 @@ class ExtrinsicNode:
 				cv.DrawChessboardCorners(img1_bgr, (self.board_rows, self.board_cols), corners1, True)
 				cv.DrawChessboardCorners(img2_bgr, (self.board_rows, self.board_cols), corners2, True)
 
+				print(T_21)
+
 		cv.ShowImage(self.gui_name, self.viz)
 		cv.WaitKey(self.gui_delay)
 
