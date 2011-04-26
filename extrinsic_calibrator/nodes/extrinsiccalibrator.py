@@ -30,8 +30,10 @@ class ExtrinsicNode:
 		self.board_size = rospy.get_param('~board_size', 0.10)
 		self.border = rospy.get_param('~border', 8)
 
-		self.pub_pose1 = rospy.Publisher('chessboard0', geometry_msgs.msg.PoseStamped)
-		self.pub_pose2 = rospy.Publisher('chessboard1', geometry_msgs.msg.PoseStamped)
+		self.pub_chess1 = rospy.Publisher('chessboard0', geometry_msgs.msg.PoseStamped)
+		self.pub_chess2 = rospy.Publisher('chessboard1', geometry_msgs.msg.PoseStamped)
+		self.pub_pose2  = rospy.Publisher('campose0',    geometry_msgs.msg.PoseStamped)
+		self.pub_pose2  = rospy.Publisher('campose1',    geometry_msgs.msg.PoseStamped)
 		self.pub_tf = tf.TransformBroadcaster()
 
 		# Synchronized left and right camera frames with monocular calibration parameters.
@@ -97,18 +99,6 @@ class ExtrinsicNode:
 		cv.Copy(tvec, tmat[0:3, 3:4])
 		return tmat
 
-	def TransformationToPose(self, T):
-		t, r = self.TransformationToTransform(T)
-		pose = geometry_msgs.msg.PoseStamped()
-		pose.pose.position.x = t[0]
-		pose.pose.position.y = t[1]
-		pose.pose.position.z = t[2]
-		pose.pose.orientation.x = r[0]
-		pose.pose.orientation.y = r[1]
-		pose.pose.orientation.z = r[2]
-		pose.pose.orientation.w = r[3]
-		return pose
-
 	def TransformationToTransform(self, T):
 		return (T[0:3, 3], tf.transformations.quaternion_from_matrix(T))
 
@@ -145,27 +135,27 @@ class ExtrinsicNode:
 			y_same = (l0[1] < l1[1] and r0[1] < r1[1]) or (l0[1] > l1[1] and r0[1] > r1[1])
 
 			if x_same and y_same:
-				T_1M = numpy.asarray(self.FindTransformation(corners1, self.model1))
-				T_2M = numpy.asarray(self.FindTransformation(corners2, self.model2))
-				T_21 = T_2M * numpy.linalg.inv(T_1M)
+				T_M1 = numpy.asarray(self.FindTransformation(corners1, self.model1))
+				T_M2 = numpy.asarray(self.FindTransformation(corners2, self.model2))
+				T_21 = numpy.linalg.inv(T_M2) * T_M1
+				T_12 = numpy.linalg.inv(T_M1) * T_M2
+
+				t_M1, R_M1 = self.TransformationToTransform(T_M1)
+				self.pub_tf.sendTransform(t_M1, R_M1, stamp, "/chessboard0", msg_img1.header.frame_id)
+
+				t_M2, R_M2 = self.TransformationToTransform(T_M2)
+				self.pub_tf.sendTransform(t_M2, R_M2, stamp, "/chessboard1", msg_img2.header.frame_id)
+
+				t_21, R_21 = self.TransformationToTransform(T_21)
+				self.pub_tf.sendTransform(t_21, R_21, stamp, "/estimate0",   msg_img1.header.frame_id)
+
+				t_12, R_12 = self.TransformationToTransform(T_12)
+				self.pub_tf.sendTransform(t_12, R_12, stamp, "/estimate1",   msg_img2.header.frame_id)
+
 
 				# TODO: Calculate reprojection error. Save the transform with minimum error.
 				cv.DrawChessboardCorners(img1_bgr, (self.board_rows, self.board_cols), corners1, True)
 				cv.DrawChessboardCorners(img2_bgr, (self.board_rows, self.board_cols), corners2, True)
-
-				# Estimated chessboard poses.
-				pose1 = self.TransformationToPose(T_1M)
-				pose1.header.stamp    = stamp
-				pose1.header.frame_id = msg_img1.header.frame_id
-				self.pub_pose1.publish(pose1)
-
-				pose2 = self.TransformationToPose(T_2M)
-				pose2.header.stamp    = stamp
-				pose2.header.frame_id = msg_img2.header.frame_id
-				self.pub_pose2.publish(pose2)
-
-				t, r = self.TransformationToTransform(T_21)
-				self.pub_tf.sendTransform(t, r, stamp, "second", frame1)
 
 		cv.ShowImage(self.gui_name, self.viz)
 		cv.WaitKey(self.gui_delay)
