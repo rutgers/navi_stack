@@ -10,4 +10,5 @@
 	<depend package="message_filters"/>
 	<depend package="sensor_msgs"/>
 	<depend package="rospy"/>
+	<depend package="tf"/>
 </package>

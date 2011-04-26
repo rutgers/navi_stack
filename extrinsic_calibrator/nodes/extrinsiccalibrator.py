@@ -8,9 +8,9 @@ import cv
 import cv_bridge
 import image_geometry
 import message_filters
+import geometry_msgs.msg
 import sensor_msgs.msg
-import sensor_msgs.srv
-
+import tf
 
 import math
 import numpy
@@ -26,7 +26,11 @@ class ExtrinsicNode:
 		self.board_rows = rospy.get_param('~board_rows', 7)
 		self.board_cols = rospy.get_param('~board_cols', 7)
 		self.board_size = rospy.get_param('~board_size', 0.10)
-		self.border     = rospy.get_param('~border', 8)
+		self.border = rospy.get_param('~border', 8)
+
+		self.pub_pose1 = rospy.Publisher('chessboard0', geometry_msgs.msg.PoseStamped)
+		self.pub_pose2 = rospy.Publisher('chessboard1', geometry_msgs.msg.PoseStamped)
+		self.pub_tf = tf.TransformBroadcaster()
 
 		# Synchronized left and right camera frames with monocular calibration parameters.
 		# TODO: Use the approximate synchronization algorithm.
@@ -37,8 +41,8 @@ class ExtrinsicNode:
 		sub_info1  = mf.Subscriber(topic_cam1 + '/camera_info', sensor_msgs.msg.CameraInfo)
 		sub_info2  = mf.Subscriber(topic_cam2 + '/camera_info', sensor_msgs.msg.CameraInfo)
 
-		sub_sync = mf.TimeSynchronizer([ sub_img1, sub_info1, sub_img2, sub_info2 ], 10)
-		sub_sync.registerCallback(self.UpdateImage)
+		self.sub_sync = mf.TimeSynchronizer([ sub_img1, sub_info1, sub_img2, sub_info2 ], 10)
+		self.sub_sync.registerCallback(self.UpdateImage)
 
 		# Visualization of calibration.
 		self.gui_name  = 'Extrinsic Calibration'
@@ -83,6 +87,7 @@ class ExtrinsicNode:
 		tvec = cv.CreateMat(3, 1, cv.CV_64FC1)
 		cv.FindExtrinsicCameraParams2(pts_3d, pts_2d, mat_cam, mat_dis, rvec, tvec, False)
 		cv.Rodrigues2(rvec, rmat)
+		cv.Transpose(rmat, rmat) # FIXME
 
 		# Merge the rotation and translation into a single transformation matrix.
 		tmat = cv.CreateMat(4, 4, cv.CV_64FC1)
@@ -91,7 +96,26 @@ class ExtrinsicNode:
 		cv.Copy(tvec, tmat[0:3, 3:4])
 		return tmat
 
+	def TransformationToPose(self, T):
+		t, r = self.TransformationToTransform(T)
+		pose = geometry_msgs.msg.PoseStamped()
+		pose.pose.position.x = t[0]
+		pose.pose.position.y = t[1]
+		pose.pose.position.z = t[2]
+		pose.pose.orientation.x = r[0]
+		pose.pose.orientation.y = r[1]
+		pose.pose.orientation.z = r[2]
+		pose.pose.orientation.w = r[3]
+		return pose
+
+	def TransformationToTransform(self, T):
+		return (T[0:3, 3], tf.transformations.quaternion_from_matrix(T))
+
 	def UpdateImage(self, msg_img1, msg_info1, msg_img2, msg_info2):
+		stamp  = msg_img1.header.stamp
+		frame1 = msg_img1.header.frame_id
+		frame2 = msg_img2.header.frame_id
+
 		img1 = self.bridge.imgmsg_to_cv(msg_img1, "mono8")
 		img2 = self.bridge.imgmsg_to_cv(msg_img2, "mono8")
 		self.model1.fromCameraInfo(msg_info1)
@@ -122,11 +146,25 @@ class ExtrinsicNode:
 			if x_same and y_same:
 				T_1M = numpy.asarray(self.FindTransformation(corners1, self.model1))
 				T_2M = numpy.asarray(self.FindTransformation(corners2, self.model2))
-				T_M2 = T_1M * numpy.linalg.inv(T_2M)
+				T_21 = T_2M * numpy.linalg.inv(T_1M)
 
 				# TODO: Calculate reprojection error. Save the transform with minimum error.
 				cv.DrawChessboardCorners(img1_bgr, (self.board_rows, self.board_cols), corners1, True)
 				cv.DrawChessboardCorners(img2_bgr, (self.board_rows, self.board_cols), corners2, True)
+
+				# Estimated chessboard poses.
+				pose1 = self.TransformationToPose(numpy.linalg.inv(T_1M))
+				pose1.header.stamp    = stamp
+				pose1.header.frame_id = msg_img1.header.frame_id
+				self.pub_pose1.publish(pose1)
+
+				pose2 = self.TransformationToPose(numpy.linalg.inv(T_2M))
+				pose2.header.stamp    = stamp
+				pose2.header.frame_id = msg_img2.header.frame_id
+				self.pub_pose2.publish(pose2)
+
+				t, r = self.TransformationToTransform(T_21)
+				self.pub_tf.sendTransform(t, r, stamp, "second", frame1)
 
 		cv.ShowImage(self.gui_name, self.viz)
 		cv.WaitKey(self.gui_delay)
