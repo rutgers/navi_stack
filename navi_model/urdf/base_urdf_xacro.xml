@@ -9,97 +9,80 @@
 
 	<property name="M_PI" value="3.1415926535897931"/>
 
-	<xacro:macro name="navi_base" params="name">
-		<link name="base_link">
-			<inertial>
-				<mass value="46"/>
-				<!-- center of mass (com) is defined w.r.t. link local coordinate system -->
-				<origin xyz="0 0 -0.2"/> 
-				<inertia  ixx="1.0" ixy="0.0" ixz="0.0" iyy="100.0" iyz="0.0" izz="1.0"/>
-			</inertial>
-			<visual>
-				<!-- visual origin is defined w.r.t. link local coordinate system -->
-				<origin xyz=" 0 0 0" rpy="0 0 0"/>
-				<geometry name="base_link_visual_geom">
-					<mesh filename="package://navi_model/meshes/base_link.stl"/> 
-				</geometry>
-				<material name="Blue"/> 
-			</visual>
-			<collision>
+<xacro:macro name="navi_base" params="name">
+	<link name="base_link">
+		<inertial>
+			<mass value="50"/>
+			<!-- center of mass (com) is defined w.r.t. link local coordinate system -->
+			<origin xyz="0 0 -0.2"/> 
+			<inertia  ixx="1.0" ixy="0.0" ixz="0.0" iyy="100.0" iyz="0.0" izz="1.0"/>
+		</inertial>
+		<visual>
+			<!-- visual origin is defined w.r.t. link local coordinate system -->
+			<origin xyz=" 0 0 0" rpy="0 0 0"/>
+			<geometry name="base_link_visual_geom">
+				<mesh filename="package://navi_model/meshes/base_link.stl"/> 
+			</geometry>
+			<material name="Blue"/> 
+		</visual>
+		<collision>
 				<!-- collision origin is defined w.r.t. link local coordinate system -->
-				<origin xyz=" 0 0 0" rpy="0 0 -0.358775"/>
-				<geometry name="base_link_collision_geom">
-					<box size="0.9917 0.511175 0.358775"/>
-				</geometry>
-			</collision>
-		</link>
+			<origin xyz=" 0 0 0" rpy="0 0 -0.358775"/>
+			<geometry name="base_link_collision_geom">
+				<box size="0.9917 0.511175 0.358775"/>
+			</geometry>
+		</collision>
+	</link>
 
-		<gazebo reference="base_link">
-			<turnGravityOff>False</turnGravityOff>
-			<material>Gazebo/PioneerBody</material>
-			<canonicalBody>base_link</canonicalBody>
-		</gazebo>
+	<gazebo reference="base_link">
+		<turnGravityOff>False</turnGravityOff>
+		<material>Gazebo/PioneerBody</material>
+		<canonicalBody>base_link</canonicalBody>
+	</gazebo>
  
-		<link name="base_footprint">
-			<inertial>
-				<mass value="1.0"/>
-				<origin xyz="0 0 0"/>
-				<inertia ixx="0.01" ixy="0.0" ixz="0.0" iyy="0.01" iyz="0.0" izz="0.01"/>
-			</inertial>
-			<visual>
-				<origin rpy="0 0 0" xyz="0 0 0"/>
-				<geometry>
-					<box size="0.001 0.001 0.001"/>
-				</geometry>
-				<material name="Green"/>
-			</visual>
-			<collision>
-				<!-- represent base collision with a simple rectangular model,
-				     positioned by base_size_z s.t. top surface of the collision
-				     box matches the top surface of the PR2 base -->
-				<origin rpy="0 0 0" xyz="0 0 0.071"/>
-				<geometry>
-					<box size="0.001 0.001 0.001"/>
-				</geometry>
-			</collision>
-		</link>
-    
-		<joint name="base_footprint_joint" type="fixed">
-			<origin rpy="0 0 0" xyz="0 0 0.485775"/>
-			<child link="base_link"/>
-			<parent link="base_footprint"/>
-		</joint>
-		
-		<link name="drive_center">
-			<inertial>
-				<mass value="1"/>
-				<!-- center of mass (com) is defined w.r.t. link local coordinate system -->
-				<origin xyz="0 0 0"/> 
-				<inertia  ixx="1.0" ixy="0.0" ixz="0.0" iyy="100.0" iyz="0.0" izz="1.0"/>
-			</inertial>
-		</link>
-		<joint name="drive_center_joint" type="fixed">
-			<origin rpy="0 0 0" xyz="0.367 0 0"/>
-			<child link="drive_center"/>
-			<parent link="base_link"/>
-		</joint>
-	<gazebo>
+ 
+	<link name="drive_center">
+		<inertial>
+			<mass value="1"/>
+			<!-- center of mass (com) is defined w.r.t. link local coordinate system -->
+			<origin xyz="0 0 0"/> 
+			<inertia  ixx="1.0" ixy="0.0" ixz="0.0" iyy="100.0" iyz="0.0" izz="1.0"/>
+		</inertial>
+	</link>
+	<joint name="drive_center_joint" type="fixed">
+		<origin rpy="0 0 0" xyz="-0.367 0 0"/> 
+		<child link="base_link"/>
+		<parent link="drive_center"/>
+	</joint>
 	
-    <controller:gazebo_ros_p3d name="base_link_gt" plugin="libgazebo_ros_p3d.so">
-      <alwaysOn>true</alwaysOn>
-      <updateRate>20.0</updateRate>
-      <bodyName>base_link</bodyName>
-      <topicName>/drive/odom</topicName>
-      <gaussianNoise>0.0</gaussianNoise>
-      <frameName>map</frameName>
-      <interface:position name="my_box_p3d_position_iface" />
-    </controller:gazebo_ros_p3d >
+	<link name="driver_footprint">
+		<inertial>
+			<mass value="1"/>
+			<!-- center of mass (com) is defined w.r.t. link local coordinate system -->
+			<origin xyz="0 0 0"/> 
+			<inertia  ixx="1.0" ixy="0.0" ixz="0.0" iyy="100.0" iyz="0.0" izz="1.0"/>
+		</inertial>
+	</link>
+	
+	<joint name="drive_joint" type="fixed">
+		<origin rpy="0 0 0" xyz="0 0 0.485775"/> 
+		<child link="drive_center"/>
+		<parent link="drive_footprint"/>
+	</joint>
+	
+	<gazebo>
+		<controller:gazebo_ros_p3d name="base_link_gt" plugin="libgazebo_ros_p3d.so">
+		  <alwaysOn>true</alwaysOn>
+		  <updateRate>20.0</updateRate>
+		  <bodyName>base_link</bodyName>
+		  <topicName>/drive/odom</topicName>
+		  <gaussianNoise>0.0</gaussianNoise>
+		  <frameName>map</frameName>
+		  <interface:position name="my_box_p3d_position_iface" />
+		</controller:gazebo_ros_p3d >
+		<canonicalBody>driver_footprint</canonicalBody>
+	</gazebo>
 
-    <canonicalBody>base_footprint</canonicalBody>
 
-  </gazebo>
-
-
-		
 	</xacro:macro>
 </robot>

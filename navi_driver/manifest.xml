@@ -11,11 +11,8 @@
   <depend package="avr_bridge"/>
   <depend package="rospy"/>
   <depend package="nav_msgs"/>
-  <depend package="tf"/>
-  <depend package="joy"/>
-
-  <rosdep package="gpsd"/>
-  
+  <depend package="std_msgs"/>
+  <depend package="tf"/>  
 </package>
 
 
