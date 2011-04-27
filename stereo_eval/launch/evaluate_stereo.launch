@@ -1,0 +1,7 @@
+<launch>
+	<group ns="vision">
+	<group ns="narrow">
+		<node pkg="stereo_eval" type="eval_node.py" name="stereo_eval" respawn="false"/>
+	</group>
+	</group>
+</launch>
