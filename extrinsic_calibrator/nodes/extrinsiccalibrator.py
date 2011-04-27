@@ -133,8 +133,8 @@ class ExtrinsicNode:
 
 		if ok1 and ok2:
 			# Verify that the chessboards have the same orientation.
-			l0, l1 = (corners1[0], corners1[-1])
-			r0, r1 = (corners2[0], corners2[-1])
+			l0, l1 = (corners1[0],  corners2[0])
+			r0, r1 = (corners1[-1], corners2[-1])
 			x_same = (l0[0] < l1[0] and r0[0] < r1[0]) or (l0[0] > l1[0] and r0[0] > r1[0])
 			y_same = (l0[1] < l1[1] and r0[1] < r1[1]) or (l0[1] > l1[1] and r0[1] > r1[1])
 
