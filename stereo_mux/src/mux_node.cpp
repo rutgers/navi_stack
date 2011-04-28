@@ -101,9 +101,12 @@ int main(int argc, char **argv)
 
 	// Always subscribe to synchronized (left, middle, right) image triplets;
 	// we will handle the multiplexing entirely in the callback.
-	message_filters::Subscriber<Image> sub_left(nh,   "left",   1);
-	message_filters::Subscriber<Image> sub_middle(nh, "middle", 1);
-	message_filters::Subscriber<Image> sub_right(nh,  "right",  1);
+	std::string topic_l = nh.resolveName("left");
+	std::string topic_m = nh.resolveName("middle");
+	std::string topic_r = nh.resolveName("right");
+	message_filters::Subscriber<Image> sub_left(nh,   topic_l + "/image", 1);
+	message_filters::Subscriber<Image> sub_middle(nh, topic_m + "/image", 1);
+	message_filters::Subscriber<Image> sub_right(nh,  topic_r + "/image", 1);
 	TimeSynchronizer<Image, Image, Image> sub_sync(sub_left, sub_middle, sub_right, 10);
 	sub_sync.registerCallback(boost::bind(&recieve, _1, _2, _3));
 
