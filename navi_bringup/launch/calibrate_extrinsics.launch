@@ -1,0 +1,14 @@
+<launch>
+	<arg name="cam"/>    <!-- monocular camera (e.g. wheel_left or wheel_right) -->
+	<arg name="rows"/>   <!-- number of chessboard rows -->
+	<arg name="cols"/>   <!-- number of chessboard columns -->
+	<arg name="square"/> <!-- length of a side of one square on the calibration chessboard -->
+
+	<include file="$(find camera_pose_calibration)/launch_extrinsics/calibrate_2_camera.launch" ns="vision">
+		<arg name="camera1_ns" value="left"/>
+		<arg name="camera2_ns" value="$(arg cam2)"/>
+		<arg name="checker_rows" value="$(arg rows)"/>
+		<arg name="checker_cols" value="$(arg cols)"/>
+		<arg name="checker_size" value="$(arg square)"/>
+	</include>
+</launch>
