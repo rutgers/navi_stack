@@ -9,12 +9,11 @@
 #include <avr/interrupt.h>
 #include <avr/delay.h>
 
-
-extern "C" {
 #include "motorcontrol.h"
-#include "pwm.h"
 
- }
+
+
+
 
 #include "robot.h"
 
@@ -44,8 +43,8 @@ void toggle()
 
 void motor_cmd_cb(const ros::Msg* msg){
 	toggle();
-	setLeftMotorSpeed(cmd_msg.left);
-	setRightMotorSpeed(cmd_msg.right);
+	setMotor1Speed(cmd_msg.left);
+	setMotor2Speed(cmd_msg.right);
 
 }
 
@@ -59,19 +58,14 @@ void setup()
     Serial.begin(57600);
     pinMode(13, OUTPUT); //set up the LED
 
-	initEncoders();
-	initMotor1();
-	initMotor2();
-    
-    //RobotInit();
-	//setLeftMotorSpeed(100);
-	//setRightMotorSpeed(100);
-	motor1SetSpeed(255);
-	motor2SetSpeed(255);
+   RobotInit();
 
     pub_current = node.advertise("current");
     pub_enc = node.advertise("encoder");
     node.subscribe("cmd",motor_cmd_cb, &cmd_msg);
+    setMotor1Speed(0);
+    setMotor2Speed(0);
+
 }
 
 
@@ -82,7 +76,6 @@ unsigned long read_current_timer=0;
 void loop()
 {
 	 node.spin();
-
 
 	if (encoder_update_timer < millis()){
 		encoder_msg.left = Robot.leftWheel.encoder.count();

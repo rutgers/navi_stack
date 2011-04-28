@@ -18,8 +18,8 @@ file(GLOB AVR_ROS_SRC
 set(PROJECT_SRC
     main.cpp
     avr_ros_user.cpp
-	motorcontrol.c
-	pwm.c
+	motorcontrol.cpp
+	Encoder.cpp
 	robot.cpp
     ${AVR_ROS_SRC}
     ${ARDUINO_SOURCE_FILES}
