@@ -1,11 +1,12 @@
 <launch>
 	<arg name="pair"/>   <!-- camera pair (e.g. narrow or wide) -->
-	<arg name="size"/>   <!-- dimensions of the chessboard (e.g. 7x5) -->
+	<arg name="rows"/>   <!-- number of chessboard rows -->
+	<arg name="cols"/>   <!-- number of chessboard columns -->
 	<arg name="square"/> <!-- length of a side of one square on the calibration chessboard -->
 
 	<include file="$(find stereo_webcam)/launch/navi_hardware.launch"/>
 	<group ns="vision">
-		<node pkg="camera_calibration" type="cameracalibrator.py" name="calibrator" args="--size=$(arg size) --square=$(arg square)">
+		<node pkg="camera_calibration" type="cameracalibrator.py" name="calibrator" args="--size=$(arg cols)x$(arg rows) --square=$(arg square)">
 			<remap from="left"  to="$(arg pair)/left/image_raw"/>
 			<remap from="right" to="$(arg pair)/right/image_raw"/>
 			<remap from="left_camera"  to="$(arg pair)/left"/>
