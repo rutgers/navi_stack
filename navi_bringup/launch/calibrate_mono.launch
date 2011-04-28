@@ -1,0 +1,13 @@
+<launch>
+	<arg name="camera"/> <!-- monocular camera (e.g. wheel_left or wheel_right) -->
+	<arg name="size"/>   <!-- dimensions of the chessboard (e.g. 7x5) -->
+	<arg name="square"/> <!-- length of a side of one square on the calibration chessboard -->
+
+	<include file="$(find stereo_webcam)/launch/navi_hardware.launch"/>
+	<group ns="vision">
+		<node pkg="camera_calibration" type="cameracalibrator.py" name="calibrator" args="--size=$(arg size) --square=$(arg square)">
+			<remap from="image"  to="$(arg camera)/image_raw"/>
+			<remap from="camera" to="$(arg camera)"/>
+		</node>
+	</group>
+</launch>
