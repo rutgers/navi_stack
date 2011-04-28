@@ -1,5 +1,5 @@
 <launch>
-	<!--<include file="$(find navi_bringup)/launch/basic.launch"/>-->
+	<include file="$(find navi_bringup)/launch/basic.launch"/>
 
 	<group ns="vision">
 		<node pkg="stereo_webcam" type="stereo_node" name="camera_front">

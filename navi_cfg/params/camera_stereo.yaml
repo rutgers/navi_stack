@@ -1,3 +1,6 @@
+width:  640
+height: 480
+
 cameras: 3
 device0: '/dev/video_stereo_left'
 device1: '/dev/video_stereo_middle'
