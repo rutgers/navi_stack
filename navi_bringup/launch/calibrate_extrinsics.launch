@@ -4,6 +4,7 @@
 	<arg name="cols"/>   <!-- number of chessboard columns -->
 	<arg name="square"/> <!-- length of a side of one square on the calibration chessboard -->
 
+	<include file="$(find stereo_webcam)/launch/navi_hardware.launch"/>
 	<include file="$(find camera_pose_calibration)/launch_extrinsics/calibrate_2_camera.launch" ns="vision">
 		<arg name="camera1_ns" value="left"/>
 		<arg name="camera2_ns" value="$(arg cam)"/>

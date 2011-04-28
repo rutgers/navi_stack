@@ -4,6 +4,14 @@
 	<node pkg="robot_state_publisher" type="state_publisher" name="state_publisher"/>
 	<include file="$(find navi_model)/launch/model_upload.launch"/>
 
+
+	<!-- Calibrated Wheel Camera Extrinsics -->
+	<node type="buffer_server" pkg="tf2_ros" name="tf2_buffer"/>
+
+	<node type="msg_saver.py" pkg="camera_pose_calibration" name="wheel_left_saver"
+	      args="camera_calibration camera_pose_calibration/CameraCalibration $(find navi_cfg)/calibration/ext_wheel_left.bag"/>
+	<node type="calibration_transform_publisher.py" pkg="camera_pose_calibration" name="wheel_left_publisher"/>
+
 	<!-- Vision -->
 	<group ns="vision">
 		<node pkg="nodelet" type="nodelet" name="vision_manager" args="manager"/>
