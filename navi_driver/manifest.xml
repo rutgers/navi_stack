@@ -9,8 +9,9 @@
   <depend package="avr_bridge"/>
   <depend package="rospy"/>
   <depend package="nav_msgs"/>
-  <depend package="tf"/>
-  <depend package="joy"/>
+  <depend package="std_msgs"/>
+  <depend package="geometry_msgs"/>
+  <depend package="tf"/>  
   
 </package>
 

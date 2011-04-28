@@ -1,0 +1,4 @@
+drive_diameter: 0.68
+lw_encoder_to_meter : 972
+rw_encoder_to_meter : 972
+velocity_units_secs : 0.0327868852 # 1/30.5 PID freq is 30.5
