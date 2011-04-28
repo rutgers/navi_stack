@@ -1,0 +1,8 @@
+inliers_min:   200
+range_max:     5.00
+error_default: 0.20
+error_inlier:  0.05
+error_angle:   0.524
+
+frame_fixed:   '/base_footprint'
+frame_default: '/base_footprint'

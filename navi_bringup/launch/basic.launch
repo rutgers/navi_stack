@@ -53,23 +53,13 @@
 
 		<!-- Stereo Vision -->
 		<node pkg="nodelet" type="nodelet" name="stereo_ground" args="load stereo_plane/ground_nodelet vision_manager">
-			<param name="inliers_min"   value="150"/>
-			<param name="range_max"     value="5.000"/>
-			<param name="error_default" value="0.20"/>
-			<param name="error_inlier"  value="0.05"/>
-			<param name="error_angle"   value="0.523598776"/>
-			<param name="frame_fixed"   value="/base_link"/>
-			<param name="frame_default" value="/base_footprint"/>
+			<rosparam command="load" file="$(find navi_cfg)/params/stereo_ground.yaml"/>
 			<remap from="points" to="narrow/points2"/>
 		</node>
 		<node pkg="stereo_od" type="od_node" name="stereo_od">
+			<rosparam command="load" file="$(find navi_cfg)/params/stereo_od.yaml"/>
 			<remap from="points"      to="narrow/points2"/>
 			<remap from="camera_info" to="narrow/left/camera_info"/>
-			<param name="points_min"   value="250"/>
-			<param name="height_min"   value="0.3"/>
-			<param name="height_max"   value="1.0"/>
-			<param name="distance_max" value="10"/>
-			<param name="theta"        value="1.04719755"/>
 		</node>
 		<group ns="narrow">
 			<node pkg="stereo_image_proc" type="stereo_image_proc" name="narrow_proc">
