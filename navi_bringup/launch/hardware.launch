@@ -26,11 +26,7 @@
 			<remap from="wheel_right/image" to="wheel_right/image_raw"/>
 		</node>
 		<node pkg="stereo_mux" type="mux_node" name="stereo_mux">
-			<param name="fps" value="10"/>
-			<param name="info_nl" value="file://$(find navi_bringup)/calibration/stereo_nl.yaml"/>
-			<param name="info_nr" value="file://$(find navi_bringup)/calibration/stereo_nr.yaml"/>
-			<param name="info_wl" value="file://$(find navi_bringup)/calibration/stereo_wl.yaml"/>
-			<param name="info_wr" value="file://$(find navi_bringup)/calibration/stereo_wr.yaml"/>
+			<rosparam command="load" file="$(find navi_cfg/params/camera_mux.yaml"/>
 		</node>
 	</group>
 </launch>
