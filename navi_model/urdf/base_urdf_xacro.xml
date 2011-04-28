@@ -26,14 +26,8 @@
 			<material name="Blue"/> 
 		</visual>
 		<collision>
-				<!-- collision origin is defined w.r.t. link local coordinate system -->
-				<origin xyz=" 0 0 0" rpy="0 0 0"/>
-				<geometry name="base_link_collision_geom">
-					<box size="0.9917 0.511175 0.358775"/>
-				</geometry>
-			</collision>
-		</link>
-			<origin xyz=" 0 0 0" rpy="0 0 -0.358775"/>
+			<!-- collision origin is defined w.r.t. link local coordinate system -->
+			<origin xyz=" 0 0 0" rpy="0 0 0"/>
 			<geometry name="base_link_collision_geom">
 				<box size="0.9917 0.511175 0.358775"/>
 			</geometry>
