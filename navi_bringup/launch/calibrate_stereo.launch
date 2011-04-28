@@ -5,12 +5,10 @@
 	<arg name="square"/> <!-- length of a side of one square on the calibration chessboard -->
 
 	<include file="$(find stereo_webcam)/launch/navi_hardware.launch"/>
-	<group ns="vision">
-		<node pkg="camera_calibration" type="cameracalibrator.py" name="calibrator" args="--size=$(arg cols)x$(arg rows) --square=$(arg square)">
-			<remap from="left"  to="$(arg pair)/left/image_raw"/>
-			<remap from="right" to="$(arg pair)/right/image_raw"/>
-			<remap from="left_camera"  to="$(arg pair)/left"/>
-			<remap from="right_camera" to="$(arg pair)/right"/>
-		</node>
-	</group>
+	<node pkg="camera_calibration" type="cameracalibrator.py" name="calibrator" args="--size=$(arg cols)x$(arg rows) --square=$(arg square)" ns="vision">
+		<remap from="left"  to="$(arg pair)/left/image_raw"/>
+		<remap from="right" to="$(arg pair)/right/image_raw"/>
+		<remap from="left_camera"  to="$(arg pair)/left"/>
+		<remap from="right_camera" to="$(arg pair)/right"/>
+	</node>
 </launch>
