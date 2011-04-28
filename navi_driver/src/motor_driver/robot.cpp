@@ -17,7 +17,7 @@ void RobotInit(void){
 
 	initMotorDriver();
 	initEncoders();
-	//initSpeedControl();
+	initSpeedControl();
 }
 
 void initEncoders()
@@ -40,8 +40,8 @@ void initEncoders()
 
 
 ISR(PCINT2_vect){
-	Robot.rightWheel.encoder.update(bit_is_set(PIND, PIN5), bit_is_set(PIND, PIN4));
-	Robot.leftWheel.encoder.update( bit_is_set(PIND, PIN2), bit_is_set(PIND, PIN3));
+	Robot.leftWheel.encoder.update(bit_is_set(PIND, PIN5), bit_is_set(PIND, PIN4));
+	Robot.rightWheel.encoder.update( bit_is_set(PIND, PIN2), bit_is_set(PIND, PIN3));
 }
 
 
@@ -111,12 +111,12 @@ ISR(TIMER2_OVF_vect)   // feed back loop interrupt
 	Robot.leftWheel.error = Robot.leftWheel.velD - Robot.leftWheel.vel;
 
 
-	Robot.rightWheel.kpGain = Robot.rightWheel.error*4	;
-	Robot.leftWheel.kpGain = Robot.leftWheel.error *4;
+	Robot.rightWheel.kpGain = Robot.rightWheel.error;
+	Robot.leftWheel.kpGain = Robot.leftWheel.error;
 	
 	
-	Robot.rightWheel.kDGain = (Robot.rightWheel.errorp -Robot.rightWheel.error);
-	Robot.leftWheel.kDGain = (Robot.leftWheel.errorp -Robot.leftWheel.error);
+	Robot.rightWheel.kDGain = (Robot.rightWheel.errorp -Robot.rightWheel.error)*3/4;
+	Robot.leftWheel.kDGain = (Robot.leftWheel.errorp -Robot.leftWheel.error)*3/4;
 
 	Robot.rightWheel.kiGain = 0;
 	Robot.leftWheel.kiGain = 0;
@@ -137,17 +137,17 @@ ISR(TIMER2_OVF_vect)   // feed back loop interrupt
 
 		if((Robot.leftWheel.velD == 0) && (abs(Robot.leftWheel.pwmPeriod) < 30))
 		{
-			setMotor1Speed(2);
+			setMotor2Speed(2);
 		}
 		else
 		{
-			setMotor1Speed(-Robot.leftWheel.pwmPeriod);
+			setMotor2Speed(Robot.leftWheel.pwmPeriod);
 		}
 		if((Robot.rightWheel.velD == 0) && (abs(Robot.rightWheel.pwmPeriod) < 30))
 		{
-			setMotor2Speed(2);
+			setMotor1Speed(2);
 		}
-		else setMotor2Speed(Robot.rightWheel.pwmPeriod);
+		else setMotor1Speed(Robot.rightWheel.pwmPeriod);
 
 		Robot.feedbackState =0;
 

@@ -43,8 +43,8 @@ void toggle()
 
 void motor_cmd_cb(const ros::Msg* msg){
 	toggle();
-	setMotor1Speed(cmd_msg.left);
-	setMotor2Speed(cmd_msg.right);
+	setLeftMotorSpeed(cmd_msg.left);
+	setRightMotorSpeed(cmd_msg.right);
 
 }
 
@@ -63,8 +63,6 @@ void setup()
     pub_current = node.advertise("current");
     pub_enc = node.advertise("encoder");
     node.subscribe("cmd",motor_cmd_cb, &cmd_msg);
-    setMotor1Speed(0);
-    setMotor2Speed(0);
 
 }
 
