@@ -1,11 +1,14 @@
 /*
  * Encoder.cpp
  *
- *  Created on: Dec 2, 2009
+ *  Created on: Apr 27, 2011
  *      Author: asher
  */
 
 #include "Encoder.h"
+
+
+/* ************** Encoder  *******************/
 
 Encoder::Encoder() {
 	// TODO Auto-generated constructor stub
@@ -15,7 +18,6 @@ Encoder::Encoder() {
 void Encoder::clearCount(){
 	encoderCount=0;
 }
-
 
 void Encoder::update(char channelA, char channelB){
 	   if (!(priorA ) && (channelA)) {
@@ -60,3 +62,5 @@ int Encoder::count(){
 Encoder::~Encoder() {
 	// TODO Auto-generated destructor stub
 }
+
+

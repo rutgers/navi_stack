@@ -1,8 +1,6 @@
 <package>
   <description brief="navi_driver">
-
      This package has the low level 
-
   </description>
   <author>asher</author>
   <license>BSD</license>
@@ -11,10 +9,9 @@
   <depend package="avr_bridge"/>
   <depend package="rospy"/>
   <depend package="nav_msgs"/>
-  <depend package="tf"/>
-  <depend package="joy"/>
-
-  <rosdep package="gpsd"/>
+  <depend package="std_msgs"/>
+  <depend package="geometry_msgs"/>
+  <depend package="tf"/>  
   
 </package>
 

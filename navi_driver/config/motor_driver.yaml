@@ -1,5 +1,5 @@
-port: /dev/ttyUSB0
-name: motor_driver_back
+port: /dev/motor_driver
+name: motor_driver
 publish: #list of published topics
  encoder: #topic name
   type: navi_driver/Encoder  #msg type
