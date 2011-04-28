@@ -1,5 +1,5 @@
 <launch>
-	<include file="$(find navi_bringup)/launch/basic.launch"/>
+	<!--<include file="$(find navi_bringup)/launch/basic.launch"/>-->
 
 	<group ns="vision">
 		<node pkg="stereo_webcam" type="stereo_node" name="camera_front_driver">
@@ -9,16 +9,11 @@
 			<remap from="camera1" to="middle"/>
 			<remap from="camera2" to="right"/>
 		</node>
-		<node pkg="stereo_webcam" type="stereo_node" name="camera_wheel_left_driver" ns="wheel">
+		<node pkg="stereo_webcam" type="stereo_node" name="camera_wheel_left_driver">
 			<rosparam command="load" file="$(find navi_cfg)/params/camera_general.yaml"/>
-			<rosparam command="load" file="$(find navi_cfg)/params/camera_wheel_left.yaml"/>
-			<remap from="camera0" to="left"/>
-		</node>
-		<node pkg="stereo_webcam" type="stereo_node" name="camera_wheel_right_driver" ns="wheel">
-			<rosparam command="load" file="$(find navi_cfg)/params/camera_general.yaml"/>
-			<rosparam command="load" file="$(find navi_cfg)/params/camera_wheel_right.yaml"/>
-			<remap from="camera0"           to="wheel_right"/>
-			<remap from="wheel_right/image" to="wheel_right/image_raw"/>
+			<rosparam command="load" file="$(find navi_cfg)/params/camera_wheel.yaml"/>
+			<remap from="camera0" to="wheel/left"/>
+			<remap from="camera1" to="wheel/right"/>
 		</node>
 		<node pkg="stereo_mux" type="mux_node" name="stereo_mux">
 			<rosparam command="load" file="$(find navi_cfg)/params/camera_mux.yaml"/>
