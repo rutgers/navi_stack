@@ -32,12 +32,6 @@
 					<box size="0.9917 0.511175 0.358775"/>
 				</geometry>
 			</collision>
-		</link>
-			<origin xyz=" 0 0 0" rpy="0 0 -0.358775"/>
-			<geometry name="base_link_collision_geom">
-				<box size="0.9917 0.511175 0.358775"/>
-			</geometry>
-		</collision>
 	</link>
 
 	<gazebo reference="base_link">
@@ -60,7 +54,7 @@
 		<parent link="drive_center"/>
 	</joint>
 	
-	<link name="driver_footprint">
+	<link name="drive_footprint">
 		<inertial>
 			<mass value="1"/>
 			<!-- center of mass (com) is defined w.r.t. link local coordinate system -->
@@ -85,7 +79,7 @@
 		  <frameName>map</frameName>
 		  <interface:position name="my_box_p3d_position_iface" />
 		</controller:gazebo_ros_p3d >
-		<canonicalBody>driver_footprint</canonicalBody>
+		<canonicalBody>drive_footprint</canonicalBody>
 	</gazebo>
 
 
