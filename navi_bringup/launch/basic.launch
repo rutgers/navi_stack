@@ -8,69 +8,46 @@
 	<group ns="vision">
 		<node pkg="nodelet" type="nodelet" name="vision_manager" args="manager"/>
 
-		<!-- Monocular Line Detection -->
+		<!-- Whiteness Colorspace Transformation -->
 		<node pkg="nodelet" type="nodelet" name="center_white_filter" args="load white_filter/white_nodelet vision_manager">
-			<param name="use_low"  value="true"/>
-			<param name="use_high" value="false"/>
-			<param name="threshold_hue" value="180"/>
-			<param name="threshold_sat" value="127"/>
+			<rosparam command="load" file="$(find navi_cfg)/params/line_white.yaml"/>
 			<remap from="image" to="narrow/left/image_rect_color"/>
 			<remap from="white" to="center_white"/>
 		</node>
+		<node pkg="nodelet" type="nodelet" name="left_white_filter" args="load white_filter/white_nodelet vision_manager">
+			<rosparam command="load" file="$(find navi_cfg)/params/line_white.yaml"/>
+			<remap from="image" to="wheel/left/image_raw"/>
+			<remap from="white" to="left_white"/>
+		</node>
+		<node pkg="nodelet" type="nodelet" name="right_white_filter" args="load white_filter/white_nodelet vision_manager">
+			<rosparam command="load" file="$(find navi_cfg)/params/line_white.yaml"/>
+			<remap from="image" to="wheel/right/image_raw"/>
+			<remap from="white" to="right_white"/>
+		</node>
+
+		<!-- Matched Pulse Width Filter -->
 		<node pkg="nodelet" type="nodelet" name="center_lined" args="load line_detection/line_nodelet vision_manager">
-			<param name="thickness" value="0.0762"/>
-			<param name="border"    value="0.1452"/>
-			<param name="threshold" value="60"/>
-			<param name="cutoff"    value="3"/>
-			<param name="frame"     value="/base_footprint"/>
-			<param name="debug"     value="false"/>
+			<rosparam command="load" file="$(find navi_cfg)/params/line_detection.yaml"/>
 			<remap from="image"       to="center_white"/>
 			<remap from="camera_info" to="narrow/left/camera_info"/>
 			<remap from="line_points" to="center_line"/>
 		</node>
-
-		<node pkg="nodelet" type="nodelet" name="left_white_filter" args="load white_filter/white_nodelet vision_manager">
-			<param name="use_low"  value="true"/>
-			<param name="use_high" value="false"/>
-			<param name="threshold_hue" value="180"/>
-			<param name="threshold_sat" value="127"/>
-			<remap from="image" to="wheel/left/image_raw"/>
-			<remap from="white" to="left_white"/>
-		</node>
 		<node pkg="nodelet" type="nodelet" name="left_lined" args="load line_detection/line_nodelet vision_manager">
-			<param name="thickness" value="0.0762"/>
-			<param name="border"    value="0.1452"/>
-			<param name="threshold" value="60"/>
-			<param name="cutoff"    value="3"/>
-			<param name="frame"     value="/base_footprint"/>
-			<param name="debug"     value="false"/>
+			<rosparam command="load" file="$(find navi_cfg)/params/line_detection.yaml"/>
 			<remap from="image"       to="left_white"/>
 			<remap from="camera_info" to="wheel/left/camera_info"/>
 			<remap from="line_points" to="left_line"/>
 		</node>
-
-		<node pkg="nodelet" type="nodelet" name="right_white_filter" args="load white_filter/white_nodelet vision_manager">
-			<param name="use_low"  value="true"/>
-			<param name="use_high" value="false"/>
-			<param name="threshold_hue" value="180"/>
-			<param name="threshold_sat" value="127"/>
-			<remap from="image" to="wheel/right/image_raw"/>
-			<remap from="white" to="right_white"/>
-		</node>
 		<node pkg="nodelet" type="nodelet" name="right_lined" args="load line_detection/line_nodelet vision_manager">
-			<param name="thickness" value="0.0762"/>
-			<param name="border"    value="0.1452"/>
-			<param name="threshold" value="60"/>
-			<param name="cutoff"    value="3"/>
-			<param name="frame"     value="/base_footprint"/>
-			<param name="debug"     value="false"/>
+			<rosparam command="load" file="$(find navi_cfg)/params/line_detection.yaml"/>
 			<remap from="image"       to="right_white"/>
 			<remap from="camera_info" to="wheel/right/camera_info"/>
 			<remap from="line_points" to="right_line"/>
 		</node>
 
+		<!-- Model Fitting and Tracking -->
 		<node pkg="nodelet" type="nodelet" name="line_tracker" args="load line_tracking/tracker_node vision_manager">
-			<param name="inputs" value="3"/>
+			<rosparam command="load" file="$(find navi_cfg)/params/line_tracking.yaml"/>
 			<remap from="points" to="left_line"/>
 		</node>
 
