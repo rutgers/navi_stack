@@ -13,7 +13,7 @@ hflip: false
 vflip: false
 
 brightness: 0
-contrast:   70
+contrast:   24
 exposure:   0
-gain:       0
+gain:       7
 sharpness:  0
