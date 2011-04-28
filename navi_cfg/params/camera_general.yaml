@@ -1,7 +1,8 @@
-width:  320
-height: 240
-nbuf:   10
-fps:    10
+width:     320
+height:    240
+nbuf:      10
+fps:       10
+threshold: 0.05
 
 # dynamic_reconfigure defaults
 auto_gain:     false
