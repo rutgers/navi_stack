@@ -2,19 +2,24 @@
 	<!-- Static URDF -->
 	<node pkg="joint_state_publisher" type="joint_state_publisher" name="joint_publisher"/>
 	<node pkg="robot_state_publisher" type="state_publisher" name="state_publisher"/>
-	<include file="$(find navi_model)/launch/model_upload.launch"/>
-
-
-	<!-- Calibrated Wheel Camera Extrinsics -->
 	<node type="buffer_server" pkg="tf2_ros" name="tf2_buffer"/>
-
-	<node type="msg_saver.py" pkg="camera_pose_calibration" name="wheel_left_saver"
-	      args="camera_calibration camera_pose_calibration/CameraCalibration $(find navi_cfg)/calibration/ext_wheel_left.bag"/>
-	<node type="calibration_transform_publisher.py" pkg="camera_pose_calibration" name="wheel_left_publisher"/>
+	<include file="$(find navi_model)/launch/model_upload.launch"/>
 
 	<!-- Vision -->
 	<group ns="vision">
 		<node pkg="nodelet" type="nodelet" name="vision_manager" args="manager"/>
+
+		<!-- Calibrated Wheel Camera Extrinsics -->
+		<group ns="wheel_left">
+			<node type="calibration_transform_publisher.py" pkg="camera_pose_calibration" name="wheel_left_publisher"/>
+			<node type="msg_saver.py" pkg="camera_pose_calibration" name="wheel_left_saver"
+			      args="camera_calibration camera_pose_calibration/CameraCalibration $(find navi_cfg)/calibration/ext_wheel_left.bag"/>
+		</group>
+		<group ns="wheel_right">
+			<node type="calibration_transform_publisher.py" pkg="camera_pose_calibration" name="wheel_right_publisher"/>
+			<node type="msg_saver.py" pkg="camera_pose_calibration" name="wheel_right_saver"
+				  args="camera_calibration camera_pose_calibration/CameraCalibration $(find navi_cfg)/calibration/ext_wheel_right.bag"/>
+		</group>
 
 		<!-- Whiteness Colorspace Transformation -->
 		<node pkg="nodelet" type="nodelet" name="center_white_filter" args="load white_filter/white_nodelet vision_manager">

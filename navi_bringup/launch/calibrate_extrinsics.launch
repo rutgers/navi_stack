@@ -4,10 +4,19 @@
 	<arg name="cols"/>   <!-- number of chessboard columns -->
 	<arg name="square"/> <!-- length of a side of one square on the calibration chessboard -->
 
-	<include file="$(find stereo_webcam)/launch/navi_hardware.launch"/>
-	<include file="$(find camera_pose_calibration)/launch_extrinsics/calibrate_2_camera.launch" ns="vision">
-		<arg name="camera1_ns" value="left"/>
-		<arg name="camera2_ns" value="$(arg cam)"/>
+	<include file="$(find navi_bringup)/launch/hardware.launch"/>
+
+	<node type="image_proc" pkg="image_proc" name="image_proc1" ns="vision/left"/>
+	<node type="image_proc" pkg="image_proc" name="image_proc2" ns="vision/$(arg cam)"/>
+
+	<node type="buffer_server" pkg="tf2_ros" name="tf2_buffer"/>
+	<node type="calibration_transform_publisher.py" pkg="camera_pose_calibration" name="wheel_right_publisher"/>
+	<node type="msg_saver.py" pkg="camera_pose_calibration" name="wheel_right_saver"
+	      args="camera_calibration camera_pose_calibration/CameraCalibration $(find navi_cfg)/calibration/ext_$(arg cam).bag"/>
+
+	<include file="$(find camera_pose_calibration)/launch_extrinsics/calibrate_2_camera.launch">
+		<arg name="camera1_ns" value="vision/left"/>
+		<arg name="camera2_ns" value="vision/$(arg cam)"/>
 		<arg name="checker_rows" value="$(arg rows)"/>
 		<arg name="checker_cols" value="$(arg cols)"/>
 		<arg name="checker_size" value="$(arg square)"/>
