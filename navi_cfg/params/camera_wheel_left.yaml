@@ -1,0 +1,4 @@
+cameras: 1
+device0: '/dev/video_wheel_left'
+calib0: 'package://navi_cfg/calibration/mono_wheel_left.yaml'
+frame0: '/wheel_left_link'

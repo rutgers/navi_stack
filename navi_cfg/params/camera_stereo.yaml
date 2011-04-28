@@ -1,0 +1,10 @@
+cameras: 3
+device0: '/dev/video_stereo_left'
+device1: '/dev/video_stereo_middle'
+device2: '/dev/video_stereo_right'
+calib0: 'package://navi_cfg/calibration/mono_front_left.yaml'
+calib1: 'package://navi_cfg/calibration/mono_front_middle.yaml'
+calib2: 'package://navi_cfg/calibration/mono_front_right.yaml'
+frame0: '/stereo_left_link'
+frame1: '/stereo_middle_link'
+frame2: '/stereo_right_link'
