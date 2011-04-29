@@ -109,7 +109,7 @@
 				<controller:gazebo_ros_camera name="${prefix}_camera_controller" plugin="libgazebo_ros_camera.so">
 					<alwaysOn>true</alwaysOn>
 					<updateRate>${fps}</updateRate>
-					<imageTopicName>${topic}/image_raw</imageTopicName>
+					<imageTopicName>${topic}/image</imageTopicName>
 					<cameraInfoTopicName>${topic}/camera_info</cameraInfoTopicName>
 					<frameName>/camera_link</frameName>
 					<hackBaseline>${baseline}</hackBaseline>

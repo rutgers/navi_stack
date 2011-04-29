@@ -38,21 +38,6 @@ cv::Point3d PointROStoCv(geometry_msgs::Point const &pt)
 	return cv::Point3d(pt.x, pt.y, pt.z);
 }
 
-void cb_info(CameraInfo::ConstPtr const &tmp)
-{
-	ROS_ERROR("cb: info");
-}
-
-void cb_image(Image::ConstPtr const &tmp)
-{
-	ROS_ERROR("cb: image");
-}
-
-void cb_plane(Plane::ConstPtr const &tmp)
-{
-	ROS_ERROR("cb: plane");
-}
-
 void LineNodelet::onInit(void)
 {
 	ros::NodeHandle &nh      = getNodeHandle();
@@ -67,7 +52,6 @@ void LineNodelet::onInit(void)
 	nh_priv.param<int>("threshold", m_threshold,    30);
 	nh_priv.param<double>("border",    m_width_dead, 0.1452);
 	nh_priv.param<double>("thickness", m_width_line, 0.0726);
-	nh_priv.param<std::string>("frame", m_ground_id, "/base_footprint");
 
 	m_pub_pts = nh.advertise<PointCloudXYZ>("line_points", 10);
 
