@@ -1,13 +1,11 @@
 <launch>
 
 <node pkg="joy" type="joy_node" name="joy_node">
-	<param name="dev" value="/dev/input/js1" type="str" />
+	<param name="dev" value="/dev/input/js0" type="str" />
 </node>
 <node pkg="navi_teleop" type="teleop_gamepad" name="teleop_gamepad">
-	<param name="axis_linear" value="1"/> <!-- game pad axis-->
-	<param name="axis_angular" value="2"/> 
 	<param name="scale_angular" value="2"/> 
-	<param name="scale_linear" value="1"/> <!-- m/s -->
+	<param name="scale_linear" value="3.3"/> <!-- m/s -->
 </node>
 
 
