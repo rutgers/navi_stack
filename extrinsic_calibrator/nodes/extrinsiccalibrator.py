@@ -44,8 +44,8 @@ class ExtrinsicNode:
 		# TODO: Use the approximate synchronization algorithm.
 		topic_cam1 = rospy.resolve_name('camera0')
 		topic_cam2 = rospy.resolve_name('camera1')
-		sub_img1   = mf.Subscriber(topic_cam1 + '/image_raw', sensor_msgs.msg.Image)
-		sub_img2   = mf.Subscriber(topic_cam2 + '/image_raw', sensor_msgs.msg.Image)
+		sub_img1   = mf.Subscriber(topic_cam1 + '/image', sensor_msgs.msg.Image)
+		sub_img2   = mf.Subscriber(topic_cam2 + '/image', sensor_msgs.msg.Image)
 		sub_info1  = mf.Subscriber(topic_cam1 + '/camera_info', sensor_msgs.msg.CameraInfo)
 		sub_info2  = mf.Subscriber(topic_cam2 + '/camera_info', sensor_msgs.msg.CameraInfo)
 
@@ -149,10 +149,12 @@ class ExtrinsicNode:
 				self.pub_tf.sendTransform(t_M1, R_M1, stamp, self.fr_boards[0], msg_img1.header.frame_id)
 				self.pub_tf.sendTransform(t_M2, R_M2, stamp, self.fr_boards[1], msg_img2.header.frame_id)
 
+				"""
 				t_12, R_12 = self.TransformationToTransform(T_12)
 				t_21, R_21 = self.TransformationToTransform(T_21)
 				self.pub_tf.sendTransform(t_12, R_12, stamp, self.fr_cameras[0], msg_img2.header.frame_id)
 				self.pub_tf.sendTransform(t_21, R_21, stamp, self.fr_cameras[1], msg_img1.header.frame_id)
+				"""
 
 				# TODO: Calculate reprojection error. Save the transform with minimum error.
 				cv.DrawChessboardCorners(img1_bgr, (self.board_rows, self.board_cols), corners1, True)
