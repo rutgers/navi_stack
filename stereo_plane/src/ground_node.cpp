@@ -35,7 +35,7 @@ void GroundNodelet::onInit(void)
 	nh_priv.param<double>("error_default", m_error_default, 0.20);
 	nh_priv.param<double>("error_inlier",  m_error_inlier,  0.20);
 	nh_priv.param<double>("error_angle",   m_error_angle,   M_PI/6);
-	nh_priv.param<double>("cache_time",    m_cache_time,    0.50);
+	nh_priv.param<double>("cache_time",    m_cache_time,    1.00);
 	nh_priv.param<std::string>("frame_fixed",   m_fr_fixed,   "/base_link");
 	nh_priv.param<std::string>("frame_default", m_fr_default, "/base_footprint");
 
