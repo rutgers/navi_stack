@@ -22,19 +22,21 @@ private:
 };
 
 Teleop::Teleop():
+  nh_("~"),
   left_ax_(1),
   right_ax_(3),
   l_scale_(0.5),
   a_scale_(2.0)
 {
-  nh_.param("~left_axis", left_ax_, left_ax_);
-  nh_.param("~right_axix", right_ax_, right_ax_);
-  nh_.param("~scale_angular", a_scale_, a_scale_);
-  nh_.param("~scale_linear", l_scale_, l_scale_);
+  nh_.param("left_axis", left_ax_, left_ax_);
+  nh_.param("right_axix", right_ax_, right_ax_);
+  nh_.param("scale_angular", a_scale_, a_scale_);
+  nh_.param("scale_linear", l_scale_, l_scale_);
 
 
-  vel_pub_ = nh_.advertise<geometry_msgs::Twist>("cmd_vel", 1);
-  joy_sub_ = nh_.subscribe<joy::Joy>("joy", 10, &Teleop::joyCallback, this);
+  ros::NodeHandle nh;
+  vel_pub_ = nh.advertise<geometry_msgs::Twist>("cmd_vel", 1);
+  joy_sub_ = nh.subscribe<joy::Joy>("joy", 10, &Teleop::joyCallback, this);
 }
 
 void Teleop::joyCallback(const joy::Joy::ConstPtr& joy)
