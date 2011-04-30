@@ -1,5 +1,6 @@
 #include <ros/ros.h>
 #include <boost/make_shared.hpp>
+#include <opencv/cv.h>
 #include <tf/transform_listener.h>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
@@ -117,6 +118,7 @@ void TrackerNodelet::AddPoints(PointCloud3D::ConstPtr const &pts_3d)
 		}
 	}
 
+#if 0
 	LinearModel model;
 	while ((int)pts.size() >= LinearModel::GetMinPoints()) {
 		int inliers = FitModel(pts, 500, 0.30, model);
@@ -124,6 +126,26 @@ void TrackerNodelet::AddPoints(PointCloud3D::ConstPtr const &pts_3d)
 		// TODO: remove inliers and fit additional models
 		break;
 	}
+#endif
+
+	// Render the map as an image to get grayscale.
+	int range_px = m_range_max / m_grid_size;
+	cv::Mat img_ren(range_px, range_px, CV_8UC1, cv::Scalar(0));
+
+	int x0, y0;
+	Point2Grid(pt_robot.x, pt_robot.y, x0, y0);
+
+	for (int dy = -range_px; dy <= +range_px; ++dy)
+	for (int dx = -range_px; dx <= +range_px; ++dx) {
+		int i = Grid2Index(x0 + dx, y0 + dy);
+
+		if (0 <= i && i <= m_grid_width * m_grid_height) {
+			img_ren.at<uint8_t>(dy + range_px, dx + range_px) = m_grid[i];
+		} else {
+			img_ren.at<uint8_t>(dy + range_px, dx + range_px) = 0;
+		}
+	}
+
 
 	// Render the map in RViz as a nav_msgs::GridCell message. Unfortunately
 	// there is no non-binary equivant that can be easily visualized.
@@ -143,6 +165,7 @@ void TrackerNodelet::AddPoints(PointCloud3D::ConstPtr const &pts_3d)
 	}
 
 	// Render the line model in RViz.
+#if 0
 	Marker msg_viz = RenderModel(model);
 	msg_viz.header.frame_id = m_fr_fixed;
 	msg_viz.header.stamp    = pts_3d->header.stamp;
@@ -153,6 +176,7 @@ void TrackerNodelet::AddPoints(PointCloud3D::ConstPtr const &pts_3d)
 	msg_ren->header.stamp    = pts_3d->header.stamp;
 	msg_ren->header.frame_id = m_fr_fixed;
 	m_pub_ren.publish(msg_ren);
+#endif
 }
 
 Value TrackerNodelet::GetCellValue(double x, double y) const

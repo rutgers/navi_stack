@@ -8,6 +8,7 @@
 	<export>
 		<nodelet plugin="${prefix}/nodelet.xml"/>
 	</export>
+	<depend package="opencv2"/>
 	<depend package="nodelet"/>
 	<depend package="pcl"/>
 	<depend package="pcl_ros"/>
