@@ -62,7 +62,7 @@
 	</link>
 
 
-	<link name="wheel_${prefix}_camera_link" >
+	<link name="wheel_${prefix}_camera_sim_link" >
 		<inertial>
 			<mass value="0.014036" />
 			<origin xyz="0 0 0" />
@@ -70,18 +70,18 @@
 			          iyy="0.015218160428" iyz="-0.000004273467" izz="0.011763977943" />
 		</inertial>
 	</link>
-	<gazebo reference="wheel_${prefix}_camera_link"/>
+	<gazebo reference="wheel_${prefix}_camera_sim_link"/>
 
 	<joint name="${prefix}_camera_joint" type="fixed">
 		   <axis xyz="0 0 0" />
 		  <origin xyz="0 0 0" rpy="${camera_roll} ${camera_pitch} ${camera_yaw}" />
 		  <parent link="wheel_${prefix}_camera_base_link"/>
-		  <child link="wheel_${prefix}_camera_link"/>
+		  <child link="wheel_${prefix}_camera_sim_link"/>
 	 </joint>  
 	  
 	 <joint name="wheel_${prefix}_camera_gazebo_joint" type="fixed">
 			<origin xyz="0 0 0" rpy="1.5707963267948966 -1.5707963267948966 0"/>
-			<parent link="wheel_${prefix}_camera_link"/>
+			<parent link="wheel_${prefix}_camera_sim_link"/>
 			<child link="wheel_${prefix}_camera_gazebo_link"/>
 	 </joint>
 	 
@@ -109,7 +109,7 @@
 					<updateRate>${fps}</updateRate>
 					<imageTopicName>/vision/wheel/${prefix}/image</imageTopicName>
 					<cameraInfoTopicName>/vision/wheel/${prefix}/camera_info</cameraInfoTopicName>
-					<frameName>/wheel_${prefix}_camera_link</frameName>
+					<frameName>/wheel_${prefix}_camera_sim_link</frameName>
 					<hackBaseline>0</hackBaseline>
 					<CxPrime>${(image_width+1)/2}</CxPrime>
 					<Cx>${(image_width+1)/2}</Cx>
