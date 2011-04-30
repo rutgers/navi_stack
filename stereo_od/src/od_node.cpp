@@ -172,6 +172,7 @@ void RemovePlane(PointCloudXYZ const &msg_src, PointCloudXYZ &msg_dst,
 void Callback(PointCloudXYZ::ConstPtr const &pts, CameraInfo::ConstPtr const &info,
               Plane::ConstPtr const &msg_plane)
 {
+	ROS_ERROR("OBSTACLES");
 
 	Plane plane;
 	try {

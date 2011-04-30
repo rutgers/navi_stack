@@ -107,7 +107,7 @@
 				<controller:gazebo_ros_camera name="wheel_${prefix}_camera_controller" plugin="libgazebo_ros_camera.so">
 					<alwaysOn>true</alwaysOn>
 					<updateRate>${fps}</updateRate>
-					<imageTopicName>/vision/wheel/${prefix}/image_raw</imageTopicName>
+					<imageTopicName>/vision/wheel/${prefix}/image</imageTopicName>
 					<cameraInfoTopicName>/vision/wheel/${prefix}/camera_info</cameraInfoTopicName>
 					<frameName>/wheel_${prefix}_camera_link</frameName>
 					<hackBaseline>0</hackBaseline>

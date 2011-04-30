@@ -42,7 +42,7 @@ void recieve(Image::ConstPtr const &msg_left, Image::ConstPtr const &msg_middle,
 	info_nr.header.stamp = now;
 	info_wl.header.stamp = now;
 	info_wr.header.stamp = now;
-	info_nl.header.frame_id = msg_left->.header.frame_id;
+	info_nl.header.frame_id = msg_left->header.frame_id;
 	info_nr.header.frame_id = msg_middle->header.frame_id;
 	info_wl.header.frame_id = msg_left->header.frame_id;
 	info_wr.header.frame_id = msg_right->header.frame_id;
@@ -85,20 +85,28 @@ int main(int argc, char **argv)
 	nh_priv.param("fps", fps, def_fps);
 	step.fromSec(1 / fps);
 
-	// Publish two pairs of "pseudo-cameras" that multiplex the two available
-	// baselines.
-	std::string topic_narrow = nh.resolveName("narrow");
-	std::string topic_wide   = nh.resolveName("wide");
-	pub_nl = it.advertiseCamera(topic_narrow + "/left/image_raw",  10);
-	pub_nr = it.advertiseCamera(topic_narrow + "/right/image_raw", 10);
-	pub_wl = it.advertiseCamera(topic_wide   + "/left/image_raw",  10);
-	pub_wr = it.advertiseCamera(topic_wide   + "/right/image_raw", 10);
+	// Republish the source images with new camera_info messages.
+	std::string topic_n  = nh.resolveName("narrow");
+	std::string topic_nl = nh.resolveName(topic_n + "/left");
+	std::string topic_nr = nh.resolveName(topic_n + "/right");
+
+	std::string topic_w  = nh.resolveName("wide");
+	std::string topic_wl = nh.resolveName(topic_w + "/left");
+	std::string topic_wr = nh.resolveName(topic_w + "/right");
+
+	pub_nl = it.advertiseCamera(topic_nl + "/image", 1);
+	pub_nr = it.advertiseCamera(topic_nr + "/image", 1);
+	pub_wl = it.advertiseCamera(topic_wl + "/image", 1);
+	pub_wr = it.advertiseCamera(topic_wr + "/image", 1);
 
 	// Always subscribe to synchronized (left, middle, right) image triplets;
 	// we will handle the multiplexing entirely in the callback.
-	message_filters::Subscriber<Image> sub_left(nh,   "left/image_raw",   1);
-	message_filters::Subscriber<Image> sub_middle(nh, "middle/image_raw", 1);
-	message_filters::Subscriber<Image> sub_right(nh,  "right/image_raw",  1);
+	std::string topic_l = nh.resolveName("left");
+	std::string topic_m = nh.resolveName("middle");
+	std::string topic_r = nh.resolveName("right");
+	message_filters::Subscriber<Image> sub_left(nh,   topic_l + "/image", 1);
+	message_filters::Subscriber<Image> sub_middle(nh, topic_m + "/image", 1);
+	message_filters::Subscriber<Image> sub_right(nh,  topic_r + "/image", 1);
 	TimeSynchronizer<Image, Image, Image> sub_sync(sub_left, sub_middle, sub_right, 10);
 	sub_sync.registerCallback(boost::bind(&recieve, _1, _2, _3));
 

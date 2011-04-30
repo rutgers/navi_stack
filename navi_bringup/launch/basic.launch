@@ -10,15 +10,17 @@
 		<node pkg="nodelet" type="nodelet" name="vision_manager" args="manager"/>
 
 		<!-- Calibrated Wheel Camera Extrinsics -->
-		<group ns="wheel_left">
-			<node type="calibration_transform_publisher.py" pkg="camera_pose_calibration" name="wheel_left_publisher"/>
-			<node type="msg_saver.py" pkg="camera_pose_calibration" name="wheel_left_saver"
-			      args="camera_calibration camera_pose_calibration/CameraCalibration $(find navi_cfg)/calibration/ext_wheel_left.bag"/>
-		</group>
-		<group ns="wheel_right">
-			<node type="calibration_transform_publisher.py" pkg="camera_pose_calibration" name="wheel_right_publisher"/>
-			<node type="msg_saver.py" pkg="camera_pose_calibration" name="wheel_right_saver"
-				  args="camera_calibration camera_pose_calibration/CameraCalibration $(find navi_cfg)/calibration/ext_wheel_right.bag"/>
+		<group ns="wheel">
+			<group ns="left">
+				<node type="calibration_transform_publisher.py" pkg="camera_pose_calibration" name="wheel_left_publisher"/>
+				<node type="msg_saver.py" pkg="camera_pose_calibration" name="wheel_left_saver"
+					  args="camera_calibration camera_pose_calibration/CameraCalibration $(find navi_cfg)/calibration/ext_wheel_left.bag"/>
+			</group>
+			<group ns="right">
+				<node type="calibration_transform_publisher.py" pkg="camera_pose_calibration" name="wheel_right_publisher"/>
+				<node type="msg_saver.py" pkg="camera_pose_calibration" name="wheel_right_saver"
+					  args="camera_calibration camera_pose_calibration/CameraCalibration $(find navi_cfg)/calibration/ext_wheel_right.bag"/>
+			</group>
 		</group>
 
 		<!-- Whiteness Colorspace Transformation -->
@@ -29,12 +31,12 @@
 		</node>
 		<node pkg="nodelet" type="nodelet" name="left_white_filter" args="load white_filter/white_nodelet vision_manager">
 			<rosparam command="load" file="$(find navi_cfg)/params/line_white.yaml"/>
-			<remap from="image" to="wheel/left/image_raw"/>
+			<remap from="image" to="wheel/left/image"/>
 			<remap from="white" to="left_white"/>
 		</node>
 		<node pkg="nodelet" type="nodelet" name="right_white_filter" args="load white_filter/white_nodelet vision_manager">
 			<rosparam command="load" file="$(find navi_cfg)/params/line_white.yaml"/>
-			<remap from="image" to="wheel/right/image_raw"/>
+			<remap from="image" to="wheel/right/image"/>
 			<remap from="white" to="right_white"/>
 		</node>
 
@@ -76,14 +78,16 @@
 		</node>
 		<group ns="narrow">
 			<node pkg="stereo_image_proc" type="stereo_image_proc" name="narrow_proc">
-				<remap from="stereo" to="narrow"/>
-				<remap from="image"  to="image_color"/>
+				<remap from="stereo"          to="narrow"/>
+				<remap from="left/image_raw"  to="left/image"/>
+				<remap from="right/image_raw" to="right/image"/>
 			</node>
 		</group>
 		<group ns="wide">
 			<node pkg="stereo_image_proc" type="stereo_image_proc" name="wide_proc">
-				<remap from="stereo" to="wide"/>
-				<remap from="image"  to="image_color"/>
+				<remap from="stereo"          to="wide"/>
+				<remap from="left/image_raw"  to="left/image"/>
+				<remap from="right/image_raw" to="right/image"/>
 			</node>
 		</group>
 	</group>

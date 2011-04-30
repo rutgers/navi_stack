@@ -4,5 +4,5 @@ error_default: 0.20
 error_inlier:  0.05
 error_angle:   0.524
 
-frame_fixed:   '/drive_footprint'
-frame_default: '/drive_footprint'
+frame_fixed:   '/base_footprint'
+frame_default: '/base_footprint'

@@ -1,12 +1,12 @@
 <launch>
 	<arg name="camera"/> <!-- monocular camera (e.g. wheel_left or wheel_right) -->
-	<arg name="rows"/>   <!-- number of chessboard rows -->
-	<arg name="cols"/>   <!-- number of chessboard columns -->
-	<arg name="square"/> <!-- length of a side of one square on the calibration chessboard -->
+	<arg name="rows"   default="8"/>     <!-- number of chessboard rows -->
+	<arg name="cols"   default="6"/>     <!-- number of chessboard columns -->
+	<arg name="square" default="0.062"/> <!-- length of a side of one square on the calibration chessboard -->
 
 	<include file="$(find navi_bringup)/launch/hardware.launch"/>
 	<node pkg="camera_calibration" type="cameracalibrator.py" name="calibrator" args="--size=$(arg cols)x$(arg rows) --square=$(arg square)" ns="vision">
-		<remap from="image"  to="$(arg camera)/image_raw"/>
+		<remap from="image"  to="$(arg camera)/image"/>
 		<remap from="camera" to="$(arg camera)"/>
 	</node>
 </launch>

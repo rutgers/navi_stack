@@ -1,20 +1,16 @@
 Background\ ColorR=0
 Background\ ColorG=0
 Background\ ColorB=0
-Fixed\ Frame=/map
-Target\ Frame=/base_link
-Camera.Alpha=0.5
-Camera.Enabled=0
-Camera.Image\ Topic=/vision/wide/right/image_raw
-Camera.Transport\ Hint=raw
-Center\ Line.Alpha=0.1
+Fixed\ Frame=/drive_center
+Target\ Frame=/drive_center
+Center\ Line.Alpha=1
 Center\ Line.Billboard\ Size=0.02
 Center\ Line.Color\ Transformer=Flat Color
-Center\ Line.Decay\ Time=5
+Center\ Line.Decay\ Time=0
 Center\ Line.Enabled=1
 Center\ Line.Position\ Transformer=XYZ
 Center\ Line.Selectable=1
-Center\ Line.Style=1
+Center\ Line.Style=0
 Center\ Line.Topic=/vision/center_line
 Center\ Line..AxisAutocompute\ Value\ Bounds=1
 Center\ Line..AxisAxis=2
@@ -34,15 +30,9 @@ Center\ Line..IntensityMin\ ColorG=0
 Center\ Line..IntensityMin\ ColorB=0
 Center\ Line..IntensityMin\ Intensity=0
 Center\ Stereo\ Camera.Alpha=0.5
-Center\ Stereo\ Camera.Enabled=0
-Center\ Stereo\ Camera.Image\ Topic=/vision/narrow/right/image_raw
+Center\ Stereo\ Camera.Enabled=1
+Center\ Stereo\ Camera.Image\ Topic=/vision/narrow/left/image
 Center\ Stereo\ Camera.Transport\ Hint=raw
-Grid\ Cells.Alpha=1
-Grid\ Cells.ColorR=0.1
-Grid\ Cells.ColorG=1
-Grid\ Cells.ColorB=0
-Grid\ Cells.Enabled=0
-Grid\ Cells.Topic=/vision/line_occupancy
 Grid.Alpha=0.5
 Grid.Cell\ Size=1
 Grid.ColorR=0.5
@@ -57,9 +47,7 @@ Grid.OffsetY=0
 Grid.OffsetZ=0
 Grid.Plane=0
 Grid.Plane\ Cell\ Count=25
-Grid.Reference\ Frame=/base_footprint
-Ground\ Plane.Enabled=0
-Ground\ Plane.Marker\ Topic=/vision/visualization_marker
+Grid.Reference\ Frame=/drive_footprint
 Left\ Wheel\ Camera.Alpha=0.5
 Left\ Wheel\ Camera.Enabled=0
 Left\ Wheel\ Camera.Image\ Topic=/vision/wheel/left/image_raw
@@ -71,7 +59,7 @@ Left\ Wheel\ Line.Decay\ Time=0
 Left\ Wheel\ Line.Enabled=1
 Left\ Wheel\ Line.Position\ Transformer=XYZ
 Left\ Wheel\ Line.Selectable=1
-Left\ Wheel\ Line.Style=1
+Left\ Wheel\ Line.Style=0
 Left\ Wheel\ Line.Topic=/vision/left_line
 Left\ Wheel\ Line..AxisAutocompute\ Value\ Bounds=1
 Left\ Wheel\ Line..AxisAxis=2
@@ -101,7 +89,7 @@ Right\ Wheel\ Line.Decay\ Time=0
 Right\ Wheel\ Line.Enabled=1
 Right\ Wheel\ Line.Position\ Transformer=XYZ
 Right\ Wheel\ Line.Selectable=1
-Right\ Wheel\ Line.Style=1
+Right\ Wheel\ Line.Style=0
 Right\ Wheel\ Line.Topic=/vision/right_line
 Right\ Wheel\ Line..AxisAutocompute\ Value\ Bounds=1
 Right\ Wheel\ Line..AxisAxis=2
@@ -127,8 +115,6 @@ Robot.Robot\ Description=robot_description
 Robot.TF\ Prefix=
 Robot.Update\ Interval=0
 Robot.Visual\ Enabled=1
-Robot\:\ Robot\ Link\ base_footprintShow\ Axes=0
-Robot\:\ Robot\ Link\ base_footprintShow\ Trail=0
 Robot\:\ Robot\ Link\ base_linkShow\ Axes=0
 Robot\:\ Robot\ Link\ base_linkShow\ Trail=0
 Robot\:\ Robot\ Link\ camera_linkShow\ Axes=0
@@ -183,6 +169,32 @@ Stereo\ Narrow..IntensityMin\ ColorR=0
 Stereo\ Narrow..IntensityMin\ ColorG=0
 Stereo\ Narrow..IntensityMin\ ColorB=0
 Stereo\ Narrow..IntensityMin\ Intensity=0
+Stereo\ Obstacles.Alpha=1
+Stereo\ Obstacles.Billboard\ Size=0.05
+Stereo\ Obstacles.Color\ Transformer=Flat Color
+Stereo\ Obstacles.Decay\ Time=0
+Stereo\ Obstacles.Enabled=0
+Stereo\ Obstacles.Position\ Transformer=XYZ
+Stereo\ Obstacles.Selectable=1
+Stereo\ Obstacles.Style=1
+Stereo\ Obstacles.Topic=/vision/obstacle_points
+Stereo\ Obstacles..AxisAutocompute\ Value\ Bounds=1
+Stereo\ Obstacles..AxisAxis=2
+Stereo\ Obstacles..AxisMax\ Value=3.41016
+Stereo\ Obstacles..AxisMin\ Value=-1.08769
+Stereo\ Obstacles..AxisUse\ Fixed\ Frame=1
+Stereo\ Obstacles..Flat\ ColorColorR=1
+Stereo\ Obstacles..Flat\ ColorColorG=0
+Stereo\ Obstacles..Flat\ ColorColorB=0
+Stereo\ Obstacles..IntensityAutocompute\ Intensity\ Bounds=1
+Stereo\ Obstacles..IntensityMax\ ColorR=1
+Stereo\ Obstacles..IntensityMax\ ColorG=1
+Stereo\ Obstacles..IntensityMax\ ColorB=1
+Stereo\ Obstacles..IntensityMax\ Intensity=4096
+Stereo\ Obstacles..IntensityMin\ ColorR=0
+Stereo\ Obstacles..IntensityMin\ ColorG=0
+Stereo\ Obstacles..IntensityMin\ ColorB=0
+Stereo\ Obstacles..IntensityMin\ Intensity=0
 Stereo\ Wide.Alpha=1
 Stereo\ Wide.Billboard\ Size=0.01
 Stereo\ Wide.Color\ Transformer=RGB8
@@ -212,15 +224,17 @@ Stereo\ Wide..IntensityMin\ Intensity=0
 TF.All\ Enabled=0
 TF.Enabled=1
 TF.Frame\ Timeout=15
-TF.Show\ Arrows=1
+TF.Show\ Arrows=0
 TF.Show\ Axes=1
 TF.Show\ Names=0
 TF.Update\ Interval=0
+Visualization.Enabled=0
+Visualization.Marker\ Topic=/vision/visualization_marker
 Tool\ 2D\ Nav\ GoalTopic=move_base_simple/goal
 Tool\ 2D\ Pose\ EstimateTopic=initialpose
 Camera\ Type=rviz::OrbitViewController
-Camera\ Config=1.60934 4.33849 1.95658 0 0 0
-Property\ Grid\ State=selection=Robot.Enabled;expanded=.Global Options,Ground Plane.Enabled.Ground Plane.Namespaces,Stereo Narrow.Enabled.Stereo Narrow.StatusTopStatus,Stereo Wide.Enabled.Stereo Wide.StatusTopStatus,TF.Enabled.TF.Frames,TF./base_footprint/base_footprint,TF./base_link/base_link,TF./camera_link/camera_link,TF./caster_base_link/caster_base_link,TF./caster_swivel_link/caster_swivel_link,TF./caster_wheel_link/caster_wheel_link,TF./drive_center/drive_center,TF./fl_wheel_asm_link/fl_wheel_asm_link,TF./fl_wheel_link/fl_wheel_link,TF./fr_wheel_asm_link/fr_wheel_asm_link,TF./fr_wheel_link/fr_wheel_link,TF./laser_link/laser_link,TF./map/map,TF./narrow_left_camera_link/narrow_left_camera_link,TF./narrow_right_camera_link/narrow_right_camera_link,TF./odom/odom,TF./wheel_left_camera_base_link/wheel_left_camera_base_link,TF./wheel_left_camera_gazebo_link/wheel_left_camera_gazebo_link,TF./wheel_left_camera_link/wheel_left_camera_link,TF./wheel_right_camera_base_link/wheel_right_camera_base_link,TF./wheel_right_camera_gazebo_link/wheel_right_camera_gazebo_link,TF./wheel_right_camera_link/wheel_right_camera_link,TF./wide_left_camera_link/wide_left_camera_link,TF./wide_right_camera_link/wide_right_camera_link,TF.Enabled.TF.Tree,TF./mapTree/map,TF./odomTree/odom,TF./base_footprintTree/base_footprint,TF./base_linkTree/base_link,TF./camera_linkTree/camera_link,TF./narrow_left_camera_linkTree/narrow_left_camera_link,TF./narrow_right_camera_linkTree/narrow_right_camera_link,TF./wide_left_camera_linkTree/wide_left_camera_link,TF./wide_right_camera_linkTree/wide_right_camera_link,TF./caster_base_linkTree/caster_base_link,TF./caster_swivel_linkTree/caster_swivel_link,TF./caster_wheel_linkTree/caster_wheel_link,TF./drive_centerTree/drive_center,TF./fl_wheel_asm_linkTree/fl_wheel_asm_link,TF./fl_wheel_linkTree/fl_wheel_link,TF./fr_wheel_asm_linkTree/fr_wheel_asm_link,TF./fr_wheel_linkTree/fr_wheel_link,TF./laser_linkTree/laser_link,TF./wheel_left_camera_base_linkTree/wheel_left_camera_base_link,TF./wheel_left_camera_linkTree/wheel_left_camera_link,TF./wheel_left_camera_gazebo_linkTree/wheel_left_camera_gazebo_link,TF./wheel_right_camera_base_linkTree/wheel_right_camera_base_link,TF./wheel_right_camera_linkTree/wheel_right_camera_link,TF./wheel_right_camera_gazebo_linkTree/wheel_right_camera_gazebo_link;scrollpos=0,0;splitterpos=142,300;ispageselected=1
+Camera\ Config=0.997539 2.02797 3.06537 0 0 0
+Property\ Grid\ State=selection=Right Wheel Line.Enabled.Right Wheel Line.Style;expanded=.Global Options,TF./base_footprint/base_footprint,TF./base_link/base_link,TF./camera_link/camera_link,TF./caster_base_link/caster_base_link,TF./caster_swivel_link/caster_swivel_link,TF./caster_wheel_link/caster_wheel_link,TF./drive_center/drive_center,TF./drive_footprint/drive_footprint,TF./fl_wheel_asm_link/fl_wheel_asm_link,TF./fl_wheel_link/fl_wheel_link,TF./fr_wheel_asm_link/fr_wheel_asm_link,TF./fr_wheel_link/fr_wheel_link,TF./laser_link/laser_link,TF./narrow_left_camera_link/narrow_left_camera_link,TF./narrow_right_camera_link/narrow_right_camera_link,TF./odom/odom,TF./wheel_left_camera_base_link/wheel_left_camera_base_link,TF./wheel_left_camera_gazebo_link/wheel_left_camera_gazebo_link,TF./wheel_left_camera_link/wheel_left_camera_link,TF./wheel_right_camera_base_link/wheel_right_camera_base_link,TF./wheel_right_camera_gazebo_link/wheel_right_camera_gazebo_link,TF./wheel_right_camera_link/wheel_right_camera_link,TF./wide_left_camera_link/wide_left_camera_link,TF./wide_right_camera_link/wide_right_camera_link,TF.Enabled.TF.Tree,TF./drive_footprintTree/drive_footprint,TF./drive_centerTree/drive_center,TF./base_linkTree/base_link,TF./camera_linkTree/camera_link,TF./narrow_left_camera_linkTree/narrow_left_camera_link,TF./narrow_right_camera_linkTree/narrow_right_camera_link,TF./wide_left_camera_linkTree/wide_left_camera_link,TF./wide_right_camera_linkTree/wide_right_camera_link,TF./caster_base_linkTree/caster_base_link,TF./caster_swivel_linkTree/caster_swivel_link,TF./caster_wheel_linkTree/caster_wheel_link,TF./fl_wheel_asm_linkTree/fl_wheel_asm_link,TF./fl_wheel_linkTree/fl_wheel_link,TF./fr_wheel_asm_linkTree/fr_wheel_asm_link,TF./fr_wheel_linkTree/fr_wheel_link,TF./laser_linkTree/laser_link,TF./wheel_left_camera_base_linkTree/wheel_left_camera_base_link,TF./wheel_left_camera_linkTree/wheel_left_camera_link,TF./wheel_left_camera_gazebo_linkTree/wheel_left_camera_gazebo_link,TF./wheel_right_camera_base_linkTree/wheel_right_camera_base_link,TF./wheel_right_camera_linkTree/wheel_right_camera_link,TF./wheel_right_camera_gazebo_linkTree/wheel_right_camera_gazebo_link,TF./odomTree/odom,TF./base_footprintTree/base_footprint,Visualization.Enabled.Visualization.StatusTopStatus,Visualization.Enabled.Visualization.Namespaces,Center Stereo Camera.Enabled,Stereo Narrow.Enabled.Stereo Narrow.StatusTopStatus,Stereo Wide.Enabled.Stereo Wide.StatusTopStatus,Stereo Obstacles.Enabled.Stereo Obstacles.StatusTopStatus,Right Wheel Line.Enabled;scrollpos=0,11;splitterpos=151,289;ispageselected=1
 [Display0]
 Name=Grid
 Package=rviz
@@ -230,67 +244,63 @@ Name=Robot
 Package=rviz
 ClassName=rviz::RobotModelDisplay
 [Display2]
-Name=Ground Plane
-Package=rviz
-ClassName=rviz::MarkerDisplay
-[Display3]
-Name=Center Stereo Camera
-Package=rviz
-ClassName=rviz::CameraDisplay
-[Display4]
-Name=Left Wheel Camera
-Package=rviz
-ClassName=rviz::CameraDisplay
-[Display5]
-Name=Right Wheel Camera
-Package=rviz
-ClassName=rviz::CameraDisplay
-[Display6]
-Name=Stereo Narrow
-Package=rviz
-ClassName=rviz::PointCloud2Display
-[Display7]
-Name=Stereo Wide
-Package=rviz
-ClassName=rviz::PointCloud2Display
-[Display8]
-Name=Center Line
-Package=rviz
-ClassName=rviz::PointCloud2Display
-[Display9]
-Name=Left Wheel Line
-Package=rviz
-ClassName=rviz::PointCloud2Display
-[Display10]
-Name=Right Wheel Line
-Package=rviz
-ClassName=rviz::PointCloud2Display
-[Display11]
-Name=Grid Cells
-Package=rviz
-ClassName=rviz::GridCellsDisplay
-[Display12]
-Name=Camera
-Package=rviz
-ClassName=rviz::CameraDisplay
-[Display13]
 Name=TF
 Package=rviz
 ClassName=rviz::TFDisplay
+[Display3]
+Name=Visualization
+Package=rviz
+ClassName=rviz::MarkerDisplay
+[Display4]
+Name=Center Stereo Camera
+Package=rviz
+ClassName=rviz::CameraDisplay
+[Display5]
+Name=Left Wheel Camera
+Package=rviz
+ClassName=rviz::CameraDisplay
+[Display6]
+Name=Right Wheel Camera
+Package=rviz
+ClassName=rviz::CameraDisplay
+[Display7]
+Name=Stereo Narrow
+Package=rviz
+ClassName=rviz::PointCloud2Display
+[Display8]
+Name=Stereo Wide
+Package=rviz
+ClassName=rviz::PointCloud2Display
+[Display9]
+Name=Stereo Obstacles
+Package=rviz
+ClassName=rviz::PointCloud2Display
+[Display10]
+Name=Center Line
+Package=rviz
+ClassName=rviz::PointCloud2Display
+[Display11]
+Name=Left Wheel Line
+Package=rviz
+ClassName=rviz::PointCloud2Display
+[Display12]
+Name=Right Wheel Line
+Package=rviz
+ClassName=rviz::PointCloud2Display
 [TF.]
-base_footprintEnabled=1
-base_linkEnabled=1
+base_footprintEnabled=0
+base_linkEnabled=0
 camera_linkEnabled=1
 caster_base_linkEnabled=0
 caster_swivel_linkEnabled=0
 caster_wheel_linkEnabled=0
 drive_centerEnabled=0
+drive_footprintEnabled=0
 fl_wheel_asm_linkEnabled=0
 fl_wheel_linkEnabled=0
 fr_wheel_asm_linkEnabled=0
 fr_wheel_linkEnabled=0
 laser_linkEnabled=0
-mapEnabled=1
 narrow_left_camera_linkEnabled=0
 narrow_right_camera_linkEnabled=0
 odomEnabled=0

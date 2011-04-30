@@ -109,7 +109,6 @@ private:
 	int    m_width_cutoff;
 	int m_threshold;
 	stereo_plane::Plane m_plane;
-	std::string m_ground_id;
 
 	int                 m_horizon_ver, m_horizon_hor;
 	cv::Mat             m_kernel_ver,  m_kernel_hor;
