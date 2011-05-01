@@ -14,6 +14,7 @@ private:
   ros::NodeHandle nh_;
 
   int linear_, angular_;
+  int left_ax_, right_ax_;
   double l_scale_, a_scale_;
   ros::Publisher vel_pub_;
   ros::Subscriber joy_sub_;
@@ -21,28 +22,29 @@ private:
 };
 
 Teleop::Teleop():
-  linear_(1),
-  angular_(2),
+  nh_("~"),
+  left_ax_(1),
+  right_ax_(3),
   l_scale_(0.5),
   a_scale_(2.0)
 {
-
-  nh_.param("axis_linear", linear_, linear_);
-  nh_.param("axis_angular", angular_, angular_);
+  nh_.param("left_axis", left_ax_, left_ax_);
+  nh_.param("right_axix", right_ax_, right_ax_);
   nh_.param("scale_angular", a_scale_, a_scale_);
   nh_.param("scale_linear", l_scale_, l_scale_);
 
 
-  vel_pub_ = nh_.advertise<geometry_msgs::Twist>("cmd_vel", 1);
-  joy_sub_ = nh_.subscribe<joy::Joy>("joy", 10, &Teleop::joyCallback, this);
+  ros::NodeHandle nh;
+  vel_pub_ = nh.advertise<geometry_msgs::Twist>("cmd_vel", 1);
+  joy_sub_ = nh.subscribe<joy::Joy>("joy", 10, &Teleop::joyCallback, this);
 }
 
 void Teleop::joyCallback(const joy::Joy::ConstPtr& joy)
 {
   geometry_msgs::Twist cmdvel;
   
-      cmdvel.linear.x = l_scale_ * joy->axes[linear_];
-      cmdvel.angular.z = a_scale_ * joy->axes[angular_];
+      cmdvel.linear.x = l_scale_ * 0.5*(joy->axes[left_ax_]+joy->axes[right_ax_]);
+      cmdvel.angular.z = a_scale_ * (joy->axes[right_ax_] - joy->axes[left_ax_])/2;
   
   vel_pub_.publish(cmdvel);
 }
