@@ -24,6 +24,7 @@ static CameraPublisher pub_nl, pub_nr;
 static CameraPublisher pub_wl, pub_wr;
 static ros::Duration   step;
 static ros::Time       latest(0, 0);
+static bool            rate;
 
 void recieve(Image::ConstPtr const &msg_left, Image::ConstPtr const &msg_middle,
              Image::ConstPtr const &msg_right)
@@ -82,8 +83,9 @@ int main(int argc, char **argv)
 
 	// Cap the output FPS at a fixed rate.
 	double fps;
-	nh_priv.param("fps", fps, def_fps);
-	step.fromSec(1 / fps);
+	nh_priv.param("rate", rate, true);
+	nh_priv.param("fps",  fps,  def_fps);
+	step.fromSec(1.0 / fps);
 
 	// Republish the source images with new camera_info messages.
 	std::string topic_n  = nh.resolveName("narrow");
