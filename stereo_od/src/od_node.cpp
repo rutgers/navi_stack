@@ -13,11 +13,13 @@
 #include <geometry_msgs/Vector3Stamped.h>
 #include <message_filters/subscriber.h>
 #include <message_filters/time_synchronizer.h>
+#include <stereo_plane/Plane.h>
+#include <tf/transform_listener.h>
+
 #include <pcl_ros/point_cloud.h>
 #include <pcl/kdtree/kdtree_flann.h>
 #include <pcl/point_types.h>
-#include <stereo_plane/Plane.h>
-#include <tf/transform_listener.h>
+#include <pcl/filters/statistical_outlier_removal.h>
 
 namespace mf = message_filters;
 
@@ -27,6 +29,10 @@ using sensor_msgs::PointCloud2;
 using stereo_plane::Plane;
 
 typedef pcl::PointCloud<pcl::PointXYZ> PointCloudXYZ;
+
+static bool   m_simple;
+static double m_simple_mean;
+static double m_simple_stddev;
 
 static int    m_pmin;
 static double m_dmax;
@@ -172,8 +178,6 @@ void RemovePlane(PointCloudXYZ const &msg_src, PointCloudXYZ &msg_dst,
 void Callback(PointCloudXYZ::ConstPtr const &pts, CameraInfo::ConstPtr const &info,
               Plane::ConstPtr const &msg_plane)
 {
-	ROS_ERROR("OBSTACLES");
-
 	Plane plane;
 	try {
 		TransformPlane(*msg_plane, plane, pts->header.frame_id);
@@ -192,7 +196,18 @@ void Callback(PointCloudXYZ::ConstPtr const &pts, CameraInfo::ConstPtr const &in
 	PointCloudXYZ::Ptr candidates = boost::make_shared<PointCloudXYZ>(*pts);
 	PointCloudXYZ::Ptr obstacles  = boost::make_shared<PointCloudXYZ>();
 	RemovePlane(*pts, *candidates, plane, m_pmax);
-	FindObstacles(*candidates, *obstacles, m_hmin, m_hmax, flen, m_theta);
+
+	// Use a statistical outlier removal filter to remove incorrect stereo
+	// correspondances.
+	if (m_simple) {
+		pcl::StatisticalOutlierRemoval<pcl::PointXYZ> sor;
+		sor.setInputCloud(candidates);
+		sor.setMeanK(m_simple_mean);
+		sor.setStddevMulThresh(m_simple_stddev);
+		sor.filter(*obstacles);
+	} else {
+		FindObstacles(*candidates, *obstacles, m_hmin, m_hmax, flen, m_theta);
+	}
 
 	obstacles->header.stamp    = pts->header.stamp;
 	obstacles->header.frame_id = pts->header.frame_id;
@@ -205,6 +220,10 @@ int main(int argc, char **argv)
 
 	ros::NodeHandle nh;
 	ros::NodeHandle nh_priv("~");
+
+	nh_priv.param<bool>("simple",          m_simple,        true);
+	nh_priv.param<double>("simple_mean",   m_simple_mean,   50.0);
+	nh_priv.param<double>("simple_stddev", m_simple_stddev, 1.0);
 
 	nh_priv.param<int>("points_min",      m_pmin,  25);
 	nh_priv.param<double>("distance_max", m_dmax,  5.0);
