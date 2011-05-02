@@ -24,6 +24,7 @@ void WhiteNodelet::onInit(void)
 	nh_priv.param<int>("threshold_hue", m_threshold_hue, 180);
 	nh_priv.param<int>("threshold_sat", m_threshold_sat, 127);
 
+	nh_priv.param<int>("blue_val", m_blue_val, 127);
 	nh_priv.param<int>("blue_hue", m_blue_hue, 127);
 	nh_priv.param<int>("blue_sat", m_blue_sat, 127);
 
@@ -78,11 +79,15 @@ void WhiteNodelet::FilterBlue(cv::Mat src, cv::Mat &dst)
 	cv::Mat &sat = chans[1];
 	cv::Mat &val = chans[2];
 
-	cv::Mat diff_hue = cv::abs(hue - m_blue_hue);
-	cv::Mat diff_sat = cv::abs(sat - m_blue_sat);
-	cv::Mat diff     = diff_hue + diff_sat;
+	cv::Mat good_sat;
+	cv::Mat good_val;
+	cv::threshold(sat, good_sat, m_blue_sat, 0, cv::THRESH_TOZERO);
+	cv::threshold(val, good_val, m_blue_val, 0, cv::THRESH_TOZERO);
 
-	dst = 255 - diff;
+	cv::Mat good_hue = 255 - cv::abs(hue - m_blue_hue);
+
+	cv::min(good_hue, good_sat, dst);
+cv::min(good_val, dst,      dst);
 }
 
 void WhiteNodelet::Callback(sensor_msgs::Image::ConstPtr const &msg_img)

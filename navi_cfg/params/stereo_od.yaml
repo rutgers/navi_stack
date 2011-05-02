@@ -4,6 +4,7 @@ height_max:   1.00
 distance_max: 10.00
 theta:        1.047
 
+
 # threshold-based obstacle detection
 simple:        true
 simple_mean:   50.0

@@ -3,4 +3,5 @@ info_nr: 'package://navi_cfg/calibration/stereo_narrow_right.yaml'
 info_wl: 'package://navi_cfg/calibration/stereo_wide_left.yaml'
 info_wr: 'package://navi_cfg/calibration/stereo_wide_right.yaml'
 
-fps: 12
+# cameras run at 15 fps; this should be real time
+fps: 30

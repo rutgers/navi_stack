@@ -20,6 +20,7 @@
 #include <pcl/kdtree/kdtree_flann.h>
 #include <pcl/point_types.h>
 #include <pcl/filters/statistical_outlier_removal.h>
+#include <pcl/filters/voxel_grid.h>
 
 namespace mf = message_filters;
 
@@ -194,17 +195,26 @@ void Callback(PointCloudXYZ::ConstPtr const &pts, CameraInfo::ConstPtr const &in
 	// Remove points that are clearly on the ground plane to greatly speed up
 	// the Manduchi OD algorithm.
 	PointCloudXYZ::Ptr candidates = boost::make_shared<PointCloudXYZ>(*pts);
-	PointCloudXYZ::Ptr obstacles  = boost::make_shared<PointCloudXYZ>();
 	RemovePlane(*pts, *candidates, plane, m_pmax);
 
-	// Use a statistical outlier removal filter to remove incorrect stereo
-	// correspondances.
+	PointCloudXYZ::Ptr obstacles  = boost::make_shared<PointCloudXYZ>();
+
 	if (m_simple) {
+		// Downsample the pointcloud to speed processing (using a VoxelGrid).
+		PointCloudXYZ::Ptr sampled = boost::make_shared<PointCloudXYZ>();
+		pcl::VoxelGrid<pcl::PointXYZ> vg;
+		vg.setInputCloud(candidates);
+		vg.setLeafSize(0.05, 0.05, 0.05);
+		vg.filter(*sampled);
+
+		// Use a statistical outlier removal filter to remove incorrect stereo
+		// correspondances.
 		pcl::StatisticalOutlierRemoval<pcl::PointXYZ> sor;
-		sor.setInputCloud(candidates);
+		sor.setInputCloud(sampled);
 		sor.setMeanK(m_simple_mean);
 		sor.setStddevMulThresh(m_simple_stddev);
 		sor.filter(*obstacles);
+		obstacles = candidates;
 	} else {
 		FindObstacles(*candidates, *obstacles, m_hmin, m_hmax, flen, m_theta);
 	}
@@ -238,7 +248,7 @@ int main(int argc, char **argv)
 	mf::TimeSynchronizer<PointCloudXYZ, CameraInfo, Plane> sub_sync(sub_pts, sub_info, sub_plane, 10);
 	sub_sync.registerCallback(&Callback);
 
-	m_tf = boost::make_shared<tf::TransformListener>(nh);
+	m_tf = boost::make_shared<tf::TransformListener>(nh, ros::Duration(1.0));
 
 	m_pub_pts = nh.advertise<PointCloud2>("obstacle_points", 10);
 

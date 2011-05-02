@@ -114,9 +114,9 @@ private:
 	cv::Mat             m_kernel_ver,  m_kernel_hor;
 	std::vector<Offset> m_offset_ver,  m_offset_hor;
 
-	ros::NodeHandle                    m_nh;
-	tf::TransformListener              m_tf;
+	ros::NodeHandle m_nh;
 	image_geometry::PinholeCameraModel m_model;
+	boost::shared_ptr<tf::TransformListener> m_tf;
 
 	ros::Publisher m_pub_pts;
 	it::ImageTransport         *m_it;
