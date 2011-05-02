@@ -1,9 +1,7 @@
 <launch>
 	<!-- Static URDF -->
-	<node pkg="joint_state_publisher" type="joint_state_publisher" name="joint_publisher"/>
-	<node pkg="robot_state_publisher" type="state_publisher" name="state_publisher"/>
+	<include file="$(find navi_bringup)/launch/general.launch"/>
 	<node type="buffer_server" pkg="tf2_ros" name="tf2_buffer"/>
-	<include file="$(find navi_model)/launch/model_upload.launch"/>
 
 	<!-- Vision -->
 	<group ns="vision">

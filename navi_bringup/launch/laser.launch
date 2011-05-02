@@ -1,5 +1,5 @@
 <launch>
-	<node pkg="hokuyo_node" type="hokuyo_node" name="base_laser" machine="PIPER">
+	<node pkg="hokuyo_node" type="hokuyo_node" name="base_laser">
 		<remap from="scan" to="base_laser/scan"/>
 		<param name="frame_id" value="/base_laser_link"/> 
 	</node>
