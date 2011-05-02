@@ -53,6 +53,7 @@ void LineNodelet::onInit(void)
 	nh_priv.param<double>("border",    m_width_dead, 0.1452);
 	nh_priv.param<double>("thickness", m_width_line, 0.0726);
 
+	m_tf      = boost::make_shared<tf::TransformListener>(nh, ros::Duration(1.0));
 	m_pub_pts = nh.advertise<PointCloudXYZ>("line_points", 10);
 
 	if (m_debug) {
@@ -189,8 +190,8 @@ void LineNodelet::TransformPlane(Plane const &src, Plane &dst, std::string frame
 	src_normal.header = src.header;
 	src_normal.vector = src.normal;
 
-	m_tf.transformPoint(frame_id, src_point, dst_point);
-	m_tf.transformVector(frame_id, src_normal, dst_normal);
+	m_tf->transformPoint(frame_id, src_point, dst_point);
+	m_tf->transformVector(frame_id, src_normal, dst_normal);
 
 	dst.header = src.header;
 	dst.point  = dst_point.point;
