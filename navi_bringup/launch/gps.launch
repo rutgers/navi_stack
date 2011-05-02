@@ -1,0 +1,3 @@
+<launch>
+	<node ns="gps" pkg="gpsd_client" type="gpsd_client" name="gpsd_client"/>
+</launch>
