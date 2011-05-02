@@ -26,7 +26,9 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 #target_link_libraries(${PROJECT_NAME} another_library)
 rosbuild_add_boost_directories()
 rosbuild_add_executable(teleop_keyboard src/teleop_keyboard.cpp)
-rosbuild_add_executable(teleop_gamepad src/teleop_gamepad.cpp)
+rosbuild_add_executable(gamepad_diffsticks src/gamepad_diffsticks.cpp)
+rosbuild_add_executable(gamepad_stick src/gamepad_stick.cpp)
+
 
 #rosbuild_link_boost(teleop_wiimote thread)
 #target_link_libraries(example ${PROJECT_NAME})
