@@ -1,0 +1,8 @@
+<launch>
+	<include file="$(find navi_model)/launch/model_upload.launch"/>
+	<node pkg="joint_state_publisher" type="joint_state_publisher" name="joint_publisher"/>
+	<node pkg="robot_state_publisher" type="state_publisher" name="state_publisher"/>
+
+	<node pkg="tf" type="static_transform_publisher" name="wheel_left_hack" args="0 0 0 0 0 0 /wheel_left_camera_link /wheel_left_link 50"/>
+	<node pkg="tf" type="static_transform_publisher" name="wheel_right_hack" args="0 0 0 0 0 0 /wheel_right_camera_link /wheel_right_link 50"/>
+</launch>

@@ -1,13 +1,20 @@
+# motor driver
 KERNEL=="ttyUSB[0-9]*", ATTRS{product}=="FT232R USB UART", ATTRS{serial}=="A700ejKt", SYMLINK+="motor_driver"
+
+# stereo cameras
 SUBSYSTEM=="video4linux", ATTRS{idVendor}=="1415", ATTRS{idProduct}=="2000", DEVPATH=="*usb9/9-3/9-3.1*", SYMLINK="video_stereo_left"
 SUBSYSTEM=="video4linux", ATTRS{idVendor}=="1415", ATTRS{idProduct}=="2000", DEVPATH=="*usb9/9-3/9-3.2*", SYMLINK="video_stereo_middle"
 SUBSYSTEM=="video4linux", ATTRS{idVendor}=="1415", ATTRS{idProduct}=="2000", DEVPATH=="*usb9/9-3/9-3.3*", SYMLINK="video_stereo_right"
 
+# wheel cameras
 SUBSYSTEM=="video4linux", ATTRS{idVendor}=="1415", ATTRS{idProduct}=="2000", DEVPATH=="*usb1/1-4/1-4.1/1-4.1.1*", SYMLINK="video_wheel_left"
 SUBSYSTEM=="video4linux", ATTRS{idVendor}=="1415", ATTRS{idProduct}=="2000", DEVPATH=="*usb1/1-4/1-4.1/1-4.1.2*", SYMLINK="video_wheel_right"
 
+# gps
 KERNEL=="ttyUSB[0-9]*", ATTRS{DRIVERS}=="pl2303", ATTRS{idVendor}=="067b", SYMLINK="gps_novatel"
 
-
+# joysticks
 KERNEL=="input/js*", MODE="0666"
 
+# hokuyo laser
+KERNEL=="ttyACM[0-9]*", ATTRS{product}=="URG-Series USB Driver",  SYMLINK+="hokuyo" 

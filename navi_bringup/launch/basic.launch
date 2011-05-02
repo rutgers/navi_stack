@@ -1,16 +1,4 @@
 <launch>
-	<!-- Static URDF -->
-	<node pkg="joint_state_publisher" type="joint_state_publisher" name="joint_publisher"/>
-	<node pkg="robot_state_publisher" type="state_publisher" name="state_publisher"/>
-	<node type="buffer_server" pkg="tf2_ros" name="tf2_buffer"/>
-	<include file="$(find navi_model)/launch/model_upload.launch"/>
-
-	<!-- Extrinsic Camera Calibration -->
-	<node type="msg_saver.py" pkg="camera_pose_calibration" name="cal_saver" output="screen"
-	      args="camera_calibration camera_pose_calibration/CameraCalibration $(find navi_cfg)/calibration/extrinsics.bag"/>
-	<node type="buffer_server" pkg="tf2_ros" name="tf2_buffer_server" output="screen"/>
-	<node type="calibration_transform_publisher.py" pkg="camera_pose_calibration" name="cal_publisher" output="screen"/>
-
 	<!-- Vision -->
 	<group ns="vision">
 		<node pkg="nodelet" type="nodelet" name="vision_manager" args="manager"/>

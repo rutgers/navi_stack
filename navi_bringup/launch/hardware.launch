@@ -1,6 +1,5 @@
 <launch>
-	<include file="$(find navi_bringup)/launch/basic.launch"/>
-
+	<include file="$(find navi_bringup)/launch/general.launch"/>
 	<group ns="vision">
 		<node pkg="stereo_webcam" type="stereo_node" name="camera_front">
 			<rosparam command="load" file="$(find navi_cfg)/params/camera_general.yaml"/>
