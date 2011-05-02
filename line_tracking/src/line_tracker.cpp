@@ -30,7 +30,7 @@ void TrackerNodelet::onInit(void)
 	nh_priv.param<std::string>("frame_robot", m_fr_robot, "/base_link");
 	nh_priv.param<std::string>("frame_fixed", m_fr_fixed, "/map");
 
-	m_tf = boost::make_shared<tf::TransformListener>(nh);
+	m_tf = boost::make_shared<tf::TransformListener>(nh, ros::Duration(1.0));
 
 	m_grid.resize(m_grid_width * m_grid_height);
 	for (int i = 0; i < m_grid_width * m_grid_height; ++i) {
