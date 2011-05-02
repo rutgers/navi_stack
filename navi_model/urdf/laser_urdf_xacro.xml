@@ -35,11 +35,11 @@
 	
 	<joint name="base_laser_joint" type="fixed">
 		<origin xyz="0.27085 0 0.1245" rpy="0 0 0"/>
-		<child link="laser_link"/>
+		<child link="base_laser_link"/>
 		<parent link="base_link"/>
 	</joint>
 	
-	<gazebo reference="laser_link">
+	<gazebo reference="base_laser_link">
       <sensor:ray name="laser">
         <rayCount>640</rayCount>
         <rangeCount>640</rangeCount>
@@ -59,8 +59,8 @@
           <gaussianNoise>0.005</gaussianNoise>
           <alwaysOn>true</alwaysOn>
           <updateRate>20</updateRate>
-          <topicName>laser/scan</topicName>
-          <frameName>laser_link</frameName>
+          <topicName>base_laser/scan</topicName>
+          <frameName>base_laser_link</frameName>
           <interface:laser name="gazebo_ros_laser_iface" />
         </controller:gazebo_ros_laser>
       </sensor:ray>
