@@ -29,6 +29,7 @@ private:
 	bool m_use_blue;
 	int m_blue_hue;
 	int m_blue_sat;
+	int m_blue_val;
 };
 };
 #endif
