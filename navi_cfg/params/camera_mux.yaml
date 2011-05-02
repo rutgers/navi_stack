@@ -3,4 +3,4 @@ info_nr: 'package://navi_cfg/calibration/stereo_narrow_right.yaml'
 info_wl: 'package://navi_cfg/calibration/stereo_wide_left.yaml'
 info_wr: 'package://navi_cfg/calibration/stereo_wide_right.yaml'
 
-fps: 10
+fps: 12
