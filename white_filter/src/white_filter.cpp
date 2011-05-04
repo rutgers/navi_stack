@@ -19,10 +19,8 @@ void WhiteNodelet::onInit(void)
 	ros::NodeHandle &nh_priv = getPrivateNodeHandle();
 
 	nh_priv.param<bool>("use_blue", m_use_blue, false);
-	nh_priv.param<bool>("use_low",  m_use_low,  true);
-	nh_priv.param<bool>("use_high", m_use_high, true);
-	nh_priv.param<int>("threshold_hue", m_threshold_hue, 180);
-	nh_priv.param<int>("threshold_sat", m_threshold_sat, 127);
+	nh_priv.param<int>("threshold_val", m_threshold_val, 50);
+	nh_priv.param<int>("threshold_sat", m_threshold_sat, 50);
 
 	nh_priv.param<int>("blue_val", m_blue_val, 127);
 	nh_priv.param<int>("blue_hue", m_blue_hue, 127);
@@ -45,28 +43,13 @@ void WhiteNodelet::FilterWhite(cv::Mat src, cv::Mat &dst)
 	cv::Mat &sat = chans[1];
 	cv::Mat &val = chans[2];
 
-	// Split the image into regions of low and high saturation. Pixels with a
-	// low saturation can be assumed to be white, but those with high saturation
-	// need additional processing.
-	cv::Mat sat_lo, sat_hi;
-	cv::threshold(sat, sat_lo, m_threshold_sat, 255, cv::THRESH_BINARY_INV);
-	cv::threshold(sat, sat_hi, m_threshold_sat, 255, cv::THRESH_BINARY);
-
-	// For pixels with high saturation, remove all those with hue below less
-	// than blue/green. White pixels in a shadow generally have high hue, where
-	// other colors in the image primarily have low hue.
-	cv::Mat hue_hi, white_hi;
-	cv::threshold(hue, hue_hi, m_threshold_hue, 255, cv::THRESH_BINARY);
-	cv::min(sat_hi, hue_hi, white_hi);
-
-	// Merge the results of the "low sat" and "high sat" filters.
-	cv::Mat white(src.rows, src.cols, CV_8UC1, cv::Scalar(0));
-	cv::Mat &white_lo = sat_lo;
-	if (m_use_low)  cv::max(white, white_lo, white);
-	if (m_use_high) cv::max(white, white_hi, white);
-
-	// Use this binary "white" indicator to mask the value image.
-	cv::min(val, white, dst);
+	// Remove extremely dark regions from the image. Since saturation is
+	// arbitrary near black in the color space, these regions may have sufficiently
+	// low saturation to be falsely detected as white.
+	cv::Mat mask;
+	cv::threshold(255 - sat, dst,  m_threshold_sat, 255, cv::THRESH_TOZERO);
+	cv::threshold(val, mask, m_threshold_val, 255, cv::THRESH_BINARY);
+	cv::min(mask, dst, dst);
 }
 
 void WhiteNodelet::FilterBlue(cv::Mat src, cv::Mat &dst)

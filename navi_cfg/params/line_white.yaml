@@ -1,10 +1,3 @@
-use_low:  true
-use_high: false
-threshold_hue: 180
-threshold_sat: 127
-
-# DEMO: for capstone demo only
-use_blue: true
-blue_val: 80
-blue_hue: 211
-blue_sat: 80
+use_blue: false
+threshold_val: 50
+threshold_sat: 50
