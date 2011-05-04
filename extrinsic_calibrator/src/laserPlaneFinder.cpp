@@ -12,7 +12,7 @@
 #include <math.h>
 #include <LinearMath/btQuaternion.h>
 
-
+#include <iostream>
 
 bool laserPlaneFinder(const sensor_msgs::LaserScan& scan, const geometry_msgs::Pose& approx_pos,
 						const float& approx_plane_width, geometry_msgs::Pose& pose){
@@ -22,9 +22,12 @@ bool laserPlaneFinder(const sensor_msgs::LaserScan& scan, const geometry_msgs::P
 
 	//x and y are switched in atan2 because in this coordinate system, 0 angle
 	// is at the x axiswhich is forward, rather than to the right
-	double c_angle = atan2(approx_pos.position.x, approx_pos.position.y);
+	double c_angle = atan2(approx_pos.position.y, approx_pos.position.x);
+//	std::cout << "cangle is " << c_angle << std::endl;
+	center_index = c_angle/ scan.angle_increment + (scan.ranges.size()-1)/2;
 
-	center_index = c_angle/ scan.angle_increment;
+//	std::cout << "There are " << scan.ranges.size() << " pts \n";
+	//std::cout << "The center index is " << center_index << std::endl;
 
 	int left_edge_index =-1;
 	int right_edge_index=-1;
@@ -40,11 +43,15 @@ bool laserPlaneFinder(const sensor_msgs::LaserScan& scan, const geometry_msgs::P
 			found_edge = true;
 			break;
 		}
+		last_range = scan.ranges[i];
 	}
-	if (!found_edge) return false; //failed for find edge
+	if (!found_edge) {
+		//std::cout << "Fail on right edge\n";
+		return false; //failed for find edge
+	}
 	found_edge = false;
 
-	for(uint i=center_index; i <=scan.ranges.size(); i++){
+	for(uint i=center_index; i <scan.ranges.size(); i++){
 		// detects the edge by saying that the difference in the range between a pt
 		// on the plane and off the plane will be at least 1/5 of the plane width
 		if (fabs(last_range - scan.ranges[i]) > approx_plane_width/5){
@@ -52,16 +59,26 @@ bool laserPlaneFinder(const sensor_msgs::LaserScan& scan, const geometry_msgs::P
 			found_edge = true;
 			break;
 		}
+		last_range = scan.ranges[i];
 	}
-	if (!found_edge) return false; //failed to find edge
+	if (!found_edge) {
+		//std::cout << "Fail on left edge\n";
+		return false; //failed to find edge
+	}
 
+
+	//std::cout << "Left index is " << left_edge_index << " right index is " << right_edge_index << std::endl;
 	//each point is pushed on to
-	int total_pts=  left_edge_index - right_edge_index;
+	int total_pts=  left_edge_index - right_edge_index-2;
 
 	Eigen::VectorXd X(total_pts), Y(total_pts);
 	for(int i=0; i < total_pts; i++){
-		X[i] = scan.ranges[right_edge_index+i] *cos(scan.angle_min+i*scan.angle_increment);
-		Y[i] = scan.ranges[right_edge_index+i] *sin(scan.angle_min+i*scan.angle_increment);
+
+		int offset= right_edge_index+i+1;
+		X[i] = scan.ranges[offset] *cos(scan.angle_min+offset*scan.angle_increment);
+		Y[i] = scan.ranges[offset] *sin(scan.angle_min+offset*scan.angle_increment);
+		//std::cout << "X " << X[i] << "  Y  " << Y[i] << std::endl;
+
 	}
 
 	Eigen::Vector2d origin(X.mean(), Y.mean());
