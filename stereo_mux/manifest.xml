@@ -12,4 +12,6 @@
 	<depend package="image_transport"/>
 	<depend package="message_filters"/>
 	<depend package="sensor_msgs"/>
+	<depend package="pcl"/>
+	<depend package="pcl_ros"/>
 </package>

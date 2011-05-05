@@ -4,8 +4,21 @@
 #include <image_transport/image_transport.h>
 #include <message_filters/subscriber.h>
 #include <message_filters/time_synchronizer.h>
+#include <pcl_ros/point_cloud.h>
+#include <pcl_ros/transforms.h>
+#include <pcl/point_types.h>
+#include <pcl/filters/passthrough.h>
+#include <pcl/sample_consensus/method_types.h>
+#include <pcl/sample_consensus/model_types.h>
+#include <pcl/segmentation/sac_segmentation.h>
+#include <pcl/filters/project_inliers.h>
+#include <pcl_ros/point_cloud.h>
 #include <sensor_msgs/CameraInfo.h>
 #include <sensor_msgs/Image.h>
+
+namespace mf = message_filters;
+
+typedef pcl::PointCloud<pcl::PointXYZ> PointCloudXYZ;
 
 using image_transport::CameraPublisher;
 using image_transport::ImageTransport;
@@ -13,25 +26,25 @@ using sensor_msgs::CameraInfo;
 using sensor_msgs::CameraInfoConstPtr;
 using sensor_msgs::Image;
 using sensor_msgs::ImageConstPtr;
-using message_filters::TimeSynchronizer;
-
-static double const def_fps = 10;
+using sensor_msgs::PointCloud2;
 
 static CameraInfoManager *man_nl, *man_nr;
 static CameraInfoManager *man_wl, *man_wr;
 
 static CameraPublisher pub_nl, pub_nr;
 static CameraPublisher pub_wl, pub_wr;
-static ros::Duration   step;
-static ros::Time       latest(0, 0);
-static bool            rate;
+static ros::Publisher  pub_b;
+
+static std::string info_nl, info_nr;
+static std::string info_wl, info_wr;
+
+static double min_n, max_n;
+static double min_w, max_w;
 
 void recieve(Image::ConstPtr const &msg_left, Image::ConstPtr const &msg_middle,
              Image::ConstPtr const &msg_right)
 {
-	// Limit the publishing rate to a maximum sample rate.
 	ros::Time now = msg_left->header.stamp;
-	if (now - latest < step) return;
 
 	CameraInfo info_nl = man_nl->getCameraInfo();
 	CameraInfo info_nr = man_nr->getCameraInfo();
@@ -53,8 +66,43 @@ void recieve(Image::ConstPtr const &msg_left, Image::ConstPtr const &msg_middle,
 	pub_nr.publish(*msg_middle, info_nr);
 	pub_wl.publish(*msg_left,   info_wl);
 	pub_wr.publish(*msg_right,  info_wr);
+}
 
-	latest = now;
+void merge(PointCloud2::ConstPtr const &pts2_narrow, PointCloud2::ConstPtr const &pts2_wide)
+{
+	PointCloudXYZ::Ptr pts_narrow = boost::make_shared<PointCloudXYZ>();
+	PointCloudXYZ::Ptr pts_wide   = boost::make_shared<PointCloudXYZ>();
+	pcl::fromROSMsg(*pts2_narrow, *pts_narrow);
+	pcl::fromROSMsg(*pts2_wide, *pts_wide);
+
+	PointCloudXYZ::Ptr pts = boost::make_shared<PointCloudXYZ>();
+	pts->width  = pts_narrow->width;
+	pts->height = pts_narrow->height;
+	pts->points.resize(pts->width * pts->height);
+
+	pcl::PointXYZ pt_nan;
+	pt_nan.x = std::numeric_limits<double>::quiet_NaN();
+	pt_nan.y = std::numeric_limits<double>::quiet_NaN();
+	pt_nan.z = std::numeric_limits<double>::quiet_NaN();
+
+	// Use wide baseline where available; otherwise fall back on narrow.
+	for (size_t i = 0; i < pts_narrow->width * pts_narrow->height; ++i) {
+		pcl::PointXYZ &pt_n = pts_narrow->points[i];
+		pcl::PointXYZ &pt_w = pts_wide->points[i];
+		pcl::PointXYZ &pt_b = pts->points[i];
+		bool valid_n = isnan(pt_n.x) || isnan(pt_n.y) || isnan(pt_n.z);
+		bool valid_w = isnan(pt_w.x) || isnan(pt_w.y) || isnan(pt_w.z);
+
+		if (valid_n && min_w <= pt_w.z && pt_w.z <= max_w) {
+			pt_b = pt_w;
+		} else if (valid_w && min_n <= pt_n.z && pt_n.z <= max_n) {
+			pt_b = pt_n;
+		} else {
+			pt_b = pt_nan;
+		}
+	}
+
+	pub_b.publish(pts);
 }
 
 int main(int argc, char **argv)
@@ -70,11 +118,10 @@ int main(int argc, char **argv)
 	// Use completely separate calibration parameters for the narrow and wide
 	// camera pairs even though one of the cameras is shared. This is
 	// necessary to preserve the integrity of the recitification.
-	std::string info_nl, info_nr, info_wl, info_wr;
-	nh_priv.getParam("info_nl", info_nl);
-	nh_priv.getParam("info_nr", info_nr);
-	nh_priv.getParam("info_wl", info_wl);
-	nh_priv.getParam("info_wr", info_wr);
+	nh_priv.param<std::string>("info_nl", info_nl, "");
+	nh_priv.param<std::string>("info_nr", info_nr, "");
+	nh_priv.param<std::string>("info_wl", info_wl, "");
+	nh_priv.param<std::string>("info_wr", info_wr, "");
 
 	man_nl = new CameraInfoManager(nh_nl, "", info_nl);
 	man_nr = new CameraInfoManager(nh_nr, "", info_nr);
@@ -82,10 +129,10 @@ int main(int argc, char **argv)
 	man_wr = new CameraInfoManager(nh_wr, "", info_wr);
 
 	// Cap the output FPS at a fixed rate.
-	double fps;
-	nh_priv.param("rate", rate, true);
-	nh_priv.param("fps",  fps,  def_fps);
-	step.fromSec(1.0 / fps);
+	nh_priv.param<double>("narrow_min", min_n, 0.0);
+	nh_priv.param<double>("narrow_max", max_n, INFINITY);
+	nh_priv.param<double>("wide_min",   min_w, 0.0);
+	nh_priv.param<double>("wide_max",   max_w, INFINITY);
 
 	// Republish the source images with new camera_info messages.
 	std::string topic_n  = nh.resolveName("narrow");
@@ -100,17 +147,24 @@ int main(int argc, char **argv)
 	pub_nr = it.advertiseCamera(topic_nr + "/image", 1);
 	pub_wl = it.advertiseCamera(topic_wl + "/image", 1);
 	pub_wr = it.advertiseCamera(topic_wr + "/image", 1);
+	pub_b  = nh.advertise<PointCloudXYZ>("points", 1);
 
 	// Always subscribe to synchronized (left, middle, right) image triplets;
 	// we will handle the multiplexing entirely in the callback.
 	std::string topic_l = nh.resolveName("left");
 	std::string topic_m = nh.resolveName("middle");
 	std::string topic_r = nh.resolveName("right");
-	message_filters::Subscriber<Image> sub_left(nh,   topic_l + "/image", 1);
-	message_filters::Subscriber<Image> sub_middle(nh, topic_m + "/image", 1);
-	message_filters::Subscriber<Image> sub_right(nh,  topic_r + "/image", 1);
-	TimeSynchronizer<Image, Image, Image> sub_sync(sub_left, sub_middle, sub_right, 10);
-	sub_sync.registerCallback(boost::bind(&recieve, _1, _2, _3));
+	mf::Subscriber<Image> sub_l(nh, topic_l + "/image", 1);
+	mf::Subscriber<Image> sub_m(nh, topic_m + "/image", 1);
+	mf::Subscriber<Image> sub_r(nh, topic_r + "/image", 1);
+	mf::TimeSynchronizer<Image, Image, Image> sync_img(sub_l, sub_m, sub_r, 10);
+	sync_img.registerCallback(boost::bind(&recieve, _1, _2, _3));
+
+	// Merge the stereo output.
+	mf::Subscriber<PointCloud2> sub_n(nh, topic_n + "/points2", 1);
+	mf::Subscriber<PointCloud2> sub_w(nh, topic_w + "/points2", 1);
+	mf::TimeSynchronizer<PointCloud2, PointCloud2> sync_pts(sub_n, sub_w, 10);
+	sync_pts.registerCallback(boost::bind(&merge, _1, _2));
 
 	ros::spin();
 
