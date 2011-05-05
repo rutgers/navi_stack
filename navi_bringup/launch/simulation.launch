@@ -1,5 +1,6 @@
 <launch>
 	<arg name="world" default="circle_field"/>
+	<include file="$(find navi_bringup)/launch/general.launch"/>
 	<include file="$(find navi_bringup)/launch/basic.launch"/>
 	<include file="$(find navi_simulation)/launch/spawn_navi.launch"/>
 	<include file="$(find navi_simulation)/launch/simulation.launch">

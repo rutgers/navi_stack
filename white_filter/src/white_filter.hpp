@@ -23,7 +23,7 @@ private:
 
 	bool m_use_low;
 	bool m_use_high;
-	int m_threshold_hue;
+	int m_threshold_val;
 	int m_threshold_sat;
 
 	bool m_use_blue;
