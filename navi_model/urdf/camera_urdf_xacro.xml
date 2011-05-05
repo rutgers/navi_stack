@@ -31,9 +31,8 @@
 
 	<!-- Modify camera intrinsics to match a PS3 Eye -->
 	<!-- TODO: What units is the focal length in!? -->
-	<property name="image_width"  value="320"/>
-	<property name="image_height" value="240"/>
-	<property name="focal_length" value="315"/>
+	<property name="image_width"  value="640"/>
+	<property name="image_height" value="480"/>
 	<property name="hfov"         value="75"/>
 	<property name="fps"          value="10.0"/>
 
