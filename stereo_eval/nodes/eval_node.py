@@ -33,6 +33,9 @@ class EvalNode:
 		self.border     = rospy.get_param('~border', 8)
 		self.logfile    = rospy.get_param('~log', '/tmp/stereo_data.csv')
 
+		self.pub_guess = rospy.Publisher('board_guess', geometry_msgs.msg.PoseStamped)
+		self.pub_viz   = rospy.Publisher('board_image', sensor_msgs.msg.Image)
+
 		# Synchronize monocular images with the corresponding stereo disparity map
 		topic_cam1 = rospy.resolve_name('left')
 		topic_cam2 = rospy.resolve_name('right')
@@ -42,21 +45,19 @@ class EvalNode:
 		sub_info2 = mf.Subscriber(topic_cam2 + '/camera_info', sensor_msgs.msg.CameraInfo)
 		sub_disp  = mf.Subscriber('disparity', stereo_msgs.msg.DisparityImage)
 
-		self.sub_sync = mf.TimeSynchronizer([ sub_img1, sub_info1, sub_img2, sub_info2, sub_disp ], 10)
+		self.sub      = [ sub_img1, sub_info1, sub_img2, sub_info2, sub_disp ]
+		self.sub_sync = mf.TimeSynchronizer(self.sub, 10)
 		self.sub_sync.registerCallback(self.UpdateImage)
 
 		# Log data to a CSV file for analysis.
 		self.file   = open(self.logfile, 'w')
 		self.logger = csv.writer(self.file, delimiter=',')
 
-		# Visualization of calibration.
-		self.gui_name  = 'Stereo Evaluation'
-		self.gui_delay = 10
-		self.gui_win   = cv.NamedWindow(self.gui_name)
-
 	def GetCorners(self, mono, subpix = True):
-		(ok, corners) = cv.FindChessboardCorners(mono, (self.board_cols, self.board_rows), cv.CV_CALIB_CB_ADAPTIVE_THRESH
-		                                         | cv.CV_CALIB_CB_NORMALIZE_IMAGE | cv.CALIB_CB_FAST_CHECK)
+		(ok, corners) = cv.FindChessboardCorners(mono, (self.board_cols, self.board_rows),
+		                                           cv.CV_CALIB_CB_ADAPTIVE_THRESH
+		                                         | cv.CV_CALIB_CB_NORMALIZE_IMAGE)
+		                                        # | cv.CALIB_CB_FAST_CHECK)
 
 		# Reject the detection if any corners are too close to the edge of the image.
 		w, h = cv.GetSize(mono)
@@ -127,7 +128,7 @@ class EvalNode:
 			polygon = [
 				corners[0],
 				corners[self.board_cols - 1],
-				corners[self.board_cols * self.board_rows - 1],
+				corners[self.board_cols *  self.board_rows - 1],
 				corners[self.board_cols * (self.board_rows - 1)],
 			]
 			cv.Set(self.mask, 0)
@@ -136,26 +137,25 @@ class EvalNode:
 
 			# Accumulate variance as a function of distance.
 			mono  = numpy.linalg.inv(self.FindTransformation(corners, self.model))
-			dists = [ ]
+			dists = list()
 
 			for y in range(0, img.rows):
 				for x in range(0, img.cols):
-					if self.mask[y, x]:
-						P = self.stereo.projectPixelTo3d((x, y), disp[y, x])
-						dists.append(P[2])
+					if self.mask[y, x] and disp[y, x] > 0:
+						d = self.stereo.getZ(disp[y, x])
+						dists.append(d)
 
 			dists = numpy.array(dists)
-			self.logger.writerow( (mono[2, 3], dists.mean(), dists.var()) )
+			self.logger.writerow( (mono[2, 3], numpy.mean(dists), numpy.var(dists)) )
 
-		cv.ShowImage(self.gui_name, self.viz)
-		key = cv.WaitKey(self.gui_delay)
+		msg_viz = self.bridge.cv_to_imgmsg(self.viz, encoding='bgr8')
+		self.pub_viz.publish(msg_viz)
 
 def main():
 	rospy.init_node('stereo_eval')
 	node = EvalNode()
 	rospy.spin()
 	node.file.close()
-	print('CLOSED')
 
 if __name__ == "__main__":
     main()
