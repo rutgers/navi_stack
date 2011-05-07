@@ -36,7 +36,7 @@
 
 	<gazebo reference="base_link">
 		<turnGravityOff>False</turnGravityOff>
-		<material>Gazebo/PioneerBody</material>
+		<material>Gazebo/Black</material>
 		<canonicalBody>base_link</canonicalBody>
 	</gazebo>
   
