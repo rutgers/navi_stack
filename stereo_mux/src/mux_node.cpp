@@ -102,6 +102,8 @@ void merge(PointCloud2::ConstPtr const &pts2_narrow, PointCloud2::ConstPtr const
 		}
 	}
 
+	pts->header.stamp    = pts_narrow->header.stamp;
+	pts->header.frame_id = pts_narrow->header.frame_id;
 	pub_b.publish(pts);
 }
 
