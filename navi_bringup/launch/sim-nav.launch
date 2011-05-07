@@ -1,5 +1,0 @@
-<launch>
-	<include file="$(find navi_bringup)/launch/simulation.launch">
-		<arg name="world" value="nav_field"/>
-	</include>
-</launch>

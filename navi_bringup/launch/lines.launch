@@ -1,9 +1,6 @@
 <launch>
-	<!-- Vision -->
 	<group ns="vision">
-		<node pkg="nodelet" type="nodelet" name="vision_manager" args="manager"/>
-
-		<!-- Whiteness Colorspace Transformation -->
+		<!-- Colorspace Transformation -->
 		<node pkg="nodelet" type="nodelet" name="white_filter_center" args="load white_filter/white_nodelet vision_manager">
 			<rosparam command="load" file="$(find navi_cfg)/params/line_white.yaml"/>
 			<remap from="image" to="/vision/narrow/left/image"/>
@@ -39,38 +36,5 @@
 			<remap from="camera_info" to="/vision/wheel/right/camera_info"/>
 			<remap from="line_points" to="/vision/wheel/right/line_points"/>
 		</node>
-
-		<!-- Model Fitting and Tracking -->
-		<!--
-		<node pkg="nodelet" type="nodelet" name="line_tracker" args="load line_tracking/tracker_node vision_manager">
-			<rosparam command="load" file="$(find navi_cfg)/params/line_tracking.yaml"/>
-			<remap from="points" to="left_line"/>
-		</node>
-		-->
-
-		<!-- Stereo Vision -->
-		<node pkg="nodelet" type="nodelet" name="stereo_ground" args="load stereo_plane/ground_nodelet vision_manager">
-			<rosparam command="load" file="$(find navi_cfg)/params/stereo_ground.yaml"/>
-			<remap from="points" to="narrow/points2"/>
-		</node>
-		<node pkg="stereo_od" type="od_node" name="stereo_od">
-			<rosparam command="load" file="$(find navi_cfg)/params/stereo_od.yaml"/>
-			<remap from="points"      to="narrow/points2"/>
-			<remap from="camera_info" to="narrow/left/camera_info"/>
-		</node>
-		<group ns="narrow">
-			<node pkg="stereo_image_proc" type="stereo_image_proc" name="narrow_proc">
-				<remap from="stereo"          to="narrow"/>
-				<remap from="left/image_raw"  to="left/image"/>
-				<remap from="right/image_raw" to="right/image"/>
-			</node>
-		</group>
-		<group ns="wide">
-			<node pkg="stereo_image_proc" type="stereo_image_proc" name="wide_proc">
-				<remap from="stereo"          to="wide"/>
-				<remap from="left/image_raw"  to="left/image"/>
-				<remap from="right/image_raw" to="right/image"/>
-			</node>
-		</group>
 	</group>
 </launch>
