@@ -5,5 +5,5 @@
 	<node pkg="robot_state_publisher" type="state_publisher" name="state_publisher"/>
 
 	<!-- Nodelet Managers -->
-	<node pkg="nodelet" type="nodelet" name="vision_manager" args="manager"/>
+	<node pkg="nodelet" type="nodelet" name="vision_manager" args="manager" ns="vision"/>
 </launch>
