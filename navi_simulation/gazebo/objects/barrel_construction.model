@@ -19,11 +19,11 @@ xmlns:physics="http://playerstage.sourceforge.net/gazebo/xmlschema/#physics">
         <xyz>0 0 0</xyz>
         <rpy>0 0 0</rpy>
         <geom:cylinder name="board">
-            <xyz>0 0 0.5</xyz>
+            <xyz>0 0 .3</xyz>
             <rpy>0 0 0</rpy>
-            <size>0.6 1</size> <!--- I dont really know what size they are, this is a guess...-->
+            <size>0.4 .6</size> <!--- I dont really know what size they are, this is a guess...-->
             <visual>
-                <xyz>0 0 0</xyz>
+                <xyz>0 0 -.2</xyz>
                 <rpy>0 0 0</rpy>
                 <scale>0.0254 0.0254  0.0254 </scale>
                 <mesh>barrel_construction.dae</mesh>
