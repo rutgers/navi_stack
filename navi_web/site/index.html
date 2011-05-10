@@ -1,0 +1,127 @@
+<html>
+    <head>
+      <script type="text/javascript" src="http://brown-ros-pkg.googlecode.com/svn/tags/brown-ros-pkg/rosjs/ros.min.js"></script>
+      <script type="text/javascript">
+	function fixedHeightDisplay (id_name, height){
+		this.height = height
+		this._cline =0
+		this.text = ""
+		this.div_id = id_name;
+		this.append = function(msg) {
+			if (this._cline >= this.height){
+				this._cline =0;
+				this.text = ""
+			}
+			this.text += msg + "<br/>";
+			ele = document.getElementById(this.div_id)
+			ele.innerHTML = this.text
+			this._cline += 1;
+		};
+	}
+
+    function nop() {}
+    /* console for logging */
+    var console = null;
+    /* state */
+    var active = false;
+    var wall = false;
+    var bump = false;
+    
+    var disp = new fixedHeightDisplay('console', 5)
+    
+    function log(msg) {
+        disp.append(msg)
+     }
+    function init() {
+        function waitForDOM() {
+            var cnsl = document.getElementById('console');
+            if (cnsl == null) {
+                setTimeout(waitForDOM, 100);
+            } else {
+                console = cnsl;
+                setTimeout(main, 0);
+            }
+        }
+        setTimeout(waitForDOM, 100);
+    }
+    function main() {
+        log('console initialized');
+        var connectInfo = document.location.toString();
+        log('url: ' + connectInfo);
+        var addressMatches = connectInfo.match(/address=([^&]*)/);
+         var address = '';
+        if (addressMatches == null) {
+            log('Problem extracting address!');
+            address = '192.168.10.3'
+            
+        }
+        else{
+			address= addressMatches[1]
+		}
+        log('address: ' + address);
+        var portMatches = connectInfo.match(/.*&port=([^&]*)/);
+        var port = '';
+
+        if (portMatches == null) {
+            log('Problem extracting port!');
+            port = 9090
+        }
+        else{
+			port = portMatches[1]
+		}
+        log('port: ' + port);
+        log('creating ROSProxy connection object...');
+        var connection = null;
+        try {
+            connection = new ros.Connection('ws://' + address + ':' + port);
+        } catch (err) {
+            log('Problem creating proxy connection object!');
+            return;
+        }
+        log('created');
+        log('connecting to ' + address + ' on port ' + port + '...');
+        connection.setOnClose(function (e) {
+            log('connection closed');
+        });
+        connection.setOnError(function (e) {
+            log('network error!');
+        });
+        connection.setOnOpen(function (e) {
+            log('connected');
+            log('initializing ROSProxy...');
+            try {
+                connection.callService('/rosjs/topics', '[]', nop);
+            } catch (error) {
+                log('Problem initializing ROSProxy!');
+                return;
+            }
+            log('initialized');
+            log('registering handler for hello world...');
+            try {
+                connection.addHandler('/hello', function (msg) {
+					log(msg.data)
+                });
+            } catch (error) {
+                log('Problem registering handler!');
+                return;
+            }
+            log('registered');
+            log('subscribing to hello world...');
+            try {
+                connection.callService('/rosjs/subscribe', '["/hello",0]', nop);
+            } catch (error) {
+                log('Problem subscribing!');
+            }
+            log('subscribed');
+            log('setting closed loop control policy...');
+;
+
+        });
+    }
+        </script>
+      </head>
+    <body onload="init()">
+    Navi web!
+    <div id="console"></div>
+    </body>
+    </html>
