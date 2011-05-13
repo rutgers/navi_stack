@@ -1,6 +1,7 @@
 <html>
     <head>
-      <script type="text/javascript" src="http://brown-ros-pkg.googlecode.com/svn/tags/brown-ros-pkg/rosjs/ros.min.js"></script>
+      <script type="text/javascript" src="ros.js"></script>
+      <script type="text/javascript" src="ros_widgets/image_view.js"></script>
       <script type="text/javascript">
 	function fixedHeightDisplay (id_name, height){
 		this.height = height
@@ -18,6 +19,8 @@
 			this._cline += 1;
 		};
 	}
+	
+		var view= 0;
 
     function nop() {}
     /* console for logging */
@@ -27,11 +30,12 @@
     var wall = false;
     var bump = false;
     
-    var disp = new fixedHeightDisplay('console', 5)
+    var disp = new fixedHeightDisplay('console', 20)
     
     function log(msg) {
         disp.append(msg)
      }
+     
     function init() {
         function waitForDOM() {
             var cnsl = document.getElementById('console');
@@ -45,6 +49,8 @@
         setTimeout(waitForDOM, 100);
     }
     function main() {
+		view = new image_view('image_view',640,480)
+
         log('console initialized');
         var connectInfo = document.location.toString();
         log('url: ' + connectInfo);
@@ -52,7 +58,7 @@
          var address = '';
         if (addressMatches == null) {
             log('Problem extracting address!');
-            address = '192.168.10.3'
+            address = 'localhost'
             
         }
         else{
@@ -98,30 +104,36 @@
             log('initialized');
             log('registering handler for hello world...');
             try {
-                connection.addHandler('/hello', function (msg) {
-					log(msg.data)
-                });
+                connection.addHandler('/vision/narrow/left/image', function(msg){
+					view.handler(msg);});
             } catch (error) {
                 log('Problem registering handler!');
+                log(error)
+                var output = '';
+				for (property in view) {
+					output += property + ': ' + object[property]+'; ';
+					}
+                log(output)
                 return;
             }
             log('registered');
             log('subscribing to hello world...');
             try {
-                connection.callService('/rosjs/subscribe', '["/hello",0]', nop);
+                connection.callService('/rosjs/subscribe', '["/vision/narrow/left/image",0]', nop);
             } catch (error) {
                 log('Problem subscribing!');
             }
             log('subscribed');
             log('setting closed loop control policy...');
 ;
-
+	
         });
     }
         </script>
       </head>
     <body onload="init()">
     Navi web!
+    <div id="image_view"></div>
     <div id="console"></div>
     </body>
     </html>
