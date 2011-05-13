@@ -7,17 +7,18 @@
 
 #include "csv.hpp"
 
-uint8_t ParseByte(std::string raw)
+#include <iostream>
+
+float ParseFloat(std::string raw)
 {
 	std::stringstream ss;
 	ss.str(raw);
-
-	int value;
+	float value;
 	ss >> value;
-	return (uint8_t)value;
+	return value;
 }
 
-void TokenizeRow(std::istream &stream, char delim, std::vector<std::string> data)
+void TokenizeRow(std::istream &stream, char delim, std::vector<std::string> &data)
 {
 	std::string line;
 	std::getline(stream, line);
@@ -33,8 +34,8 @@ void TokenizeRow(std::istream &stream, char delim, std::vector<std::string> data
 bool Parse(std::istream &stream, cv::Mat &features, cv::Mat &labels,
            char delim, std::string label_true)
 {
-	std::vector<uint8_t> vec_features;
-	std::vector<uint8_t> vec_labels;
+	std::vector<float> vec_features;
+	std::vector<float> vec_labels;
 	size_t n = 1;
 
 	for (;;) {
@@ -42,10 +43,11 @@ bool Parse(std::istream &stream, cv::Mat &features, cv::Mat &labels,
 		TokenizeRow(stream, delim, tokens);
 
 		if (stream.good()) {
-			// All but the last column are 8-bit features.
 			n = tokens.size() - 1;
+
+			// All but the last column are 8-bit features.
 			for (size_t i = 0; i < n; ++i) {
-				uint8_t feature = ParseByte(tokens[i]);
+				float feature = ParseFloat(tokens[i]);
 				vec_features.push_back(feature);
 			}
 

@@ -1,5 +1,7 @@
 #include "white_filter.hpp"
 
+#include <fstream>
+#include <string>
 #include <boost/shared_ptr.hpp>
 #include <boost/make_shared.hpp>
 
@@ -9,86 +11,78 @@
 #include <sensor_msgs/image_encodings.h>
 #include <opencv/cv.h>
 
+#include "csv.hpp"
+
 PLUGINLIB_DECLARE_CLASS(white_filter, white_nodelet, white_node::WhiteNodelet, nodelet::Nodelet)
 
 namespace white_node {
 
 void WhiteNodelet::onInit(void)
 {
+	std::cout << "INIT" << std::endl;
+
 	ros::NodeHandle &nh      = getNodeHandle();
 	ros::NodeHandle &nh_priv = getPrivateNodeHandle();
 
-	nh_priv.param<int>("threshold_sat",    m_threshold_sat,    127);
-	nh_priv.param<int>("threshold_val",    m_threshold_val,    127);
-	nh_priv.param<int>("threshold_hue_lo", m_threshold_hue_lo, 180);
-	nh_priv.param<int>("threshold_hue_hi", m_threshold_hue_hi, 60);
+	std::string path, delim, truth;
+	nh_priv.param<int>("knn", m_k, 1);
+	nh_priv.param<std::string>("train_path",  path,  "");
+	nh_priv.param<std::string>("train_delim", delim, ",");
+	nh_priv.param<std::string>("train_true",  truth, "line-true");
 
-	nh_priv.param<bool>("use_blue", m_use_blue, false);
-	nh_priv.param<int>("blue_val", m_blue_val, 127);
-	nh_priv.param<int>("blue_hue", m_blue_hue, 127);
-	nh_priv.param<int>("blue_sat", m_blue_sat, 127);
+	// Load training data from a CSV file.
+	std::fstream stream(path.c_str(), std::fstream::in);
+	cv::Mat features, labels;
+	Parse(stream, features, labels, delim[0], truth);
+	stream.close();
+	ROS_INFO("loaded %d training points", features.rows);
 
+	// Train the kNN classifier using the training data.
+	CvMat old_features = features;
+	CvMat old_labels   = labels;
+	m_knn.train(&old_features, &old_labels, NULL, false, m_k);
+	ROS_INFO("trained kNN classifier with k_max = %d", m_k);
+
+	// Subscribers and publishers.
 	m_it = boost::make_shared<image_transport::ImageTransport>(nh);
 	m_pub = m_it->advertise("white", 1);
 	m_sub = m_it->subscribe("image", 1, &WhiteNodelet::Callback, this);
 }
 
-void WhiteNodelet::FilterWhite(cv::Mat src, cv::Mat &dst)
+void WhiteNodelet::FilterWhite(cv::Mat bgr, cv::Mat &dst)
 {
-	// Convert the image into the HSV color space. By most ignoring pixel value,
-	// this algorithm is made much more robust to changes in ambiant lighting.
-	std::vector<cv::Mat> chans(3);
+	// RGB
+	std::vector<cv::Mat> ch_bgr(3);
+	cv::split(bgr, ch_bgr);
+	cv::Mat &r = ch_bgr[2];
+	cv::Mat &g = ch_bgr[1];
+	cv::Mat &b = ch_bgr[0];
+
+	// HSV
+	std::vector<cv::Mat> ch_hsv(3);
 	cv::Mat hsv;
-	cv::cvtColor(src, hsv, CV_BGR2HSV);
-	cv::split(hsv, chans);
-	cv::Mat &hue = chans[0];
-	cv::Mat &sat = chans[1];
-	cv::Mat &val = chans[2];
+	cv::cvtColor(bgr, hsv, CV_BGR2HSV);
+	cv::split(hsv, ch_hsv);
+	cv::Mat &h = ch_hsv[0];
+	cv::Mat &s = ch_hsv[1];
+	cv::Mat &v = ch_hsv[2];
 
-	// Split the image into regions of low and high saturation.
-	cv::Mat mask_lo, mask_hi;
-	cv::threshold(sat, mask_lo, m_threshold_sat, 255, cv::THRESH_BINARY_INV);
-	cv::threshold(sat, mask_hi, m_threshold_sat, 255, cv::THRESH_BINARY);
+	// Use kNN to classify each pixel.
+	for (int y = 0; y < bgr.rows; ++y)
+	for (int x = 0; x < bgr.cols; ++x) {
+		cv::Mat feature(1, 6, CV_32FC1);
+		float *data = (float *)feature.data;
+		data[0] = r.at<uint8_t>(y, x);
+		data[1] = g.at<uint8_t>(y, x);
+		data[2] = b.at<uint8_t>(y, x);
+		data[3] = h.at<uint8_t>(y, x);
+		data[4] = s.at<uint8_t>(y, x);
+		data[5] = v.at<uint8_t>(y, x);
 
-	// High saturation; remove hue up to the green range (~180).
-	cv::Mat mask_hue_hi;
-	cv::threshold(hue, mask_hue_hi, m_threshold_hue_hi, 255, cv::THRESH_BINARY);
-	cv::min(mask_hue_hi, mask_hi, mask_hi);
-
-	// Regions of low saturation; remove hue up to the yellow range (~60).
-	cv::Mat mask_hue_lo;
-	cv::threshold(hue, mask_hue_lo, m_threshold_hue_lo, 255, cv::THRESH_BINARY);
-	cv::min(mask_hue_lo, mask_lo, mask_lo);
-
-	// Eliminate low brightness where hue and saturation are arbitrary.
-	cv::Mat mask_val;
-	cv::threshold(val, mask_val, m_threshold_val, 255, cv::THRESH_BINARY);
-	cv::min(mask_lo, mask_val, mask_lo);
-	cv::min(mask_hi, mask_val, mask_hi);
-
-	// Combine the search of the low and high saturation regions.
-	cv::max(mask_lo, mask_hi, dst);
-}
-
-void WhiteNodelet::FilterBlue(cv::Mat src, cv::Mat &dst)
-{
-	std::vector<cv::Mat> chans(3);
-	cv::Mat hsv;
-	cv::cvtColor(src, hsv, CV_BGR2HSV);
-	cv::split(hsv, chans);
-	cv::Mat &hue = chans[0];
-	cv::Mat &sat = chans[1];
-	cv::Mat &val = chans[2];
-
-	cv::Mat good_sat;
-	cv::Mat good_val;
-	cv::threshold(sat, good_sat, m_blue_sat, 0, cv::THRESH_TOZERO);
-	cv::threshold(val, good_val, m_blue_val, 0, cv::THRESH_TOZERO);
-
-	cv::Mat good_hue = 255 - cv::abs(hue - m_blue_hue);
-
-	cv::min(good_hue, good_sat, dst);
-cv::min(good_val, dst,      dst);
+		CvMat feature_old = feature;
+		float predicted = m_knn.find_nearest(&feature_old, m_k);
+		dst.at<uint8_t>(y, x) = 255 * !!predicted;
+	}
 }
 
 void WhiteNodelet::Callback(sensor_msgs::Image::ConstPtr const &msg_img)
@@ -106,11 +100,7 @@ void WhiteNodelet::Callback(sensor_msgs::Image::ConstPtr const &msg_img)
 		return;
 	}
 
-	if (m_use_blue) {
-		FilterBlue(src, dst);
-	} else {
-		FilterWhite(src, dst);
-	}
+	FilterWhite(src, dst);
 
 	// Convert the OpenCV data to an output message without copying.
 	cv_bridge::CvImage msg_white;

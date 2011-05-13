@@ -2,6 +2,7 @@
 #define WHITE_FILTER_HPP_
 
 #include <opencv/cv.h>
+#include <opencv/ml.h>
 #include <image_transport/image_transport.h>
 #include <nodelet/nodelet.h>
 #include <sensor_msgs/Image.h>
@@ -21,13 +22,8 @@ private:
 	image_transport::Subscriber m_sub;
 	image_transport::Publisher  m_pub;
 
-	bool m_use_low;
-	bool m_use_high;
-
-	int m_threshold_sat;
-	int m_threshold_val;
-	int m_threshold_hue_lo;
-	int m_threshold_hue_hi;
+	int m_k;
+	cv::KNearest m_knn;
 
 	// for capstone demo using blue duck tape
 	bool m_use_blue;
