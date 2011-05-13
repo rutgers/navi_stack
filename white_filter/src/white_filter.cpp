@@ -18,10 +18,12 @@ void WhiteNodelet::onInit(void)
 	ros::NodeHandle &nh      = getNodeHandle();
 	ros::NodeHandle &nh_priv = getPrivateNodeHandle();
 
-	nh_priv.param<bool>("use_blue", m_use_blue, false);
-	nh_priv.param<int>("threshold_val", m_threshold_val, 50);
-	nh_priv.param<int>("threshold_sat", m_threshold_sat, 50);
+	nh_priv.param<int>("threshold_sat",    m_threshold_sat,    127);
+	nh_priv.param<int>("threshold_val",    m_threshold_val,    127);
+	nh_priv.param<int>("threshold_hue_lo", m_threshold_hue_lo, 180);
+	nh_priv.param<int>("threshold_hue_hi", m_threshold_hue_hi, 60);
 
+	nh_priv.param<bool>("use_blue", m_use_blue, false);
 	nh_priv.param<int>("blue_val", m_blue_val, 127);
 	nh_priv.param<int>("blue_hue", m_blue_hue, 127);
 	nh_priv.param<int>("blue_sat", m_blue_sat, 127);
@@ -43,13 +45,29 @@ void WhiteNodelet::FilterWhite(cv::Mat src, cv::Mat &dst)
 	cv::Mat &sat = chans[1];
 	cv::Mat &val = chans[2];
 
-	// Remove extremely dark regions from the image. Since saturation is
-	// arbitrary near black in the color space, these regions may have sufficiently
-	// low saturation to be falsely detected as white.
-	cv::Mat mask;
-	cv::threshold(255 - sat, dst,  m_threshold_sat, 255, cv::THRESH_TOZERO);
-	cv::threshold(val, mask, m_threshold_val, 255, cv::THRESH_BINARY);
-	cv::min(mask, dst, dst);
+	// Split the image into regions of low and high saturation.
+	cv::Mat mask_lo, mask_hi;
+	cv::threshold(sat, mask_lo, m_threshold_sat, 255, cv::THRESH_BINARY_INV);
+	cv::threshold(sat, mask_hi, m_threshold_sat, 255, cv::THRESH_BINARY);
+
+	// High saturation; remove hue up to the green range (~180).
+	cv::Mat mask_hue_hi;
+	cv::threshold(hue, mask_hue_hi, m_threshold_hue_hi, 255, cv::THRESH_BINARY);
+	cv::min(mask_hue_hi, mask_hi, mask_hi);
+
+	// Regions of low saturation; remove hue up to the yellow range (~60).
+	cv::Mat mask_hue_lo;
+	cv::threshold(hue, mask_hue_lo, m_threshold_hue_lo, 255, cv::THRESH_BINARY);
+	cv::min(mask_hue_lo, mask_lo, mask_lo);
+
+	// Eliminate low brightness where hue and saturation are arbitrary.
+	cv::Mat mask_val;
+	cv::threshold(val, mask_val, m_threshold_val, 255, cv::THRESH_BINARY);
+	cv::min(mask_lo, mask_val, mask_lo);
+	cv::min(mask_hi, mask_val, mask_hi);
+
+	// Combine the search of the low and high saturation regions.
+	cv::max(mask_lo, mask_hi, dst);
 }
 
 void WhiteNodelet::FilterBlue(cv::Mat src, cv::Mat &dst)

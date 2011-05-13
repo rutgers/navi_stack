@@ -23,9 +23,13 @@ private:
 
 	bool m_use_low;
 	bool m_use_high;
-	int m_threshold_val;
-	int m_threshold_sat;
 
+	int m_threshold_sat;
+	int m_threshold_val;
+	int m_threshold_hue_lo;
+	int m_threshold_hue_hi;
+
+	// for capstone demo using blue duck tape
 	bool m_use_blue;
 	int m_blue_hue;
 	int m_blue_sat;
