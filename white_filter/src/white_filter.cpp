@@ -43,16 +43,9 @@ void WhiteNodelet::onInit(void)
 	NODELET_INFO("loaded %d training points", features.rows);
 
 	// Train the SVM using the training data.
-	cv::SVMParams svm_params;
-	svm_params.svm_type    = cv::SVM::C_SVC; // categorical
-	svm_params.kernel_type = cv::SVM::RBF;   // radial basis function
-	svm_params.term_crit.epsilon  = 1e-4;
-	svm_params.term_crit.max_iter = 50;
-	svm_params.term_crit.type     = CV_TERMCRIT_ITER | CV_TERMCRIT_EPS;
-
 	CvMat old_features = features;
 	CvMat old_labels   = labels;
-	m_svm.train_auto(&old_features, &old_labels, NULL, NULL, svm_params);
+	m_tree.train(&old_features, CV_ROW_SAMPLE, &old_labels);
 	NODELET_INFO("trained SVM classifier classifier");
 
 	// Subscribers and publishers.
@@ -96,8 +89,8 @@ void WhiteNodelet::FilterWhite(cv::Mat bgr, cv::Mat &dst)
 		data[5] = v.at<uint8_t>(y, x);
 
 		CvMat feature_old = feature;
-		float pred = m_svm.predict(&feature_old);
-		dst.at<uint8_t>(y, x) = 255 * !!pred;
+		float pred = m_tree.predict(&feature_old)->value;
+		dst.at<uint8_t>(y, x) = 255 * pred;
 
 #if 0
 		std::cout << "(" << x << ", " << y << ") "

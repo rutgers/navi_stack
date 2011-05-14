@@ -22,7 +22,7 @@ private:
 	image_transport::Subscriber m_sub;
 	image_transport::Publisher  m_pub;
 
-	cv::SVM m_svm;
+	CvDTree m_tree;
 
 	// for capstone demo using blue duck tape
 	bool m_use_blue;
