@@ -19,8 +19,6 @@ namespace white_node {
 
 void WhiteNodelet::onInit(void)
 {
-	std::cout << "INIT" << std::endl;
-
 	ros::NodeHandle &nh      = getNodeHandle();
 	ros::NodeHandle &nh_priv = getPrivateNodeHandle();
 
@@ -33,15 +31,24 @@ void WhiteNodelet::onInit(void)
 	// Load training data from a CSV file.
 	std::fstream stream(path.c_str(), std::fstream::in);
 	cv::Mat features, labels;
-	Parse(stream, features, labels, delim[0], truth);
+	if (!stream.good()) {
+		NODELET_ERROR("unable to open training data");
+		return;
+	}
+
+	bool valid = Parse(stream, features, labels, delim[0], truth);
 	stream.close();
-	ROS_INFO("loaded %d training points", features.rows);
+	if (!valid) {
+		NODELET_ERROR("unable to parse training data");
+		return;
+	}
+	NODELET_INFO("loaded %d training points", features.rows);
 
 	// Train the kNN classifier using the training data.
 	CvMat old_features = features;
 	CvMat old_labels   = labels;
 	m_knn.train(&old_features, &old_labels, NULL, false, m_k);
-	ROS_INFO("trained kNN classifier with k_max = %d", m_k);
+	NODELET_INFO("trained kNN classifier with k_max = %d", m_k);
 
 	// Subscribers and publishers.
 	m_it = boost::make_shared<image_transport::ImageTransport>(nh);
@@ -51,6 +58,10 @@ void WhiteNodelet::onInit(void)
 
 void WhiteNodelet::FilterWhite(cv::Mat bgr, cv::Mat &dst)
 {
+	int rows = bgr.rows;
+	int cols = bgr.cols;
+	dst.create(rows, cols, CV_32FC1);
+
 	// RGB
 	std::vector<cv::Mat> ch_bgr(3);
 	cv::split(bgr, ch_bgr);
@@ -68,10 +79,10 @@ void WhiteNodelet::FilterWhite(cv::Mat bgr, cv::Mat &dst)
 	cv::Mat &v = ch_hsv[2];
 
 	// Use kNN to classify each pixel.
-	for (int y = 0; y < bgr.rows; ++y)
-	for (int x = 0; x < bgr.cols; ++x) {
+	for (int y = 0; y < rows; ++y) {
+	for (int x = 0; x < cols; ++x) {
 		cv::Mat feature(1, 6, CV_32FC1);
-		float *data = (float *)feature.data;
+		float *data = feature.ptr<float>(0);
 		data[0] = r.at<uint8_t>(y, x);
 		data[1] = g.at<uint8_t>(y, x);
 		data[2] = b.at<uint8_t>(y, x);
@@ -79,16 +90,32 @@ void WhiteNodelet::FilterWhite(cv::Mat bgr, cv::Mat &dst)
 		data[4] = s.at<uint8_t>(y, x);
 		data[5] = v.at<uint8_t>(y, x);
 
+#if 0
+		std::cout << "(" << x << ", " << y << ") "
+		          << "RGB(" << data[0] << ", "
+		                    << data[1] << ", "
+		                    << data[2] << ") "
+		          << "HSV(" << data[3] << ", "
+		                    << data[4] << ", "
+		                    << data[5] << ") "
+		          << std::flush;
+#endif
+
 		CvMat feature_old = feature;
-		float predicted = m_knn.find_nearest(&feature_old, m_k);
-		dst.at<uint8_t>(y, x) = 255 * !!predicted;
+		float pred = m_knn.find_nearest(&feature_old, m_k);
+
+		dst.at<uint8_t>(y, x) = 255 * !!pred;
+#if 0
+		std::cout << " ---> " << !!pred  << std::endl;
+#endif
+	}
+		std::cout << "y = " << y << std::endl;
 	}
 }
 
 void WhiteNodelet::Callback(sensor_msgs::Image::ConstPtr const &msg_img)
 {
 	namespace enc = sensor_msgs::image_encodings;
-
 	cv::Mat src, dst;
 
 	// Convert the message to the OpenCV datatype without copying it.
@@ -96,11 +123,14 @@ void WhiteNodelet::Callback(sensor_msgs::Image::ConstPtr const &msg_img)
 		cv_bridge::CvImageConstPtr src_tmp = cv_bridge::toCvShare(msg_img, enc::BGR8);
 		src = src_tmp->image;
 	} catch (cv_bridge::Exception const &e) {
-		ROS_WARN_THROTTLE(10, "unable to parse image message");
+		NODELET_WARN_THROTTLE(10, "unable to parse image message");
 		return;
 	}
 
+	NODELET_INFO("before");
 	FilterWhite(src, dst);
+	NODELET_INFO("after");
+
 
 	// Convert the OpenCV data to an output message without copying.
 	cv_bridge::CvImage msg_white;
@@ -108,6 +138,7 @@ void WhiteNodelet::Callback(sensor_msgs::Image::ConstPtr const &msg_img)
 	msg_white.encoding = enc::MONO8;
 	msg_white.image    = dst;
 	m_pub.publish(msg_white.toImageMsg());
+	std::cout << "publish" << std::endl;
 }
 
 };
