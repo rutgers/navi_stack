@@ -52,7 +52,7 @@ bool Parse(std::istream &stream, cv::Mat &features, cv::Mat &labels,
 			}
 
 			// Last column is the label.
-			uint8_t label = (label_true == tokens[n]);
+			uint8_t label = ParseFloat(tokens[n]) == 255.0;
 			vec_labels.push_back(label);
 		} else if (stream.eof()) {
 			break;

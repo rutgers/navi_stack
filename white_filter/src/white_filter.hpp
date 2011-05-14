@@ -22,8 +22,7 @@ private:
 	image_transport::Subscriber m_sub;
 	image_transport::Publisher  m_pub;
 
-	int m_k;
-	cv::KNearest m_knn;
+	cv::SVM m_svm;
 
 	// for capstone demo using blue duck tape
 	bool m_use_blue;
