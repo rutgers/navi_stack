@@ -22,10 +22,9 @@ void WhiteNodelet::onInit(void)
 	ros::NodeHandle &nh      = getNodeHandle();
 	ros::NodeHandle &nh_priv = getPrivateNodeHandle();
 
-	std::string path, delim, truth;
+	std::string path, delim;
 	nh_priv.param<std::string>("train_path",  path,  "");
 	nh_priv.param<std::string>("train_delim", delim, ",");
-	nh_priv.param<std::string>("train_true",  truth, "line-true");
 
 	// Load training data from a CSV file.
 	std::fstream stream(path.c_str(), std::fstream::in);
@@ -35,7 +34,7 @@ void WhiteNodelet::onInit(void)
 		return;
 	}
 
-	bool valid = Parse(stream, features, labels, delim[0], truth);
+	bool valid = Parse(stream, features, labels, delim[0]);
 	stream.close();
 	if (!valid) {
 		NODELET_ERROR("unable to parse training data");
@@ -47,16 +46,13 @@ void WhiteNodelet::onInit(void)
 	cv::SVMParams svm_params;
 	svm_params.svm_type    = cv::SVM::C_SVC; // categorical
 	svm_params.kernel_type = cv::SVM::RBF;   // radial basis function
-	svm_params.gamma = 1.0 / features.rows;  // ???
-	svm_params.nu    = 0.5;                  // ???
-	svm_params.C     = 8;                    // ???
 	svm_params.term_crit.epsilon  = 1e-4;
 	svm_params.term_crit.max_iter = 50;
 	svm_params.term_crit.type     = CV_TERMCRIT_ITER | CV_TERMCRIT_EPS;
 
 	CvMat old_features = features;
 	CvMat old_labels   = labels;
-	m_svm.train(&old_features, &old_labels, NULL, NULL, svm_params);
+	m_svm.train_auto(&old_features, &old_labels, NULL, NULL, svm_params);
 	NODELET_INFO("trained SVM classifier classifier");
 
 	// Subscribers and publishers.
@@ -88,7 +84,7 @@ void WhiteNodelet::FilterWhite(cv::Mat bgr, cv::Mat &dst)
 	cv::Mat &v = ch_hsv[2];
 
 	// Use kNN to classify each pixel.
-	for (int y = 0; y < rows; ++y) {
+	for (int y = 0; y < rows; ++y)
 	for (int x = 0; x < cols; ++x) {
 		cv::Mat feature(1, 6, CV_32FC1);
 		float *data = feature.ptr<float>(0);
@@ -99,6 +95,10 @@ void WhiteNodelet::FilterWhite(cv::Mat bgr, cv::Mat &dst)
 		data[4] = s.at<uint8_t>(y, x);
 		data[5] = v.at<uint8_t>(y, x);
 
+		CvMat feature_old = feature;
+		float pred = m_svm.predict(&feature_old);
+		dst.at<uint8_t>(y, x) = 255 * !!pred;
+
 #if 0
 		std::cout << "(" << x << ", " << y << ") "
 		          << "RGB(" << data[0] << ", "
@@ -107,18 +107,8 @@ void WhiteNodelet::FilterWhite(cv::Mat bgr, cv::Mat &dst)
 		          << "HSV(" << data[3] << ", "
 		                    << data[4] << ", "
 		                    << data[5] << ") "
-		          << std::flush;
+		          << "-> " << !!pred  << std::endl;
 #endif
-
-		CvMat feature_old = feature;
-		float pred = m_svm.predict(&feature_old);
-
-		dst.at<uint8_t>(y, x) = 255 * !!pred;
-#if 0
-		std::cout << " ---> " << !!pred  << std::endl;
-#endif
-	}
-		std::cout << "y = " << y << std::endl;
 	}
 }
 

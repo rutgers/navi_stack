@@ -31,8 +31,7 @@ void TokenizeRow(std::istream &stream, char delim, std::vector<std::string> &dat
 	}
 }
 
-bool Parse(std::istream &stream, cv::Mat &features, cv::Mat &labels,
-           char delim, std::string label_true)
+bool Parse(std::istream &stream, cv::Mat &features, cv::Mat &labels, char delim)
 {
 	std::vector<float> vec_features;
 	std::vector<float> vec_labels;
@@ -52,7 +51,7 @@ bool Parse(std::istream &stream, cv::Mat &features, cv::Mat &labels,
 			}
 
 			// Last column is the label.
-			uint8_t label = ParseFloat(tokens[n]) == 255.0;
+			float label = ParseFloat(tokens[n]);
 			vec_labels.push_back(label);
 		} else if (stream.eof()) {
 			break;
