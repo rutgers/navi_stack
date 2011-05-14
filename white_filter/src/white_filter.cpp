@@ -89,8 +89,8 @@ void WhiteNodelet::FilterWhite(cv::Mat bgr, cv::Mat &dst)
 		data[5] = v.at<uint8_t>(y, x);
 
 		CvMat feature_old = feature;
-		float pred = m_tree.predict(&feature_old)->value;
-		dst.at<uint8_t>(y, x) = 255 * pred;
+		float pred = m_tree.predict(&feature_old);
+		dst.at<uint8_t>(y, x) = 255 * !pred;
 
 #if 0
 		std::cout << "(" << x << ", " << y << ") "
