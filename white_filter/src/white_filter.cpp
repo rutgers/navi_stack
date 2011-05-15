@@ -61,8 +61,23 @@ void WhiteNodelet::onInit(void)
 	for (int i = 0; i < n; ++i) {
 		XmlRpc::XmlRpcValue coord = center[i];
 		ROS_ASSERT(coord.getType() == XmlRpc::XmlRpcValue::TypeDouble);
-		m_center.at<float>(0, i) = (float)static_cast<double>(coord);
-		std::cout << "center[" << i << "] = " << m_center.at<float>(0, i) << std::endl;
+
+		float value = static_cast<double>(coord);
+		m_center.at<float>(0, i) = value;
+	}
+	NODELET_INFO("loaded PCA cluster center from parameter server");
+
+	// Load axis weights (in PCA-space) from the parameter server.
+	XmlRpc::XmlRpcValue weights;
+	nh_priv.getParam("weight", weights);
+	ROS_ASSERT(weights.getType() == XmlRpc::XmlRpcValue::TypeArray);
+	ROS_ASSERT(weights.size() == n);
+	m_weight.resize(n);
+
+	for (int i = 0; i < n; ++i) {
+		XmlRpc::XmlRpcValue weight = weights[i];
+		ROS_ASSERT(weight.getType() == XmlRpc::XmlRpcValue::TypeDouble);
+		m_weight[i] = static_cast<double>(weight);
 	}
 	NODELET_INFO("loaded PCA cluster center from parameter server");
 
@@ -118,7 +133,12 @@ void WhiteNodelet::FilterWhite(cv::Mat bgr, cv::Mat &dst)
 		}
 
 		// Find the distance in PCA-space to the target.
-		dst.at<float>(y, x) = cv::norm(feature_pcl, m_center);
+		float &distance = dst.at<float>(y, x);
+		distance = 0.0;
+
+		for (size_t ch = 0; ch < m_transforms.size(); ++ch) {
+			distance += m_weight[ch] * -fabs(feature_pcl.at<float>(0, ch) - m_center.at<float>(0, ch));
+		}
 	}
 
 	cv::Mat mono8;
@@ -147,7 +167,6 @@ void WhiteNodelet::Callback(sensor_msgs::Image::ConstPtr const &msg_img)
 	} else {
 		src_blur = src;
 	}
-	src_blur = src;
 	FilterWhite(src_blur, dst);
 
 	// Convert the OpenCV data to an output message without copying.

@@ -24,6 +24,7 @@ private:
 	image_transport::Publisher  m_pub;
 
 	cv::Mat              m_center;
+	std::vector<float>   m_weight;
 	std::vector<cv::Mat> m_transforms;
 
 	cv::SVM m_svm;
