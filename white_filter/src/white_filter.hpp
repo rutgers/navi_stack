@@ -1,6 +1,7 @@
 #ifndef WHITE_FILTER_HPP_
 #define WHITE_FILTER_HPP_
 
+#include <vector>
 #include <opencv/cv.h>
 #include <opencv/ml.h>
 #include <image_transport/image_transport.h>
@@ -22,7 +23,11 @@ private:
 	image_transport::Subscriber m_sub;
 	image_transport::Publisher  m_pub;
 
+	cv::Mat              m_center;
+	std::vector<cv::Mat> m_transforms;
+
 	cv::SVM m_svm;
+	int m_ker_size;
 
 	// for capstone demo using blue duck tape
 	bool m_use_blue;
