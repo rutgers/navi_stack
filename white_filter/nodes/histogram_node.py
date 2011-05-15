@@ -40,16 +40,14 @@ class HistogramNode:
 		self.channels = [ CH_HUE, CH_SAT ]
 
 		# Histogram matching parameters.
-		width  = rospy.get_param('~window_width',  5)
-		height = rospy.get_param('~window_height', 5)
+		width  = rospy.get_param('~window_width',  10)
+		height = rospy.get_param('~window_height', 10)
 		self.window = (width, height)
 		self.method = cv.CV_COMP_INTERSECT
 
 		# Load training data from a CSV file.
 		train_path = rospy.get_param('~train_path')
 		train_data = numpy.genfromtxt(train_path, delimiter=',', comments='@', dtype=numpy.uint8)
-		print([ train_data ])
-
 		# Build the HS-histogram of both positive and negative examples.
 		pos = train_data[train_data[:,CH_LABEL] == 1, :]
 		neg = train_data[train_data[:,CH_LABEL] == 0, :]
@@ -106,7 +104,7 @@ class HistogramNode:
 		"""
 
 		dst = cv.CreateMat(dst_pos.rows, dst_pos.cols, cv.CV_8UC1)
-		cv.ConvertScale(dst_neg, dst, 255.0)
+		cv.ConvertScale(dst_pos, dst, 255.0)
 
 		# Publish the positive response; ignore the negative response.
 		msg_out = self.bridge.cv_to_imgmsg(dst, 'mono8')
