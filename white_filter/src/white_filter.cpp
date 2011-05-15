@@ -144,6 +144,8 @@ void WhiteNodelet::FilterWhite(cv::Mat bgr, cv::Mat &dst)
 	cv::Mat mono8;
 	cv::normalize(dst, mono8, 0, 255, cv::NORM_MINMAX, CV_8UC1);
 	dst = mono8;
+
+	dst = b;
 }
 
 void WhiteNodelet::Callback(sensor_msgs::Image::ConstPtr const &msg_img)
