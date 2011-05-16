@@ -14,14 +14,20 @@ import sys
 try:
 	file_clr = sys.argv[1]
 	file_tru = sys.argv[2]
+	ker_size = int(sys.argv[3])
+except ValueError:
+	print('err: kernel width and height must be integers', file=sys.stderr)
 except IndexError:
 	print('err: incorrect number of arguments', file=sys.stderr)
-	print('usage: label.py <image> <mask>', file=sys.stderr)
+	print('usage: label.py <image> <mask> <kernel size>', file=sys.stderr)
 	sys.exit(1)
 
 writer   = csv.writer(sys.stdout)
 img_rgb = cv.LoadImageM(file_clr, cv.CV_LOAD_IMAGE_COLOR)
 img_tru = cv.LoadImageM(file_tru, cv.CV_LOAD_IMAGE_GRAYSCALE)
+
+if ker_size > 0:
+	cv.Smooth(img_rgb, img_rgb, cv.CV_GAUSSIAN, ker_size, ker_size)
 
 img_hsv = cv.CreateMat(img_rgb.rows, img_rgb.cols, cv.CV_8UC3)
 cv.CvtColor(img_rgb, img_hsv, cv.CV_RGB2HSV)
