@@ -1,3 +1,27 @@
-use_blue: false
-threshold_val: 50
-threshold_sat: 50
+# training data for classifier
+train_path:  '/home/mckoval/line_train.csv'
+train_delim: ','
+train_true:  '255'
+kernel_size: 0
+
+# description of the line in PCA-space
+transform:
+ - [ 1.0, 0.0, 0.0, 0.0, 0.0, 0.0 ]
+ - [ 0.0, 1.0, 0.0, 0.0, 0.0, 0.0 ]
+ - [ 0.0, 0.0, 0.0, 1.0, 0.0, 0.0 ]
+ - [ 0.0, 0.0, 0.0, 0.0, 1.0, 0.0 ]
+ - [ 0.0, 0.0, 0.0, 0.0, 0.0, 1.0 ]
+
+weight:
+ - -1.0
+ - -1.0
+ - -1.0
+ - -1.0
+ - -1.0
+
+center:
+ - 170.0
+ - 150.0
+ - 10.0
+ - 40.0
+ - 150.0
