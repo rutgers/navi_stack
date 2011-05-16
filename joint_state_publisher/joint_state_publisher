@@ -197,10 +197,14 @@ class JointStatePublisherGui(wx.Frame):
 
 
 if __name__ == '__main__':
-    try:
-        rospy.init_node('joint_state_publisher')
-        jsp = JointStatePublisher()
-        jsp.loop()
-        
-    except rospy.ROSInterruptException: pass
+	restart = True
+
+	while restart:
+		restart = False
+		try:
+			rospy.init_node('joint_state_publisher')
+			jsp = JointStatePublisher()
+			jsp.loop()
+		except rospy.ROSInterruptException:
+			restart = True
 
