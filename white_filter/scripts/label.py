@@ -41,6 +41,6 @@ for (y, x) in pixels:
 
 # Force both sets to be of equal size.
 k = min(map(len, labels.values()))
-for label in labels.values():
+for (key, label) in labels.items():
 	samples = random.sample(label, k)
 	writer.writerows(samples)

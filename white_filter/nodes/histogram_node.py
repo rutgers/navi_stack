@@ -27,11 +27,11 @@ class HistogramNode:
 		self.bridge = cv_bridge.CvBridge()
 
 		# Histogram parameters.
-		bins_hue = rospy.get_param('~bins_hue', 10)
+		bins_hue = rospy.get_param('~bins_hue', 5)
 		min_hue  = rospy.get_param('~min_hue', 0)
 		max_hue  = rospy.get_param('~max_hue', 255)
 
-		bins_sat = rospy.get_param('~bins_sat', 10)
+		bins_sat = rospy.get_param('~bins_sat', 5)
 		min_sat  = rospy.get_param('~min_sat', 0)
 		max_sat  = rospy.get_param('~max_sat', 255)
 
@@ -43,7 +43,7 @@ class HistogramNode:
 		width  = rospy.get_param('~window_width',  10)
 		height = rospy.get_param('~window_height', 10)
 		self.window = (width, height)
-		self.method = cv.CV_COMP_INTERSECT
+		self.method = cv.CV_COMP_CORREL
 
 		# Load training data from a CSV file.
 		train_path = rospy.get_param('~train_path')
@@ -98,11 +98,6 @@ class HistogramNode:
 		dst_pos, dst_neg = self.TransformImage(bgr, hsv, self.channels, self.window, self.method)
 
 		# DEBUG: Normalization for rendering.
-		"""
-		val_min, val_max, loc_min, loc_max = cv.MinMaxLoc(dst_pos)
-		print('min = {0}, max = {1}'.format(val_min, val_max))
-		"""
-
 		dst = cv.CreateMat(dst_pos.rows, dst_pos.cols, cv.CV_8UC1)
 		cv.ConvertScale(dst_pos, dst, 255.0)
 
