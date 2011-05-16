@@ -1,5 +1,7 @@
 #include "white_filter.hpp"
 
+#include <fstream>
+#include <string>
 #include <boost/shared_ptr.hpp>
 #include <boost/make_shared.hpp>
 
@@ -8,6 +10,8 @@
 #include <pluginlib/class_list_macros.h>
 #include <sensor_msgs/image_encodings.h>
 #include <opencv/cv.h>
+
+#include "csv.hpp"
 
 PLUGINLIB_DECLARE_CLASS(white_filter, white_nodelet, white_node::WhiteNodelet, nodelet::Nodelet)
 
@@ -18,65 +22,135 @@ void WhiteNodelet::onInit(void)
 	ros::NodeHandle &nh      = getNodeHandle();
 	ros::NodeHandle &nh_priv = getPrivateNodeHandle();
 
-	nh_priv.param<bool>("use_blue", m_use_blue, false);
-	nh_priv.param<int>("threshold_val", m_threshold_val, 50);
-	nh_priv.param<int>("threshold_sat", m_threshold_sat, 50);
+	std::string path, delim;
+	nh_priv.param<int>("kernel_size", m_ker_size, 3);
+	nh_priv.param<std::string>("train_path",  path,  "");
+	nh_priv.param<std::string>("train_delim", delim, ",");
 
-	nh_priv.param<int>("blue_val", m_blue_val, 127);
-	nh_priv.param<int>("blue_hue", m_blue_hue, 127);
-	nh_priv.param<int>("blue_sat", m_blue_sat, 127);
+	// Load the PCA transformation from the parameter server.
+	XmlRpc::XmlRpcValue transforms;
+	nh_priv.getParam("transform", transforms);
+	ROS_ASSERT(transforms.getType() == XmlRpc::XmlRpcValue::TypeArray);
+	ROS_ASSERT(transforms.size() > 0);
+	int n = transforms.size();
 
+	for (int i = 0; i < n; ++i) {
+		XmlRpc::XmlRpcValue transform = transforms[i];
+		ROS_ASSERT(transform.getType() == XmlRpc::XmlRpcValue::TypeArray);
+		ROS_ASSERT(transform.size() == 6);
+
+		cv::Mat coefs(6, 1, CV_32FC1);
+		float  *data = coefs.ptr<float>(0);
+
+		for (int j = 0; j < transform.size(); ++j) {
+			XmlRpc::XmlRpcValue coef = transform[j];
+			ROS_ASSERT(coef.getType() == XmlRpc::XmlRpcValue::TypeDouble);
+			data[j] = (float)static_cast<double>(coef);
+		}
+		m_transforms.push_back(coefs);
+	}
+	NODELET_INFO("loaded %d PCA dimensions from parameter server", (int)transforms.size());
+
+	// Load the line properties (in PCA-space) from the parameter server.
+	XmlRpc::XmlRpcValue center;
+	nh_priv.getParam("center", center);
+	ROS_ASSERT(center.getType() == XmlRpc::XmlRpcValue::TypeArray);
+	ROS_ASSERT(center.size() == n);
+	m_center.create(1, n, CV_32FC1);
+
+	for (int i = 0; i < n; ++i) {
+		XmlRpc::XmlRpcValue coord = center[i];
+		ROS_ASSERT(coord.getType() == XmlRpc::XmlRpcValue::TypeDouble);
+
+		float value = static_cast<double>(coord);
+		m_center.at<float>(0, i) = value;
+	}
+	NODELET_INFO("loaded PCA cluster center from parameter server");
+
+	// Load axis weights (in PCA-space) from the parameter server.
+	XmlRpc::XmlRpcValue weights;
+	nh_priv.getParam("weight", weights);
+	ROS_ASSERT(weights.getType() == XmlRpc::XmlRpcValue::TypeArray);
+	ROS_ASSERT(weights.size() == n);
+	m_weight.resize(n);
+
+	for (int i = 0; i < n; ++i) {
+		XmlRpc::XmlRpcValue weight = weights[i];
+		ROS_ASSERT(weight.getType() == XmlRpc::XmlRpcValue::TypeDouble);
+		m_weight[i] = static_cast<double>(weight);
+	}
+	NODELET_INFO("loaded PCA cluster center from parameter server");
+
+	// Subscribers and publishers.
 	m_it = boost::make_shared<image_transport::ImageTransport>(nh);
 	m_pub = m_it->advertise("white", 1);
 	m_sub = m_it->subscribe("image", 1, &WhiteNodelet::Callback, this);
 }
 
-void WhiteNodelet::FilterWhite(cv::Mat src, cv::Mat &dst)
+void WhiteNodelet::FilterWhite(cv::Mat bgr, cv::Mat &dst)
 {
-	// Convert the image into the HSV color space. By most ignoring pixel value,
-	// this algorithm is made much more robust to changes in ambiant lighting.
-	std::vector<cv::Mat> chans(3);
+	int features = m_transforms.size();
+	int rows = bgr.rows;
+	int cols = bgr.cols;
+	dst.create(rows, cols, CV_32FC1);
+
+	// RGB
+	std::vector<cv::Mat> ch_bgr(3);
+	cv::split(bgr, ch_bgr);
+	cv::Mat &r = ch_bgr[2];
+	cv::Mat &g = ch_bgr[1];
+	cv::Mat &b = ch_bgr[0];
+
+	// HSV
+	std::vector<cv::Mat> ch_hsv(3);
 	cv::Mat hsv;
-	cv::cvtColor(src, hsv, CV_BGR2HSV);
-	cv::split(hsv, chans);
-	cv::Mat &hue = chans[0];
-	cv::Mat &sat = chans[1];
-	cv::Mat &val = chans[2];
+	cv::cvtColor(bgr, hsv, CV_BGR2HSV);
+	cv::split(hsv, ch_hsv);
+	cv::Mat &h = ch_hsv[0];
+	cv::Mat &s = ch_hsv[1];
+	cv::Mat &v = ch_hsv[2];
 
-	// Remove extremely dark regions from the image. Since saturation is
-	// arbitrary near black in the color space, these regions may have sufficiently
-	// low saturation to be falsely detected as white.
-	cv::Mat mask;
-	cv::threshold(255 - sat, dst,  m_threshold_sat, 255, cv::THRESH_TOZERO);
-	cv::threshold(val, mask, m_threshold_val, 255, cv::THRESH_BINARY);
-	cv::min(mask, dst, dst);
-}
+	for (int y = 0; y < rows; ++y)
+	for (int x = 0; x < cols; ++x) {
+		// Build the (RGB, HSV) feature vector.
+		cv::Mat feature(1, 6, CV_32FC1);
+		float *data = feature.ptr<float>(0);
+		int i = 0;
+		data[i++] = r.at<uint8_t>(y, x);
+		data[i++] = g.at<uint8_t>(y, x);
+		data[i++] = b.at<uint8_t>(y, x);
+		data[i++] = h.at<uint8_t>(y, x);
+		data[i++] = s.at<uint8_t>(y, x);
+		data[i++] = v.at<uint8_t>(y, x);
 
-void WhiteNodelet::FilterBlue(cv::Mat src, cv::Mat &dst)
-{
-	std::vector<cv::Mat> chans(3);
-	cv::Mat hsv;
-	cv::cvtColor(src, hsv, CV_BGR2HSV);
-	cv::split(hsv, chans);
-	cv::Mat &hue = chans[0];
-	cv::Mat &sat = chans[1];
-	cv::Mat &val = chans[2];
+		// Transform each pixel into the PCA-space.
+		cv::Mat feature_pcl(1, features, CV_32FC1);
+		float *data_pcl = feature_pcl.ptr<float>(0);
 
-	cv::Mat good_sat;
-	cv::Mat good_val;
-	cv::threshold(sat, good_sat, m_blue_sat, 0, cv::THRESH_TOZERO);
-	cv::threshold(val, good_val, m_blue_val, 0, cv::THRESH_TOZERO);
+		for (size_t ch = 0; ch < m_transforms.size(); ++ch) {
+			cv::Mat wrapped = feature * m_transforms[ch];
+			data_pcl[ch] = wrapped.at<float>(0, 0);
+		}
 
-	cv::Mat good_hue = 255 - cv::abs(hue - m_blue_hue);
+		// Find the distance in PCA-space to the target.
+		float &distance = dst.at<float>(y, x);
+		distance = 0.0;
 
-	cv::min(good_hue, good_sat, dst);
-cv::min(good_val, dst,      dst);
+		for (size_t ch = 0; ch < m_transforms.size(); ++ch) {
+			distance += m_weight[ch] * -fabs(feature_pcl.at<float>(0, ch) - m_center.at<float>(0, ch));
+		}
+	}
+
+	cv::Mat mono8;
+	cv::normalize(dst, mono8, 0, 255, cv::NORM_MINMAX, CV_8UC1);
+	dst = mono8;
+
+	dst = b;
 }
 
 void WhiteNodelet::Callback(sensor_msgs::Image::ConstPtr const &msg_img)
 {
 	namespace enc = sensor_msgs::image_encodings;
-
 	cv::Mat src, dst;
 
 	// Convert the message to the OpenCV datatype without copying it.
@@ -84,15 +158,18 @@ void WhiteNodelet::Callback(sensor_msgs::Image::ConstPtr const &msg_img)
 		cv_bridge::CvImageConstPtr src_tmp = cv_bridge::toCvShare(msg_img, enc::BGR8);
 		src = src_tmp->image;
 	} catch (cv_bridge::Exception const &e) {
-		ROS_WARN_THROTTLE(10, "unable to parse image message");
+		NODELET_WARN_THROTTLE(10, "unable to parse image message");
 		return;
 	}
 
-	if (m_use_blue) {
-		FilterBlue(src, dst);
+	// Blur to reduce the visibility of individual blades of grass.
+	cv::Mat src_blur;
+	if (m_ker_size > 1) {
+		cv::GaussianBlur(src, src_blur, cv::Size(m_ker_size, m_ker_size), 0.0);
 	} else {
-		FilterWhite(src, dst);
+		src_blur = src;
 	}
+	FilterWhite(src_blur, dst);
 
 	// Convert the OpenCV data to an output message without copying.
 	cv_bridge::CvImage msg_white;
