@@ -1,0 +1,24 @@
+Index: src/camera_calibration/calibrator.py
+===================================================================
+--- src/camera_calibration/calibrator.py	(revision 36479)
++++ src/camera_calibration/calibrator.py	(working copy)
+@@ -909,6 +909,19 @@
+         if not rok:
+             return rv
+ 
++        # Confirm that the chessboards have the same relative orientation.
++        l0 = lcorners[0]
++        l1 = lcorners[-1]
++        r0 = rcorners[0]
++        r1 = rcorners[-1]
++
++        x_same = (l0[0] < l1[0] and r0[0] < r1[0]) or (l0[0] > l1[0] and r0[0] > r1[0])
++        y_same = (l0[1] < l1[1] and r0[1] < r1[1]) or (l0[1] > l1[1] and r0[1] > r1[1])
++
++        if (not x_same) or (not y_same):
++                print 'Ignored inverted chessboard pair'
++                return rv
++
+         # Compute some parameters for this chessboard
+         Xs = [x for (x, y) in lcorners]
+         Ys = [y for (x, y) in lcorners]
