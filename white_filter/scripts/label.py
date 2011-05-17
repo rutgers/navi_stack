@@ -30,7 +30,7 @@ if ker_size > 0:
 	cv.Smooth(img_rgb, img_rgb, cv.CV_GAUSSIAN, ker_size, ker_size)
 
 img_hsv = cv.CreateMat(img_rgb.rows, img_rgb.cols, cv.CV_8UC3)
-cv.CvtColor(img_rgb, img_hsv, cv.CV_RGB2HSV)
+cv.CvtColor(img_rgb, img_hsv, cv.CV_BGR2HSV)
 
 assert(img_rgb.rows == img_tru.rows)
 assert(img_rgb.cols == img_tru.cols)
