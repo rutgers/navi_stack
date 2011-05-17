@@ -1,13 +1,14 @@
 #!/bin/bash
 
-if [ $# -lt 1 ]; then
+if [ $# -lt 2 ]; then
 	echo "err: incorrect number of arguments" 1>&2
-	echo "usage: label.sh <path>"
+	echo "usage: label.sh <path> <kernel size>"
 	exit 1
 fi
 
 path_clr="$1/color"
 path_tru="$1/truth"
+ker_size="$2"
 
 names=`ls "$path_clr"`
 temp=`mktemp`
@@ -27,7 +28,7 @@ cat > "$temp" <<HEADER
 HEADER
 
 for name in $names; do
-	rosrun white_filter label.py "$path_clr/$name" "$path_tru/$name" >> "$temp"
+	rosrun white_filter label.py "$path_clr/$name" "$path_tru/$name" "$ker_size" >> "$temp"
 done
 
 cat "$temp"
