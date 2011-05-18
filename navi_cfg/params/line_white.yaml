@@ -4,16 +4,20 @@ train_delim: ','
 train_true:  '255'
 kernel_size: 5
 
+svm_weight: 0.50
 
 window_width:  7
 window_height: 7
 
 # description of the line in PCA-space
 transform:
- - [  0.4663,  0.4715,  0.4676, -0.1878, -0.2962,  0.4676 ]
+ - [ 0.0, 0.0, 0.0, 1.0, 0.0, 0.0 ]
+ - [ 0.0, 0.0, 0.0, 0.0, 1.0, 0.0 ]
 
 weight:
- - -0.72813
+ - 1.0
+ - -1.0
 
 center:
- -  259.370
+ - 90.0
+ - 0.0

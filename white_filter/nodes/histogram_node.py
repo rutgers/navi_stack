@@ -13,7 +13,6 @@ import cv
 import numpy
 import sys
 
-
 CH_BLUE  = 0
 CH_GREEN = 1
 CH_RED   = 2

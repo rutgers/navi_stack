@@ -1,20 +1,18 @@
 <launch>
 	<group ns="vision">
 		<!-- Colorspace Transformation -->
-		<node pkg="nodelet" type="nodelet" name="white_left" args="standalone white_filter/white_nodelet">
-			<rosparam command="load" file="$(find navi_cfg)/params/line_white.yaml"/>
-			<remap from="image" to="/vision/wheel/left/image"/>
-			<remap from="white" to="/vision/wheel/left/white"/>
-		</node>
-		<node pkg="nodelet" type="nodelet" name="white_middle" args="standalone white_filter/white_nodelet">
+		<!--
+		<node pkg="white_filter" type="histogram_node.py" name="white_middle">
 			<rosparam command="load" file="$(find navi_cfg)/params/line_white.yaml"/>
 			<remap from="image" to="/vision/narrow/right/image"/>
 			<remap from="white" to="/vision/narrow/right/white"/>
 		</node>
-		<node pkg="nodelet" type="nodelet" name="white_right" args="standalone white_filter/white_nodelet">
+		-->
+
+		<node pkg="nodelet" type="nodelet" name="white_middle" args="standalone white_filter/pca_nodelet">
 			<rosparam command="load" file="$(find navi_cfg)/params/line_white.yaml"/>
-			<remap from="image" to="/vision/wheel/right/image"/>
-			<remap from="white" to="/vision/wheel/right/white"/>
+			<remap from="image" to="/vision/narrow/right/image"/>
+			<remap from="white" to="/vision/narrow/right/white"/>
 		</node>
 
 		<!--

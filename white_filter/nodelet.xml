@@ -1,4 +1,4 @@
-<library path="lib/libml_nodelet">
+<library path="lib/libwhite_nodelet">
 	<class name="white_filter/ml_nodelet"
 	       type="white_filter::MLNodelet"
 	       base_class_type="nodelet::Nodelet">
