@@ -22,9 +22,11 @@ void MLNodelet::onInit(void)
 	ros::NodeHandle &nh_priv = getPrivateNodeHandle();
 
 	int n_max;
+	double weight;
 	std::string path, delim;
 	nh_priv.param<int>("kernel_size", m_ker_size, 3);
-	nh_priv.param<int>("train_size",  n_max,      2500);
+	nh_priv.param<int>("train_size",  n_max, 2500);
+	nh_priv.param<double>("svm_weight", weight, 0.5);
 	nh_priv.param<std::string>("train_path",  path,  "");
 	nh_priv.param<std::string>("train_delim", delim, ",");
 
@@ -42,6 +44,7 @@ void MLNodelet::onInit(void)
 		NODELET_ERROR("training data is invalid");
 		return;
 	}
+	features = features / 255.0;
 	NODELET_INFO("loaded %d training points", features.rows);
 
 	// Limit the amount of training data so OpenCV doesn't crash.
@@ -52,7 +55,7 @@ void MLNodelet::onInit(void)
 		NODELET_WARN("using %d of %d training points", n_max, n);
 	}
 
-	// Train the random forest.
+	// Train the SVM.
 	CvMat old_features = features;
 	CvMat old_labels   = labels;
 	CvSVMParams params;
@@ -61,6 +64,13 @@ void MLNodelet::onInit(void)
 	params.term_crit.epsilon  = 1e-2;
 	params.term_crit.max_iter = 25;
 	params.term_crit.type     = CV_TERMCRIT_ITER | CV_TERMCRIT_EPS;
+
+	cv::Mat weights(1, 2, CV_32FC1);
+	weights.at<float>(0, 0) = weight;
+	weights.at<float>(0, 1) = 1.0 - weight;
+	CvMat old_weights    = weights;
+	params.class_weights = &old_weights;
+
 	m_ml.train_auto(features, labels, cv::Mat(), cv::Mat(), params);
 	NODELET_INFO("trained SVM with %d points and %d support vectors",
 	             features.rows,
@@ -97,6 +107,7 @@ void MLNodelet::FilterWhite(cv::Mat bgr_8u, cv::Mat &dst)
 	features.insert(features.end(), ch_hsv.begin(), ch_hsv.end());
 	cv::merge(features, bgrhsv);
 	bgrhsv = bgrhsv.reshape(1, cols * rows);
+	bgrhsv = bgrhsv / 255.0;
 
 	// Classify each point.
 	for (int i = 0; i < bgrhsv.rows; ++i) {
