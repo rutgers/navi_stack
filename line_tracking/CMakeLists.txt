@@ -14,4 +14,7 @@ rosbuild_init()
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 
-rosbuild_add_library(tracker_nodelet src/line_tracker.cpp)
+rosbuild_add_library(tracker_nodelet
+	src/line_mux.cpp
+	src/line_tracker.cpp
+)
