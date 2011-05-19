@@ -59,7 +59,6 @@ void PCANodelet::onInit(void)
 		ROS_ASSERT(coord.getType() == XmlRpc::XmlRpcValue::TypeDouble);
 		m_center.push_back(static_cast<double>(coord));
 	}
-	NODELET_INFO("loaded PCA cluster center from parameter server");
 
 	// Load axis weights (in PCA-space) from the parameter server.
 	XmlRpc::XmlRpcValue weights;
@@ -72,7 +71,6 @@ void PCANodelet::onInit(void)
 		ROS_ASSERT(weight.getType() == XmlRpc::XmlRpcValue::TypeDouble);
 		m_weight.push_back(static_cast<double>(weight));
 	}
-	NODELET_INFO("loaded PCA cluster center from parameter server");
 
 	// Subscribers and publishers.
 	m_it = boost::make_shared<image_transport::ImageTransport>(nh);
