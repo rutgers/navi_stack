@@ -31,6 +31,8 @@ private:
 	ros::Publisher m_pub;
 
 	double m_cache_time;
+	double m_sod_mean;
+	double m_sod_stddev;
 	std::string m_fr_fixed;
 };
 

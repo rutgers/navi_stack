@@ -1,3 +1,4 @@
+#include <pcl/filters/statistical_outlier_removal.h>
 #include <pcl_ros/point_cloud.h>
 #include <pcl_ros/transforms.h>
 #include <pluginlib/class_list_macros.h>
@@ -19,15 +20,18 @@ void MuxNodelet::onInit(void)
 	ros::NodeHandle nh_priv = getPrivateNodeHandle();
 
 	nh_priv.param<double>("cache_time", m_cache_time, 1.0);
+	nh_priv.param<double>("sod_mean",   m_sod_mean,   10.0);
+	nh_priv.param<double>("sod_stddev", m_sod_stddev, 0.5);
 	nh_priv.param<std::string>("frame_fixed", m_fr_fixed, "/base_link");
 
 	m_tf  = boost::make_shared<tf::TransformListener>(ros::Duration(m_cache_time));
 	m_pub = nh.advertise<PointCloudXYZ>("line_points", 10);
 
-	mf::Subscriber<PointCloudXYZ> sub_pc1(nh, "line_points1", 1);
-	mf::Subscriber<PointCloudXYZ> sub_pc2(nh, "line_points2", 1);
-	mf::Subscriber<PointCloudXYZ> sub_pc3(nh, "line_points3", 1);
-	Synchronizer *sub = new Synchronizer(SyncPolicy(20), sub_pc1, sub_pc2, sub_pc3);
+	// FIXME: subscribers need to be wrapped in boost::shared_ptrs
+	mf::Subscriber<PointCloudXYZ> *sub_pc1 = new mf::Subscriber<PointCloudXYZ>(nh, "line_points1", 1);
+	mf::Subscriber<PointCloudXYZ> *sub_pc2 = new mf::Subscriber<PointCloudXYZ>(nh, "line_points2", 1);
+	mf::Subscriber<PointCloudXYZ> *sub_pc3 = new mf::Subscriber<PointCloudXYZ>(nh, "line_points3", 1);
+	Synchronizer *sub = new Synchronizer(SyncPolicy(20), *sub_pc1, *sub_pc2, *sub_pc3);
 	sub->registerCallback(&MuxNodelet::Callback, this);
 
 	// Can't use boost::make_shared() because of reference parameters.
@@ -62,8 +66,15 @@ void MuxNodelet::Callback(PointCloudXYZ::ConstPtr const &pc1,
 		merged->points.insert(merged->points.end(), pc_fixed->points.begin(), pc_fixed->points.end());
 	}
 
-	// TODO: SOD filter
-	m_pub.publish(merged);
+	// Statistical Outlier Detection (SOD) filter.
+	PointCloudXYZ::Ptr filtered = boost::make_shared<PointCloudXYZ>();
+	pcl::StatisticalOutlierRemoval<pcl::PointXYZ> sor;
+	sor.setInputCloud(merged);
+	sor.setMeanK(m_sod_mean);
+	sor.setStddevMulThresh(m_sod_stddev);
+	sor.filter(*filtered);
+
+	m_pub.publish(filtered);
 }
 
 };
