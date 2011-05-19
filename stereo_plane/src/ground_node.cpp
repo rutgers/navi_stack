@@ -51,6 +51,10 @@ void GroundNodelet::Callback(pcl::PointCloud<pcl::PointXYZ>::ConstPtr const &msg
 {
 	ros::Time const &msg_stamp = msg_pts->header.stamp;
 
+	// Wait for the TF buffer to catch up.
+	m_sub_tf->waitForTransform(m_fr_fixed, m_fr_default, msg_stamp, ros::Duration(m_cache_time));
+	m_sub_tf->waitForTransform(m_fr_fixed, msg_pts->header.frame_id, msg_stamp, ros::Duration(m_cache_time));
+
 	// Get the default ground plane from TF (most likely a static transform in
 	// in the robot's URDF). This is used as a sanity check.
 	Plane::Ptr plane_def = boost::make_shared<Plane>();
@@ -58,7 +62,7 @@ void GroundNodelet::Callback(pcl::PointCloud<pcl::PointXYZ>::ConstPtr const &msg
 	try {
 		valid_def = GetTFPlane(msg_stamp, m_fr_fixed, m_fr_default, *plane_def);
 	} catch (tf::TransformException const &e) {
-		ROS_WARN("%s", e.what());
+		NODELET_WARN("%s", e.what());
 		return;
 	}
 
