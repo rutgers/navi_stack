@@ -1,0 +1,7 @@
+thickness: 0.0762
+border:    0.1452
+threshold: 30
+cutoff:    3
+
+debug: false
+frame: '/base_footprint'
