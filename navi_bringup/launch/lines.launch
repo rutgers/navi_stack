@@ -2,6 +2,32 @@
 	<group ns="vision">
 		<node pkg="nodelet" type="nodelet" name="line_manager" args="manager"/>
 
+		<!-- Stereo Reconstruction -->
+		<node pkg="stereo_image_proc" type="stereo_image_proc" name="narrow_proc" ns="narrow">
+			<remap from="stereo"          to="narrow"/>
+			<remap from="left/image_raw"  to="left/image"/>
+			<remap from="right/image_raw" to="right/image"/>
+		</node>
+		<node pkg="stereo_image_proc" type="stereo_image_proc" name="wide_proc" ns="wide">
+			<remap from="stereo"          to="wide"/>
+			<remap from="left/image_raw"  to="left/image"/>
+			<remap from="right/image_raw" to="right/image"/>
+		</node>
+
+		<!-- Stereo Obstacle Detection -->
+		<node pkg="nodelet" type="nodelet" name="stereo_ground"
+		      args="load stereo_plane/ground_nodelet line_manager">
+			<rosparam command="load" file="$(find navi_cfg)/params/stereo_ground.yaml"/>
+			<remap from="points" to="narrow/points2"/>
+		</node>
+		<!--
+		<node pkg="stereo_od" type="od_node" name="stereo_od">
+			<rosparam command="load" file="$(find navi_cfg)/params/stereo_od.yaml"/>
+			<remap from="points"      to="narrow/points2"/>
+			<remap from="camera_info" to="narrow/left/camera_info"/>
+		</node>
+		-->
+
 		<!-- Colorspace Transformation -->
 		<node pkg="nodelet" type="nodelet" name="white_middle" ns="narrow/right"
 		      args="load white_filter/pca_nodelet /vision/line_manager">
@@ -16,26 +42,21 @@
 			<rosparam command="load" file="$(find navi_cfg)/params/line_white.yaml"/>
 		</node>
 
-		<!--
-		<node pkg="nodelet" type="nodelet" name="white_left" args="load white_filter/pca_nodelet line_manager">
-			<rosparam command="load" file="$(find navi_cfg)/params/line_white.yaml"/>
-			<remap from="image" to="/vision/wheel/left/image"/>
-			<remap from="white" to="/vision/wheel/left/white"/>
+		<!-- Matched Pulse-Width Filter -->
+		<node pkg="nodelet" type="nodelet" name="pulse_middle" ns="narrow/right"
+		      args="load line_detection/line_nodelet /vision/line_manager">
+			<rosparam command="load" file="$(find navi_cfg)/params/line_pulse.yaml"/>
+			<remap from="ground_plane" to="/vision/ground_plane"/>
 		</node>
-
-		<node pkg="nodelet" type="nodelet" name="white_right" args="load white_filter/pca_nodelet line_manager">
-			<rosparam command="load" file="$(find navi_cfg)/params/line_white.yaml"/>
-			<remap from="image" to="/vision/wheel/right/image"/>
-			<remap from="white" to="/vision/wheel/right/white"/>
+		<node pkg="nodelet" type="nodelet" name="pulse_left" ns="wheel/left"
+		      args="load line_detection/line_nodelet /vision/line_manager">
+			<rosparam command="load" file="$(find navi_cfg)/params/line_pulse.yaml"/>
+			<remap from="ground_plane" to="/vision/ground_plane"/>
 		</node>
-		-->
-
-		<!--
-		<node pkg="nodelet" type="nodelet" name="line_detection_center" args="load line_detection/line_nodelet vision_manager">
-			<rosparam command="load" file="$(find navi_cfg)/params/line_detection.yaml"/>
-			<remap from="image"       to="/vision/narrow/right/white"/>
-			<remap from="camera_info" to="/vision/narrow/right/camera_info"/>
-			<remap from="line_points" to="/vision/narrow/right/line_points"/>
-		-->
+		<node pkg="nodelet" type="nodelet" name="pulse_right" ns="wheel/right"
+		      args="load line_detection/line_nodelet /vision/line_manager">
+			<rosparam command="load" file="$(find navi_cfg)/params/line_pulse.yaml"/>
+			<remap from="ground_plane" to="/vision/ground_plane"/>
+		</node>
 	</group>
 </launch>
