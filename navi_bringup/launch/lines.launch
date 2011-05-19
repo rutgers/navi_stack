@@ -3,12 +3,20 @@
 		<node pkg="nodelet" type="nodelet" name="line_manager" args="manager"/>
 
 		<!-- Colorspace Transformation -->
-		<node pkg="nodelet" type="nodelet" name="white_middle" args="load white_filter/pca_nodelet line_manager">
+		<node pkg="nodelet" type="nodelet" name="white_middle" ns="narrow/right"
+		      args="load white_filter/pca_nodelet /vision/line_manager">
 			<rosparam command="load" file="$(find navi_cfg)/params/line_white.yaml"/>
-			<remap from="image" to="/vision/narrow/right/image"/>
-			<remap from="white" to="/vision/narrow/right/white"/>
+		</node>
+		<node pkg="nodelet" type="nodelet" name="white_left" ns="wheel/left"
+		      args="load white_filter/pca_nodelet /vision/line_manager">
+			<rosparam command="load" file="$(find navi_cfg)/params/line_white.yaml"/>
+		</node>
+		<node pkg="nodelet" type="nodelet" name="white_left" ns="wheel/right"
+		      args="load white_filter/pca_nodelet /vision/line_manager">
+			<rosparam command="load" file="$(find navi_cfg)/params/line_white.yaml"/>
 		</node>
 
+		<!--
 		<node pkg="nodelet" type="nodelet" name="white_left" args="load white_filter/pca_nodelet line_manager">
 			<rosparam command="load" file="$(find navi_cfg)/params/line_white.yaml"/>
 			<remap from="image" to="/vision/wheel/left/image"/>
@@ -20,6 +28,7 @@
 			<remap from="image" to="/vision/wheel/right/image"/>
 			<remap from="white" to="/vision/wheel/right/white"/>
 		</node>
+		-->
 
 		<!--
 		<node pkg="nodelet" type="nodelet" name="line_detection_center" args="load line_detection/line_nodelet vision_manager">
