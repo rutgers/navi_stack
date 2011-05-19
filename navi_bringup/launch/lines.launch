@@ -1,18 +1,24 @@
 <launch>
 	<group ns="vision">
+		<node pkg="nodelet" type="nodelet" name="line_manager" args="manager"/>
+
 		<!-- Colorspace Transformation -->
-		<!--
-		<node pkg="white_filter" type="histogram_node.py" name="white_middle">
+		<node pkg="nodelet" type="nodelet" name="white_middle" args="load white_filter/pca_nodelet line_manager">
 			<rosparam command="load" file="$(find navi_cfg)/params/line_white.yaml"/>
 			<remap from="image" to="/vision/narrow/right/image"/>
 			<remap from="white" to="/vision/narrow/right/white"/>
 		</node>
-		-->
 
-		<node pkg="nodelet" type="nodelet" name="white_middle" args="standalone white_filter/pca_nodelet">
+		<node pkg="nodelet" type="nodelet" name="white_left" args="load white_filter/pca_nodelet line_manager">
 			<rosparam command="load" file="$(find navi_cfg)/params/line_white.yaml"/>
-			<remap from="image" to="/vision/narrow/right/image"/>
-			<remap from="white" to="/vision/narrow/right/white"/>
+			<remap from="image" to="/vision/wheel/left/image"/>
+			<remap from="white" to="/vision/wheel/left/white"/>
+		</node>
+
+		<node pkg="nodelet" type="nodelet" name="white_right" args="load white_filter/pca_nodelet line_manager">
+			<rosparam command="load" file="$(find navi_cfg)/params/line_white.yaml"/>
+			<remap from="image" to="/vision/wheel/right/image"/>
+			<remap from="white" to="/vision/wheel/right/white"/>
 		</node>
 
 		<!--
@@ -21,19 +27,6 @@
 			<remap from="image"       to="/vision/narrow/right/white"/>
 			<remap from="camera_info" to="/vision/narrow/right/camera_info"/>
 			<remap from="line_points" to="/vision/narrow/right/line_points"/>
-		</node>
-		<node pkg="nodelet" type="nodelet" name="line_detection_left" args="load line_detection/line_nodelet vision_manager">
-			<rosparam command="load" file="$(find navi_cfg)/params/line_detection.yaml"/>
-			<remap from="image"       to="/vision/wheel/left/white"/>
-			<remap from="camera_info" to="/vision/wheel/left/camera_info"/>
-			<remap from="line_points" to="/vision/wheel/left/line_points"/>
-		</node>
-		<node pkg="nodelet" type="nodelet" name="line_detection_right" args="load line_detection/line_nodelet vision_manager">
-			<rosparam command="load" file="$(find navi_cfg)/params/line_detection.yaml"/>
-			<remap from="image"       to="/vision/wheel/right/white"/>
-			<remap from="camera_info" to="/vision/wheel/right/camera_info"/>
-			<remap from="line_points" to="/vision/wheel/right/line_points"/>
-		</node>
 		-->
 	</group>
 </launch>
