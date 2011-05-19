@@ -20,13 +20,11 @@
 			<rosparam command="load" file="$(find navi_cfg)/params/stereo_ground.yaml"/>
 			<remap from="points" to="narrow/points2"/>
 		</node>
-		<!--
 		<node pkg="stereo_od" type="od_node" name="stereo_od">
 			<rosparam command="load" file="$(find navi_cfg)/params/stereo_od.yaml"/>
 			<remap from="points"      to="narrow/points2"/>
 			<remap from="camera_info" to="narrow/left/camera_info"/>
 		</node>
-		-->
 
 		<!-- Colorspace Transformation -->
 		<node pkg="nodelet" type="nodelet" name="white_middle" ns="narrow/right"
@@ -43,7 +41,6 @@
 		</node>
 
 		<!-- Matched Pulse-Width Filter -->
-		<!--
 		<node pkg="nodelet" type="nodelet" name="pulse_middle" ns="narrow/right"
 		      args="load line_detection/line_nodelet /vision/line_manager">
 			<rosparam command="load" file="$(find navi_cfg)/params/line_pulse.yaml"/>
@@ -59,6 +56,13 @@
 			<rosparam command="load" file="$(find navi_cfg)/params/line_pulse.yaml"/>
 			<remap from="ground_plane" to="/vision/ground_plane"/>
 		</node>
-		-->
+
+		<!-- Line Fusion and Outlier Detection -->
+		<node pkg="nodelet" type="nodelet" name="line_mux"
+		      args="load line_tracking/mux_nodelet line_manager">
+			<remap from="line_points1" to="narrow/right/line_points"/>
+			<remap from="line_points2" to="wheel/left/line_points"/>
+			<remap from="line_points3" to="wheel/right/line_points"/>
+		</node>
 	</group>
 </launch>
