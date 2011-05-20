@@ -1,3 +1,4 @@
+#include <iostream>
 #include "integral_histogram.hpp"
 
 IntegralHistogram::IntegralHistogram(int bins_hue, int bins_sat)
@@ -10,14 +11,14 @@ IntegralHistogram::IntegralHistogram(int bins_hue, int bins_sat)
 void IntegralHistogram::GetPatch(cv::Rect patch, cv::MatND &dst)
 {
 	CV_Assert(m_bins_hue > 0 && m_bins_sat > 0);
-	CV_Assert(0 <= patch.y && patch.y < m_rows);
-	CV_Assert(0 <= patch.x && patch.x < m_cols);
+	CV_Assert(0 <= patch.y && patch.y + patch.height < m_rows);
+	CV_Assert(0 <= patch.x && patch.x + patch.width  < m_cols);
 
 	int const dims[] = { m_bins_hue, m_bins_sat };
 	dst.create(2, dims, CV_32F);
 
-	for (size_t bin_hue = 0; bin_hue < m_bins_hue; ++bin_hue)
-	for (size_t bin_sat = 0; bin_sat < m_bins_sat; ++bin_sat) {
+	for (int bin_hue = 0; bin_hue < m_bins_hue; ++bin_hue)
+	for (int bin_sat = 0; bin_sat < m_bins_sat; ++bin_sat) {
 		cv::Mat &img_int = m_bins[bin_hue][bin_sat];
 		float int_tl = img_int.at<float>(patch.y,                patch.x              );
 		float int_tr = img_int.at<float>(patch.y,                patch.x + patch.width);
@@ -51,8 +52,8 @@ void IntegralHistogram::LoadImage(cv::Mat const &img)
 	// Compute the integral image of each bin.
 	cv::Mat trash;
 
-	for (size_t bin_hue = 0; bin_hue < m_bins_hue; ++bin_hue)
-	for (size_t bin_sat = 0; bin_sat < m_bins_sat; ++bin_sat) {
+	for (int bin_hue = 0; bin_hue < m_bins_hue; ++bin_hue)
+	for (int bin_sat = 0; bin_sat < m_bins_sat; ++bin_sat) {
 		// Mask of pixels with the correct hue.
 		float hue_min = ((bin_hue + 0) * 255) / m_bins_hue;
 		float hue_max = ((bin_hue + 1) * 255) / m_bins_hue;

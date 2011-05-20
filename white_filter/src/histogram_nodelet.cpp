@@ -99,7 +99,7 @@ void HistogramNodelet::Callback(sensor_msgs::Image::ConstPtr const &msg_img)
 void HistogramNodelet::BuildNeedleHistogram(cv::Mat data, cv::MatND &needle)
 {
 	// Convert from a [ n x 6 ] 1-channel matrix to a [ n x 1 ] 6-channel matrix.
-	cv::Mat data_ch = data.reshape(data.cols);
+	cv::Mat data_ch = data.reshape(data.cols, data.rows);
 
 	cv::Mat arrays[] = { data_ch };
 	int chans[] = { 3, 4 };                   // hue and sat channels (BGRHSV)
@@ -112,8 +112,6 @@ void HistogramNodelet::BuildNeedleHistogram(cv::Mat data, cv::MatND &needle)
 
 void HistogramNodelet::MatchNeedleHistogram(cv::Mat src, cv::Mat &dst)
 {
-	ROS_ASSERT(m_win_width % 2 == 1 && m_win_height == 1);
-
 	dst.create(src.rows, src.cols, CV_32FC1);
 	dst.setTo(0.0);
 	m_haystack->LoadImage(src);
@@ -121,6 +119,11 @@ void HistogramNodelet::MatchNeedleHistogram(cv::Mat src, cv::Mat &dst)
 	for (int y = m_win_height / 2; y < src.rows - m_win_height / 2; ++y)
 	for (int x = m_win_width  / 2; x < src.cols - m_win_width  / 2; ++x) {
 		cv::Rect patch(cv::Point2i(x, y), cv::Size(m_win_width, m_win_height));
+
+		// TODO: Why is this exceeding the image dimensions?
+		// TODO: Is this off-by-one?
+		patch = patch & cv::Rect(0, 0, src.cols - 1, src.rows - 1);
+
 		cv::MatND hist_patch;
 		m_haystack->GetPatch(patch, hist_patch);
 		dst.at<float>(y, x) = cv::compareHist(hist_patch, m_needle, m_method);

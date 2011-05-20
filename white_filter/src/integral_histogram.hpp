@@ -10,8 +10,8 @@ public:
 	void LoadImage(cv::Mat const &img);
 	void GetPatch(cv::Rect patch, cv::MatND &dst);
 private:
-	int m_rows, m_cols;
 	int m_bins_hue, m_bins_sat;
+	int m_rows, m_cols;
 	std::vector<std::vector<cv::Mat> > m_bins;
 };
 
