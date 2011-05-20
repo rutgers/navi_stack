@@ -86,13 +86,14 @@ void HistogramNodelet::Callback(sensor_msgs::Image::ConstPtr const &msg_img)
 
 	// Use histogram matching to isolate the line.
 	cv::Mat dst_32f, dst_8u;
-	MatchNeedleHistogram(src, dst_32f);
+	//MatchNeedleHistogram(src, dst_32f);
+	m_haystack->MatchPatches(src, dst_32f, m_needle, cv::Size(m_win_width, m_win_height), m_method);
 	cv::normalize(dst_32f, dst_8u, 0, 255, cv::NORM_MINMAX, CV_8UC1);
 
 	// Convert the OpenCV data to an output message without copying.
 	cv_bridge::CvImage msg_white;
 	msg_white.header   = msg_img->header;
-	msg_white.encoding = enc::MO3NO8;
+	msg_white.encoding = enc::MONO8;
 	msg_white.image    = dst_8u;
 	m_pub.publish(msg_white.toImageMsg());
 }

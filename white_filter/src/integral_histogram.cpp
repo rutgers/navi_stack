@@ -84,32 +84,81 @@ void IntegralHistogram::LoadImage(cv::Mat const &img)
 }
 
 // Half-implemented integral calculation code.
-#if 0
 void IntegralHistogram::MatchPatches(cv::Mat src, cv::Mat &dst,
-                                     cv::MatND needle, cv::Size window)
+                                     cv::MatND needle, cv::Size window, int method)
 {
-	std::vector<cv::MatND> row_prev(src.cols);
-	std::vector<cv::MatND> row_curr(src.cols);
-	cv::Rect bounds(0, 0, src.cols - 1, src.rows - 1);
+	int const xh = window.width  / 2;
+	int const yh = window.height / 2;
+	int const x0 = xh;
+	int const y0 = yh;
+	int const x1 = src.cols - xh - 1;
+	int const y1 = src.rows - yh - 1;
 
-	// Empty histogram for padding the top and left image borders.
-	int const dims[] = { m_bins_hue, m_bins_sat };
-	cv::MatND const padding(2, dims, CV_32F, cv::Scalar(0.0));
+	// Pre-allocate the destination image.
+	dst.create(src.rows, src.cols, CV_32FC1);
+	dst.setTo(0.0);
 
-	for (int y = 0; y < src.rows; ++y) {
-		for (int x = 0; x < src.cols; ++x) {
-			cv::MatND *tl; // H(x-1, y-1)
-			cv::MatND *tr; // H(x,   y-1)
-			cv::MatND *bl; // H(x-1, y  )
+	// Extract the HS-plane from the source BGR image.
+	std::vector<cv::Mat> dims;
+	cv::Mat hsv;
+	cv::cvtColor(src, hsv, CV_BGR2HSV);
+	cv::split(hsv, dims);
+	cv::Mat &hue = dims[0];
+	cv::Mat &sat = dims[1];
 
-			// Pixels not in the image have a zero histogram.
-			tl = (x > 0 && y > 0) ? &row_prev[x - 1] : &padding;
-			tr = (         y > 0) ? &row_prev[x    ] : &padding;
-			bl = (x > 0         ) ? &row_curr[x - 1] : &padding;
+	// Seed the recursion with pixel (0, 0).
+	cv::Rect seed_rect(cv::Point(xh, yh), window);
+	cv::Mat arrays[] = { hsv(seed_rect) };
+	int chans[] = { 0, 1 };                   // hue and sat channels
+	int sizes[] = { m_bins_hue, m_bins_sat }; // bins per channel
+	float const range[]   = { 0, 255 };       // 8-bit channel depth
+	float const *ranges[] = { range, range };
 
+	cv::MatND hist, seed;
+	cv::calcHist(arrays, 1, chans, cv::Mat(), hist, 2, sizes, ranges, true, false);
+	hist.copyTo(seed);
 
+	for (int y = y0; y < y1; ++y) {
+		// Vertical incremental update.
+		if (y > y0) {
+			seed.copyTo(hist);
+			for (int dx = -xh; dx <= xh; ++dx) {
+				int bin_hue, bin_sat;
 
+				bin_hue = hue.at<uint8_t>(y - yh, xh + dx) * m_bins_hue / 255;
+				bin_sat = sat.at<uint8_t>(y - yh, xh + dx) * m_bins_sat / 255;
+				--hist.at<float>(bin_hue, bin_sat);
+
+				bin_hue = hue.at<uint8_t>(y + yh, xh + dx) * m_bins_hue / 255;
+				bin_sat = sat.at<uint8_t>(y + yh, xh + dx) * m_bins_sat / 255;
+				++hist.at<float>(bin_hue, bin_sat);
+			}
 		}
 
+		for (int x = x0; x < x1; ++x) {
+			// Horizontal incremental update.
+			if (x > x0) {
+				for (int dy = -yh; dy <= yh; ++dy) {
+					int bin_hue, bin_sat;
+
+					bin_hue = hue.at<uint8_t>(y + dy, x - xh) * m_bins_hue / 255;
+					bin_sat = sat.at<uint8_t>(y + dy, x - xh) * m_bins_sat / 255;
+					--hist.at<float>(bin_hue, bin_sat);
+
+					bin_hue = hue.at<uint8_t>(y + dy, x + xh) * m_bins_hue / 255;
+					bin_sat = sat.at<uint8_t>(y + dy, x + xh) * m_bins_sat / 255;
+					++hist.at<float>(bin_hue, bin_sat);
+				}
+			}
+			// Keep track of the first pixel for the vertical update.
+			else {
+				hist.copyTo(seed);
+			}
+
+			// Correlation of this patch with the needle.
+			dst.at<float>(y, x) = cv::compareHist(hist, needle, method);
+		}
+
+	}
+
 }
-#endif
