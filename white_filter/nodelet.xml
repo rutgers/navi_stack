@@ -15,4 +15,12 @@
 			center to detect regions white color in an image.
 		</description>
 	</class>
+	<class name="white_filter/histogram_nodelet"
+	       type="white_filter::HistogramNodelet"
+	       base_class_type="nodelet::Nodelet">
+		<description>
+			Use patch-based histogram matching to find regions of desired
+			texture in an image.
+		</description>
+	</class>
 </library>

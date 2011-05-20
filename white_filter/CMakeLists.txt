@@ -16,7 +16,9 @@ set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 
 rosbuild_add_library(white_nodelet
+	src/histogram_nodelet.cpp
 	src/ml_nodelet.cpp
 	src/pca_nodelet.cpp
 	src/csv.cpp
+	src/integral_histogram.cpp
 )
