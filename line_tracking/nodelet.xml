@@ -4,4 +4,12 @@
 	       base_class_type="nodelet::Nodelet">
 		<description>Track detected lines over time.</description>
 	</class>
+	<class name="line_tracking/mux_nodelet"
+	       type="line_tracking::MuxNodelet"
+	       base_class_type="nodelet::Nodelet">
+		<description>
+			Merge several point clouds in a fixed coordinate frame and publish
+			the result.
+		</description>
+	</class>
 </library>

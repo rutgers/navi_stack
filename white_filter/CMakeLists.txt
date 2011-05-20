@@ -16,11 +16,7 @@ set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 
 rosbuild_add_library(white_nodelet
+	src/ml_nodelet.cpp
+	src/pca_nodelet.cpp
 	src/csv.cpp
-	src/white_filter.cpp
-)
-rosbuild_add_executable(white_node
-	src/csv.cpp
-	src/white_filter.cpp
-	src/white_node.cpp
 )

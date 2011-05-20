@@ -1,7 +1,18 @@
 <library path="lib/libwhite_nodelet">
-	<class name="white_filter/white_nodelet"
-	       type="white_node::WhiteNodelet"
+	<class name="white_filter/ml_nodelet"
+	       type="white_filter::MLNodelet"
 	       base_class_type="nodelet::Nodelet">
-		<description>Detect regions of white color in an image.</description>
+		<description>
+			Use machine learning regression algorithms to detect regions of
+			white color in an image.
+		</description>
+	</class>
+	<class name="white_filter/pca_nodelet"
+	       type="white_filter::PCANodelet"
+	       base_class_type="nodelet::Nodelet">
+		<description>
+			Use Principle Component Analysis (PCA) and a manually tuned cluster
+			center to detect regions white color in an image.
+		</description>
 	</class>
 </library>

@@ -1,5 +1,5 @@
-#ifndef WHITE_FILTER_HPP_
-#define WHITE_FILTER_HPP_
+#ifndef ML_NODELET_HPP_
+#define ML_NODELET_HPP_
 
 #include <vector>
 #include <opencv/cv.h>
@@ -8,9 +8,9 @@
 #include <nodelet/nodelet.h>
 #include <sensor_msgs/Image.h>
 
-namespace white_node {
+namespace white_filter {
 
-class WhiteNodelet : public nodelet::Nodelet {
+class MLNodelet : public nodelet::Nodelet {
 public:
 	virtual void onInit(void);
 
@@ -23,11 +23,7 @@ private:
 	image_transport::Subscriber m_sub;
 	image_transport::Publisher  m_pub;
 
-	cv::Mat              m_center;
-	std::vector<float>   m_weight;
-	std::vector<cv::Mat> m_transforms;
-
-	cv::SVM m_svm;
+	cv::SVM m_ml;
 	int m_ker_size;
 
 	// for capstone demo using blue duck tape

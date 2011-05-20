@@ -1,5 +1,3 @@
-#include "white_filter.hpp"
-
 #include <fstream>
 #include <string>
 #include <boost/shared_ptr.hpp>
@@ -12,12 +10,13 @@
 #include <opencv/cv.h>
 
 #include "csv.hpp"
+#include "pca_nodelet.hpp"
 
-PLUGINLIB_DECLARE_CLASS(white_filter, white_nodelet, white_node::WhiteNodelet, nodelet::Nodelet)
+PLUGINLIB_DECLARE_CLASS(white_filter, pca_nodelet, white_filter::PCANodelet, nodelet::Nodelet)
 
-namespace white_node {
+namespace white_filter {
 
-void WhiteNodelet::onInit(void)
+void PCANodelet::onInit(void)
 {
 	ros::NodeHandle &nh      = getNodeHandle();
 	ros::NodeHandle &nh_priv = getPrivateNodeHandle();
@@ -39,13 +38,11 @@ void WhiteNodelet::onInit(void)
 		ROS_ASSERT(transform.getType() == XmlRpc::XmlRpcValue::TypeArray);
 		ROS_ASSERT(transform.size() == 6);
 
-		cv::Mat coefs(6, 1, CV_32FC1);
-		float  *data = coefs.ptr<float>(0);
-
+		std::vector<float> coefs(6);
 		for (int j = 0; j < transform.size(); ++j) {
 			XmlRpc::XmlRpcValue coef = transform[j];
 			ROS_ASSERT(coef.getType() == XmlRpc::XmlRpcValue::TypeDouble);
-			data[j] = (float)static_cast<double>(coef);
+			coefs[j] = static_cast<double>(coef);
 		}
 		m_transforms.push_back(coefs);
 	}
@@ -56,99 +53,74 @@ void WhiteNodelet::onInit(void)
 	nh_priv.getParam("center", center);
 	ROS_ASSERT(center.getType() == XmlRpc::XmlRpcValue::TypeArray);
 	ROS_ASSERT(center.size() == n);
-	m_center.create(1, n, CV_32FC1);
 
 	for (int i = 0; i < n; ++i) {
 		XmlRpc::XmlRpcValue coord = center[i];
 		ROS_ASSERT(coord.getType() == XmlRpc::XmlRpcValue::TypeDouble);
-
-		float value = static_cast<double>(coord);
-		m_center.at<float>(0, i) = value;
+		m_center.push_back(static_cast<double>(coord));
 	}
-	NODELET_INFO("loaded PCA cluster center from parameter server");
 
 	// Load axis weights (in PCA-space) from the parameter server.
 	XmlRpc::XmlRpcValue weights;
 	nh_priv.getParam("weight", weights);
 	ROS_ASSERT(weights.getType() == XmlRpc::XmlRpcValue::TypeArray);
 	ROS_ASSERT(weights.size() == n);
-	m_weight.resize(n);
 
 	for (int i = 0; i < n; ++i) {
 		XmlRpc::XmlRpcValue weight = weights[i];
 		ROS_ASSERT(weight.getType() == XmlRpc::XmlRpcValue::TypeDouble);
-		m_weight[i] = static_cast<double>(weight);
+		m_weight.push_back(static_cast<double>(weight));
 	}
-	NODELET_INFO("loaded PCA cluster center from parameter server");
 
 	// Subscribers and publishers.
 	m_it = boost::make_shared<image_transport::ImageTransport>(nh);
 	m_pub = m_it->advertise("white", 1);
-	m_sub = m_it->subscribe("image", 1, &WhiteNodelet::Callback, this);
+	m_sub = m_it->subscribe("image", 1, &PCANodelet::Callback, this);
 }
 
-void WhiteNodelet::FilterWhite(cv::Mat bgr, cv::Mat &dst)
+void PCANodelet::FilterWhite(cv::Mat bgr_8u, cv::Mat &dst)
 {
-	int features = m_transforms.size();
-	int rows = bgr.rows;
-	int cols = bgr.cols;
-	dst.create(rows, cols, CV_32FC1);
+	int rows = bgr_8u.rows;
+	int cols = bgr_8u.cols;
 
-	// RGB
-	std::vector<cv::Mat> ch_bgr(3);
-	cv::split(bgr, ch_bgr);
-	cv::Mat &r = ch_bgr[2];
-	cv::Mat &g = ch_bgr[1];
-	cv::Mat &b = ch_bgr[0];
+	cv::Mat bgr;
+	bgr_8u.convertTo(bgr, CV_32FC3);
 
-	// HSV
-	std::vector<cv::Mat> ch_hsv(3);
+	// BGR-space, HSV-space
+	std::vector<cv::Mat> ch_bgr(3), ch_hsv(3);
 	cv::Mat hsv;
 	cv::cvtColor(bgr, hsv, CV_BGR2HSV);
+	cv::split(bgr, ch_bgr);
 	cv::split(hsv, ch_hsv);
-	cv::Mat &h = ch_hsv[0];
-	cv::Mat &s = ch_hsv[1];
-	cv::Mat &v = ch_hsv[2];
 
-	for (int y = 0; y < rows; ++y)
-	for (int x = 0; x < cols; ++x) {
-		// Build the (RGB, HSV) feature vector.
-		cv::Mat feature(1, 6, CV_32FC1);
-		float *data = feature.ptr<float>(0);
-		int i = 0;
-		data[i++] = r.at<uint8_t>(y, x);
-		data[i++] = g.at<uint8_t>(y, x);
-		data[i++] = b.at<uint8_t>(y, x);
-		data[i++] = h.at<uint8_t>(y, x);
-		data[i++] = s.at<uint8_t>(y, x);
-		data[i++] = v.at<uint8_t>(y, x);
+	// BGRHSV-space, the feature space
+	std::vector<cv::Mat> features;
+	features.insert(features.end(), ch_bgr.begin(), ch_bgr.end());
+	features.insert(features.end(), ch_hsv.begin(), ch_hsv.end());
 
-		// Transform each pixel into the PCA-space.
-		cv::Mat feature_pcl(1, features, CV_32FC1);
-		float *data_pcl = feature_pcl.ptr<float>(0);
+	// Find distances in the feature-space.
+	dst.create(rows, cols, CV_32FC1);
+	dst.setTo(0.0);
 
-		for (size_t ch = 0; ch < m_transforms.size(); ++ch) {
-			cv::Mat wrapped = feature * m_transforms[ch];
-			data_pcl[ch] = wrapped.at<float>(0, 0);
+	for (size_t transform = 0; transform < m_transforms.size(); ++transform) {
+		cv::Mat transformed(rows, cols, CV_32FC1, cv::Scalar(0.0));
+
+		// Transform the image into the correct space.
+		for (size_t feature = 0; feature < features.size(); ++feature) {
+			transformed += m_transforms[transform][feature] * features[feature];
 		}
 
-		// Find the distance in PCA-space to the target.
-		float &distance = dst.at<float>(y, x);
-		distance = 0.0;
-
-		for (size_t ch = 0; ch < m_transforms.size(); ++ch) {
-			distance += m_weight[ch] * -fabs(feature_pcl.at<float>(0, ch) - m_center.at<float>(0, ch));
-		}
+		// Find the distance between each pixel and the cluster center.
+		// TODO: Convert to SSD instead of SAD.
+		dst += m_weight[transform] * cv::abs(transformed - m_center[transform]);
 	}
 
 	cv::Mat mono8;
 	cv::normalize(dst, mono8, 0, 255, cv::NORM_MINMAX, CV_8UC1);
 	dst = mono8;
-
-	dst = b;
 }
 
-void WhiteNodelet::Callback(sensor_msgs::Image::ConstPtr const &msg_img)
+void PCANodelet::Callback(sensor_msgs::Image::ConstPtr const &msg_img)
 {
 	namespace enc = sensor_msgs::image_encodings;
 	cv::Mat src, dst;

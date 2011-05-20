@@ -67,7 +67,7 @@ void LineNodelet::onInit(void)
 	}
 
 	// TODO: store these subscribers in member variables
-	m_sub_img   = new image_transport::SubscriberFilter(*m_it, "image", 1);
+	m_sub_img   = new image_transport::SubscriberFilter(*m_it, "white", 1);
 	m_sub_info  = new mf::Subscriber<CameraInfo>(nh, "camera_info", 1);
 	m_sub_plane = new mf::Subscriber<Plane>(nh, "ground_plane", 1);
 	m_sub = boost::shared_ptr<Synchronizer>(new Synchronizer(*m_sub_img, *m_sub_info, *m_sub_plane, 10));
