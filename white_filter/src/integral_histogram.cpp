@@ -82,3 +82,34 @@ void IntegralHistogram::LoadImage(cv::Mat const &img)
 		cv::integral(img_bin, m_bins[bin_hue][bin_sat], trash, CV_32FC1);
 	}
 }
+
+// Half-implemented integral calculation code.
+#if 0
+void IntegralHistogram::MatchPatches(cv::Mat src, cv::Mat &dst,
+                                     cv::MatND needle, cv::Size window)
+{
+	std::vector<cv::MatND> row_prev(src.cols);
+	std::vector<cv::MatND> row_curr(src.cols);
+	cv::Rect bounds(0, 0, src.cols - 1, src.rows - 1);
+
+	// Empty histogram for padding the top and left image borders.
+	int const dims[] = { m_bins_hue, m_bins_sat };
+	cv::MatND const padding(2, dims, CV_32F, cv::Scalar(0.0));
+
+	for (int y = 0; y < src.rows; ++y) {
+		for (int x = 0; x < src.cols; ++x) {
+			cv::MatND *tl; // H(x-1, y-1)
+			cv::MatND *tr; // H(x,   y-1)
+			cv::MatND *bl; // H(x-1, y  )
+
+			// Pixels not in the image have a zero histogram.
+			tl = (x > 0 && y > 0) ? &row_prev[x - 1] : &padding;
+			tr = (         y > 0) ? &row_prev[x    ] : &padding;
+			bl = (x > 0         ) ? &row_curr[x - 1] : &padding;
+
+
+
+		}
+
+}
+#endif

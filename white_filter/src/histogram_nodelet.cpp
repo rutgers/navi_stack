@@ -26,7 +26,7 @@ void HistogramNodelet::onInit(void)
 	nh_priv.param<int>("bins_sat", m_bins_sat, 10);
 	nh_priv.param<int>("win_width",  m_win_width,  9);
 	nh_priv.param<int>("win_height", m_win_height, 9);
-	m_method = CV_COMP_CORREL;
+	m_method = CV_COMP_INTERSECT;
 	m_haystack = boost::make_shared<IntegralHistogram>(m_bins_hue, m_bins_sat);
 
 	// Training data for target histogram.
@@ -84,6 +84,7 @@ void HistogramNodelet::Callback(sensor_msgs::Image::ConstPtr const &msg_img)
 		src_blur = src;
 	}
 
+	// Use histogram matching to isolate the line.
 	cv::Mat dst_32f, dst_8u;
 	MatchNeedleHistogram(src, dst_32f);
 	cv::normalize(dst_32f, dst_8u, 0, 255, cv::NORM_MINMAX, CV_8UC1);
@@ -91,7 +92,7 @@ void HistogramNodelet::Callback(sensor_msgs::Image::ConstPtr const &msg_img)
 	// Convert the OpenCV data to an output message without copying.
 	cv_bridge::CvImage msg_white;
 	msg_white.header   = msg_img->header;
-	msg_white.encoding = enc::MONO8;
+	msg_white.encoding = enc::MO3NO8;
 	msg_white.image    = dst_8u;
 	m_pub.publish(msg_white.toImageMsg());
 }
