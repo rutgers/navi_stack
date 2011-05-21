@@ -1,4 +1,13 @@
 #!/usr/bin/python
+import roslib; roslib.load_manifest('navi_web')
+import rospy
+
+print "arguments :"
+import sys
+[ sys.stdout.write(' '+ arg) for arg in sys.argv]
+
+sys.argv = sys.argv[0:2]
+
 from django.core.management import execute_manager
 try:
     import settings # Assumed to be in the same directory.
