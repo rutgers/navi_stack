@@ -5,7 +5,7 @@
 </node>
 <node pkg="navi_teleop" type="gamepad_stick" name="teleop_gamepad">
 	<remap from="cmd_vel" to="drive/cmd_vel"/>
-	<param name="scale_angular" value="2"/> 
+	<param name="scale_angular" value="4"/> 
 	<param name="scale_linear" value="3.3"/> <!-- m/s -->
 </node>
 
