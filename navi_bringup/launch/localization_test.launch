@@ -1,6 +1,6 @@
 <launch>
-	<include file="$(find navi_driver)/launch/hardware.launch"/>
+	<include file="$(find navi_bringup)/launch/hardware.launch"/>
 	<include file="$(find navi_teleop)/launch/gamepad_stick.launch"/>
 	<node type="rosbridge.py" name="rosjs" pkg="rosbridge" />
 	<node name="navi_web" pkg="navi_web" type="manager.py" args="runserver"/>
-<launch>
+</launch>
