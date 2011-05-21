@@ -1,1 +1,0 @@
-../navi_site/manage.py
