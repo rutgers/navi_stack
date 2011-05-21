@@ -20,6 +20,7 @@
   <depend package="navi_teleop"/>
   <depend package="navi_executive"/>
   <depend package="line_tracking"/>
+  <depend package="imu_9drazor"/>
   
   
 </package>
