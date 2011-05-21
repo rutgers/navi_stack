@@ -1,0 +1,6 @@
+
+<launch>
+	<node type="rosbridge.py" name="rosjs" pkg="rosbridge" />
+	<node name="navi_web" pkg="navi_web" type="manage.py" args="runserver"/>
+</launch>
+
