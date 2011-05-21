@@ -15,6 +15,12 @@
   <depend package="line_detection"/>
   <depend package="stereo_mux"/>
   <depend package="stereo_webcam"/>
+  <depend package="stereo_od"/>
+  <depend package="white_filter"/>
+  <depend package="navi_teleop"/>
+  <depend package="navi_executive"/>
+  <depend package="line_tracking"/>
+  
   
 </package>
 
