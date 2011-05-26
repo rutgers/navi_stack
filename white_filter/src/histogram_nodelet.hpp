@@ -28,6 +28,7 @@ private:
 	cv::MatND m_needle;
 	boost::shared_ptr<IntegralHistogram> m_haystack;
 
+	bool m_downsample;
 	int m_bins_hue, m_bins_sat;
 	int m_win_width, m_win_height;
 	int m_ker_size;

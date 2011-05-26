@@ -89,8 +89,6 @@ void IntegralHistogram::MatchPatches(cv::Mat src, cv::Mat &dst,
 {
 	int const xh = window.width  / 2;
 	int const yh = window.height / 2;
-	int const x0 = xh;
-	int const y0 = yh;
 	int const x1 = src.cols - xh - 1;
 	int const y1 = src.rows - yh - 1;
 
@@ -106,48 +104,50 @@ void IntegralHistogram::MatchPatches(cv::Mat src, cv::Mat &dst,
 	cv::Mat &hue = dims[0];
 	cv::Mat &sat = dims[1];
 
-	// Seed the recursion with pixel (0, 0).
+	// Seed the recursion with the histogram centered at pixel (0, 0).
 	cv::Rect seed_rect(cv::Point(xh, yh), window);
 	cv::Mat arrays[] = { hsv(seed_rect) };
 	int chans[] = { 0, 1 };                   // hue and sat channels
 	int sizes[] = { m_bins_hue, m_bins_sat }; // bins per channel
 	float const range[]   = { 0, 255 };       // 8-bit channel depth
 	float const *ranges[] = { range, range };
-
 	cv::MatND hist, seed;
 	cv::calcHist(arrays, 1, chans, cv::Mat(), hist, 2, sizes, ranges, true, false);
-	hist.copyTo(seed);
 
-	for (int y = y0; y < y1; ++y) {
+	for (int y = 0; y < y1; ++y) {
 		// Vertical incremental update.
-		if (y > y0) {
+		if (y > 0) {
 			seed.copyTo(hist);
-			for (int dx = -xh; dx <= xh; ++dx) {
-				int bin_hue, bin_sat;
+			for (int dx = -xh; dx <= +xh; ++dx) {
+				// TODO: Modify the array bounds instead of checking in here.
+				bool in_x = 0 <= xh + dx    && xh + dx < src.cols;
+				bool in_y = 0 <= y - yh - 1 && y  + yh < src.rows;
+				if (!in_x || !in_y) continue;
 
-				bin_hue = hue.at<uint8_t>(y - yh, xh + dx) * m_bins_hue / 255;
-				bin_sat = sat.at<uint8_t>(y - yh, xh + dx) * m_bins_sat / 255;
-				--hist.at<float>(bin_hue, bin_sat);
-
-				bin_hue = hue.at<uint8_t>(y + yh, xh + dx) * m_bins_hue / 255;
-				bin_sat = sat.at<uint8_t>(y + yh, xh + dx) * m_bins_sat / 255;
-				++hist.at<float>(bin_hue, bin_sat);
+				int bin_old_hue = hue.at<uint8_t>(y - yh - 1, xh + dx) * m_bins_hue / 255;
+				int bin_old_sat = sat.at<uint8_t>(y - yh - 1, xh + dx) * m_bins_sat / 255;
+				int bin_new_hue = hue.at<uint8_t>(y + yh, xh + dx) * m_bins_hue / 255;
+				int bin_new_sat = sat.at<uint8_t>(y + yh, xh + dx) * m_bins_sat / 255;
+				--hist.at<float>(bin_old_hue, bin_old_sat);
+				++hist.at<float>(bin_new_hue, bin_new_sat);
 			}
 		}
 
-		for (int x = x0; x < x1; ++x) {
+		for (int x = 0; x < x1; ++x) {
 			// Horizontal incremental update.
-			if (x > x0) {
-				for (int dy = -yh; dy <= yh; ++dy) {
-					int bin_hue, bin_sat;
+			if (x > 0) {
+				for (int dy = -yh; dy <= +yh; ++dy) {
+					// TODO: Modify the array bounds instead of checking in here.
+					bool in_x = 0 <= x - xh - 1 && x + xh < src.cols;
+					bool in_y = 0 <= y + dy     && y + dy < src.rows;
+					if (!in_x || !in_y) continue;
 
-					bin_hue = hue.at<uint8_t>(y + dy, x - xh) * m_bins_hue / 255;
-					bin_sat = sat.at<uint8_t>(y + dy, x - xh) * m_bins_sat / 255;
-					--hist.at<float>(bin_hue, bin_sat);
-
-					bin_hue = hue.at<uint8_t>(y + dy, x + xh) * m_bins_hue / 255;
-					bin_sat = sat.at<uint8_t>(y + dy, x + xh) * m_bins_sat / 255;
-					++hist.at<float>(bin_hue, bin_sat);
+					int bin_old_hue = hue.at<uint8_t>(y + dy, x - xh - 1) * m_bins_hue / 255;
+					int bin_old_sat = sat.at<uint8_t>(y + dy, x - xh - 1) * m_bins_sat / 255;
+					int bin_new_hue = hue.at<uint8_t>(y + dy, x + xh) * m_bins_hue / 255;
+					int bin_new_sat = sat.at<uint8_t>(y + dy, x + xh) * m_bins_sat / 255;
+					--hist.at<float>(bin_old_hue, bin_old_sat);
+					++hist.at<float>(bin_new_hue, bin_new_sat);
 				}
 			}
 			// Keep track of the first pixel for the vertical update.

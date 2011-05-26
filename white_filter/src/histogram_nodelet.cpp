@@ -26,14 +26,14 @@ void HistogramNodelet::onInit(void)
 	nh_priv.param<int>("bins_sat", m_bins_sat, 10);
 	nh_priv.param<int>("win_width",  m_win_width,  9);
 	nh_priv.param<int>("win_height", m_win_height, 9);
+	nh_priv.param<int>("kernel_size", m_ker_size, 3);
+	nh_priv.param<bool>("downsample", m_downsample, false);
 	m_method = CV_COMP_INTERSECT;
 	m_haystack = boost::make_shared<IntegralHistogram>(m_bins_hue, m_bins_sat);
 
 	// Training data for target histogram.
 	double weight;
 	std::string path, delim;
-	nh_priv.param<int>("kernel_size", m_ker_size, 3);
-	nh_priv.param<double>("svm_weight", weight, 0.5);
 	nh_priv.param<std::string>("train_path",  path,  "");
 	nh_priv.param<std::string>("train_delim", delim, ",");
 
@@ -76,18 +76,25 @@ void HistogramNodelet::Callback(sensor_msgs::Image::ConstPtr const &msg_img)
 		return;
 	}
 
+	// Downsample (if necessary).
+	cv::Mat src_down;
+	if (m_downsample) {
+		cv::pyrDown(src, src_down, cv::Size((src.cols + 1)/2, (src.rows + 1)/2));
+	} else {
+		src_down = src;
+	}
+
 	// Blur to reduce the visibility of individual blades of grass.
 	cv::Mat src_blur;
 	if (m_ker_size > 1) {
-		cv::GaussianBlur(src, src_blur, cv::Size(m_ker_size, m_ker_size), 0.0);
+		cv::GaussianBlur(src_down, src_blur, cv::Size(m_ker_size, m_ker_size), 0.0);
 	} else {
-		src_blur = src;
+		src_blur = src_down;
 	}
 
 	// Use histogram matching to isolate the line.
 	cv::Mat dst_32f, dst_8u;
-	//MatchNeedleHistogram(src, dst_32f);
-	m_haystack->MatchPatches(src, dst_32f, m_needle, cv::Size(m_win_width, m_win_height), m_method);
+	MatchNeedleHistogram(src_blur, dst_32f);
 	cv::normalize(dst_32f, dst_8u, 0, 255, cv::NORM_MINMAX, CV_8UC1);
 
 	// Convert the OpenCV data to an output message without copying.
