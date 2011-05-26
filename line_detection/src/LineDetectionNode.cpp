@@ -70,7 +70,7 @@ void LineNodelet::onInit(void)
 	m_sub_img   = new image_transport::SubscriberFilter(*m_it, "white", 1);
 	m_sub_info  = new mf::Subscriber<CameraInfo>(nh, "camera_info", 1);
 	m_sub_plane = new mf::Subscriber<Plane>(nh, "ground_plane", 1);
-	m_sub = boost::shared_ptr<Synchronizer>(new Synchronizer(*m_sub_img, *m_sub_info, *m_sub_plane, 10));
+	m_sub = new mf::Synchronizer<Policy>(Policy(30), *m_sub_img, *m_sub_info, *m_sub_plane);
 	m_sub->registerCallback(&LineNodelet::ImageCallback, this);
 }
 

@@ -23,8 +23,9 @@
 #include <stereo_plane/Plane.h>
 
 #include <message_filters/subscriber.h>
-#include <message_filters/time_synchronizer.h>
+#include <message_filters/sync_policies/approximate_time.h>
 #include <image_transport/subscriber_filter.h>
+#include <message_filters/time_synchronizer.h>
 
 namespace line_node {
 
@@ -36,7 +37,7 @@ using sensor_msgs::Image;
 using stereo_plane::Plane;
 
 typedef pcl::PointCloud<pcl::PointXYZ> PointCloudXYZ;
-typedef message_filters::TimeSynchronizer<sensor_msgs::Image, sensor_msgs::CameraInfo, stereo_plane::Plane> Synchronizer;
+typedef mf::sync_policies::ApproximateTime<Image, CameraInfo, Plane> Policy;
 
 class LineNodelet : public nodelet::Nodelet {
 public:
@@ -123,7 +124,7 @@ private:
 	it::SubscriberFilter       *m_sub_img;
 	mf::Subscriber<CameraInfo> *m_sub_info;
 	mf::Subscriber<Plane>      *m_sub_plane;
-	boost::shared_ptr<Synchronizer> m_sub;
+	mf::Synchronizer<Policy>   *m_sub;
 
 	// Debug topics; only enabled if m_debug is true.
 	image_transport::Publisher m_pub_pre;
