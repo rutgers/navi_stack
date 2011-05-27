@@ -217,8 +217,6 @@ void LineNodelet::ImageCallback(Image::ConstPtr const &msg_img,
 {
 	namespace enc = sensor_msgs::image_encodings;
 
-	ROS_ERROR("callback");
-
 	// Transform msg_plane into the camera's coordinate frame.
 	Plane plane;
 	try {
@@ -369,10 +367,20 @@ int LineNodelet::GeneratePulseFilter(cv::Point3d dw, cv::Mat &kernel, std::vecto
 		// larger than the cutoff size. This guarantees that the filter is not
 		// degenerate and will sum to zero.
 		if (m_width_cutoff <= width_min && width_prev >= width_min) {
+			int a = std::max(0, offs_both_neg - offs_line_neg);
+			int b = std::min(kernel.cols, offs_both_neg + offs_line_pos);
+			int c = std::min(kernel.cols, offs_both_neg + offs_both_pos);
+
+			// FIXME: Figure out why the bounds are sometimes invalid.
+			bool good = 0 <= a && a < b && b < c && c < kernel.cols;
+			if (!good) {
+				return horizon + 1;
+			}
+
 			cv::Range row(r, r + 1);
-			cv::Mat left   = kernel(row, cv::Range(0,                             offs_both_neg - offs_line_neg));
-			cv::Mat center = kernel(row, cv::Range(offs_both_neg - offs_line_neg, offs_both_neg + offs_line_pos));
-			cv::Mat right  = kernel(row, cv::Range(offs_both_neg + offs_line_pos, offs_both_neg + offs_both_pos));
+			cv::Mat left   = kernel(row, cv::Range(0, a));
+			cv::Mat center = kernel(row, cv::Range(a, b));
+			cv::Mat right  = kernel(row, cv::Range(b, c));
 
 			double value_left   = -0.5 / left.cols;
 			double value_center = +1.0 / center.cols;
