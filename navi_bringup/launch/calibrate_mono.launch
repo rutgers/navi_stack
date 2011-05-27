@@ -4,7 +4,6 @@
 	<arg name="cols"   default="6"/>     <!-- number of chessboard columns -->
 	<arg name="square" default="0.062"/> <!-- length of a side of one square on the calibration chessboard -->
 
-	<include file="$(find navi_bringup)/launch/hardware.launch"/>
 	<node pkg="camera_calibration" type="cameracalibrator.py" name="calibrator" args="--size=$(arg cols)x$(arg rows) --square=$(arg square)" ns="vision">
 		<remap from="image"  to="$(arg camera)/image"/>
 		<remap from="camera" to="$(arg camera)"/>
