@@ -78,7 +78,7 @@ public:
 	 * \param pts list of local maxima in the filter response
 	 */
 	void NonMaxSupr(cv::Mat src_hor, cv::Mat src_ver,
-	                pcl::PointCloud<pcl::PointXYZ> &dst);
+	                pcl::PointCloud<pcl::PointXYZ> &dst, cv::Mat &mask);
 
 	/**
 	 * Update cached information to match the current algorithmic parameters.
@@ -133,12 +133,11 @@ private:
 	mf::Synchronizer<Policy>   *m_sub;
 
 	// Debug topics; only enabled if m_debug is true.
-	image_transport::Publisher m_pub_pre;
-	image_transport::Publisher m_pub_distance;
 	image_transport::Publisher m_pub_filter_hor;
 	image_transport::Publisher m_pub_filter_ver;
 	image_transport::Publisher m_pub_ker_hor;
 	image_transport::Publisher m_pub_ker_ver;
+	image_transport::Publisher m_pub_maxima;
 };
 };
 #endif

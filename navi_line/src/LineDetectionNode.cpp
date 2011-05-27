@@ -70,15 +70,14 @@ void LineNodelet::onInit(void)
 
 	if (m_debug) {
 		ROS_WARN("debugging topics are enabled; performance may be degraded");
-		m_pub_pre        = m_it->advertise("line_pre",        10);
-		m_pub_distance   = m_it->advertise("line_distance",   10);
 		m_pub_ker_hor    = m_it->advertise("line_kernel_hor", 10);
 		m_pub_ker_ver    = m_it->advertise("line_kernel_ver", 10);
 		m_pub_filter_hor = m_it->advertise("line_filter_hor", 10);
 		m_pub_filter_ver = m_it->advertise("line_filter_ver", 10);
+		m_pub_maxima     = m_it->advertise("line_maxima",     10);
 	}
 
-	// TODO: store these subscribers in member variables
+	// FIXME: Memory leak!
 	m_sub_img   = new image_transport::SubscriberFilter(*m_it, "white", 1);
 	m_sub_info  = new mf::Subscriber<CameraInfo>(nh, "camera_info", 1);
 	m_sub_plane = new mf::Subscriber<Plane>(nh, "ground_plane", 1);
@@ -140,11 +139,14 @@ void LineNodelet::SetResolution(int width, int height)
 	m_rows  = height;
 }
 
-void LineNodelet::NonMaxSupr(cv::Mat src_hor, cv::Mat src_ver, PointCloudXYZ &dst)
+void LineNodelet::NonMaxSupr(cv::Mat src_hor, cv::Mat src_ver, PointCloudXYZ &dst, cv::Mat &mask)
 {
 	ROS_ASSERT(src_hor.rows == src_ver.rows && src_hor.cols == src_ver.cols);
 	ROS_ASSERT(src_hor.type() == CV_64FC1 && src_ver.type() == CV_64FC1);
 	ROS_ASSERT(m_valid);
+
+	mask.create(src_hor.rows, src_hor.cols, CV_8UC1);
+	mask.setTo(0);
 
 	for (int y = 1; y < src_hor.rows - 1; ++y)
 	for (int x = 1; x < src_hor.cols - 1; ++x) {
@@ -168,6 +170,7 @@ void LineNodelet::NonMaxSupr(cv::Mat src_hor, cv::Mat src_ver, PointCloudXYZ &ds
 			pt.y = pt_3d.y;
 			pt.z = pt_3d.z;
 			dst.push_back(pt);
+			mask.at<uint8_t>(y, x) = 255;
 		}
 	}
 }
@@ -228,13 +231,13 @@ void LineNodelet::ImageCallback(Image::ConstPtr const &msg_img,
 
 	// Convert the ROS Image and CameraInfo messages into OpenCV datatypes for
 	// processing. This avoids copying the data when possible.
-	cv::Mat img_src;
+	cv::Mat img_src, img_src8;
 	try {
 		m_model.fromCameraInfo(msg_cam);
 		cv_bridge::CvImageConstPtr src_tmp = cv_bridge::toCvShare(msg_img, enc::MONO8);
 
 		// TODO: Directly process the 8-bit image to avoid this type conversion.
-		cv::Mat img_src8 = src_tmp->image;
+		img_src8 = src_tmp->image;
 		img_src8.convertTo(img_src, CV_64FC1);
 	} catch (cv_bridge::Exception &e) {
 		ROS_WARN_THROTTLE(10, "unable to parse image message");
@@ -252,7 +255,8 @@ void LineNodelet::ImageCallback(Image::ConstPtr const &msg_img,
 	PulseFilter(img_src, img_ver, m_kernel_ver, m_offset_ver, false);
 
 	PointCloudXYZ maxima;
-	NonMaxSupr(img_hor, img_ver, maxima);
+	cv::Mat maxima_mask;
+	NonMaxSupr(img_hor, img_ver, maxima, maxima_mask);
 
 	sensor_msgs::PointCloud2 msg_maxima;
 	pcl::toROSMsg(maxima, msg_maxima);
@@ -302,6 +306,18 @@ void LineNodelet::ImageCallback(Image::ConstPtr const &msg_img,
 		msg_filter_ver.encoding = enc::MONO8;
 		msg_filter_ver.image    = img_filter_ver;
 		m_pub_filter_ver.publish(msg_filter_ver.toImageMsg());
+
+		// Overlay the detected points over the original image.
+		cv::Mat img_maxima;
+		cv::cvtColor(img_src8, img_maxima, CV_GRAY2BGR);
+		img_maxima.setTo(cv::Scalar(0, 0, 255), maxima_mask);
+
+		cv_bridge::CvImage msg_maxima;
+		msg_maxima.header.stamp    = msg_img->header.stamp;
+		msg_maxima.header.frame_id = msg_img->header.frame_id;
+		msg_filter_ver.encoding = enc::BGR8;
+		msg_filter_ver.image    = img_maxima;
+		m_pub_maxima.publish(msg_maxima.toImageMsg());
 	}
 }
 
