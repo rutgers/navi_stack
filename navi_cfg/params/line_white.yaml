@@ -2,12 +2,13 @@
 train_path:  '/home/mckoval/line_train.arff'
 train_delim: ','
 train_true:  '255'
-kernel_size: 5
 
-svm_weight: 0.50
+win_width:   9
+win_height:  9
+kernel_size: 0
 
-window_width:  7
-window_height: 7
+bins_hue: 3
+bins_sat: 3
 
 # description of the line in PCA-space
 transform:

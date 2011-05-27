@@ -1,4 +1,4 @@
-inliers_min:   200
+inliers_min:   2000
 range_max:     5.00
 error_default: 0.20
 error_inlier:  0.05

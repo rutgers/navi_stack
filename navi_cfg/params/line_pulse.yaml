@@ -1,6 +1,6 @@
 thickness: 0.0762
 border:    0.1452
-threshold: 30
+threshold: 45
 cutoff:    3
 
 debug: false
