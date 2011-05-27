@@ -11,7 +11,6 @@
 #include <pcl/point_types.h>
 #include <message_filters/subscriber.h>
 #include <message_filters/time_synchronizer.h>
-#include <nodelet/nodelet.h>
 #include <image_geometry/pinhole_camera_model.h>
 #include <image_transport/image_transport.h>
 #include <sensor_msgs/CameraInfo.h>

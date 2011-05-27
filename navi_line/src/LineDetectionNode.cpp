@@ -8,8 +8,6 @@
 #include <ros/console.h>
 #include <cv_bridge/cv_bridge.h>
 #include <pcl_ros/point_cloud.h>
-#include <pluginlib/class_list_macros.h>
-#include <nodelet/nodelet.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <sensor_msgs/image_encodings.h>
 #include <tf/transform_datatypes.h>
