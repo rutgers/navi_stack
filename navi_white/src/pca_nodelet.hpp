@@ -32,12 +32,7 @@ private:
 	std::vector<float> m_weight;
 	std::vector<std::vector<float> > m_transforms;
 	int m_ker_size;
-
-	// for capstone demo using blue duck tape
-	bool m_use_blue;
-	int m_blue_hue;
-	int m_blue_sat;
-	int m_blue_val;
+	int m_min_value;
 };
 };
 #endif

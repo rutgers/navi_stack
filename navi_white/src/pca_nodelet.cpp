@@ -86,6 +86,9 @@ void PCANodelet::onInit(void)
 		m_weight.push_back(static_cast<double>(weight));
 	}
 
+	// Threshold for regions of low intensity (where H and S are undefined).
+	nh_priv.param<int>("value_min", m_min_value, 45.0);
+
 	// Subscribers and publishers.
 	m_it = boost::make_shared<image_transport::ImageTransport>(nh);
 	m_pub = m_it->advertise("white", 1);
@@ -132,6 +135,14 @@ void PCANodelet::FilterWhite(cv::Mat bgr_8u, cv::Mat &dst)
 	cv::Mat mono8;
 	cv::normalize(dst, mono8, 0, 255, cv::NORM_MINMAX, CV_8UC1);
 	dst = mono8;
+
+	// Eliminate regions of low value where hue and sat are undefined.
+	cv::Mat val_8u;
+	ch_hsv[2].convertTo(val_8u, CV_8UC1);
+
+	cv::Mat mask;
+	cv::threshold(val_8u, mask, m_min_value, 255, cv::THRESH_BINARY);
+	cv::min(dst, mask, dst);
 }
 
 void PCANodelet::Callback(sensor_msgs::Image::ConstPtr const &msg_img)
