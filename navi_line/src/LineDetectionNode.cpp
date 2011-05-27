@@ -254,15 +254,12 @@ void LineNodelet::ImageCallback(Image::ConstPtr const &msg_img,
 	PulseFilter(img_src, img_hor, m_kernel_hor, m_offset_hor, true);
 	PulseFilter(img_src, img_ver, m_kernel_ver, m_offset_ver, false);
 
-	PointCloudXYZ maxima;
+	PointCloudXYZ::Ptr maxima = boost::make_shared<PointCloudXYZ>();
 	cv::Mat maxima_mask;
-	NonMaxSupr(img_hor, img_ver, maxima, maxima_mask);
-
-	sensor_msgs::PointCloud2 msg_maxima;
-	pcl::toROSMsg(maxima, msg_maxima);
-	msg_maxima.header.stamp    = msg_img->header.stamp;
-	msg_maxima.header.frame_id = msg_img->header.frame_id;
-	m_pub_pts.publish(msg_maxima);
+	NonMaxSupr(img_hor, img_ver, *maxima, maxima_mask);
+	maxima->header.stamp    = msg_img->header.stamp;
+	maxima->header.frame_id = msg_img->header.frame_id;
+	m_pub_pts.publish(maxima);
 
 	if (m_debug) {
 		// Visualize the matched pulse width kernels.
@@ -315,8 +312,8 @@ void LineNodelet::ImageCallback(Image::ConstPtr const &msg_img,
 		cv_bridge::CvImage msg_maxima;
 		msg_maxima.header.stamp    = msg_img->header.stamp;
 		msg_maxima.header.frame_id = msg_img->header.frame_id;
-		msg_filter_ver.encoding = enc::BGR8;
-		msg_filter_ver.image    = img_maxima;
+		msg_maxima.encoding = enc::BGR8;
+		msg_maxima.image    = img_maxima;
 		m_pub_maxima.publish(msg_maxima.toImageMsg());
 	}
 }
