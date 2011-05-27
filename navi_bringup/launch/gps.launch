@@ -1,6 +1,6 @@
 <launch>
 	<node ns="gps" pkg="gpsd_client" type="gpsd_client" name="gpsd_client"/>
-	<node ns="gps" pkg="gps_commomn" type="utm_odometry_node" name="utm_odom_node">
+	<node ns="gps" pkg="gps_common" type="utm_odometry_node" name="utm_odom_node">
 		<param name="frame_id" value="base_link"/>
 	</node>
 </launch>

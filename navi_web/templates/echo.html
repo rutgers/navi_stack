@@ -1,0 +1,40 @@
+<html>
+	<head>
+		<script type="text/javascript" src="/media/js/jquery.min.js"></script>
+		<script type="text/javascript" src="/media/js/JSON-js/json2.js"></script>
+		<script type="text/javascript" src="/media/js/ros.js"></script>
+		<script type="text/javascript" src="/media/js/ros_widgets/ros_widgets.js"></script>
+      {% if debug_enabled %}
+		<script type="text/javascript" src="/media/js/debug.js"></script>
+	  {% else %}
+      <script type="text/javascript">
+		log = function(msg){};
+      </script>
+      {% endif %}
+      
+      <script type="text/javascript" src="/media/js/ros_widgets/topic_echo.js"></script>
+	  <script type="text/javascript" src="/media/js/ros_widgets/topics_display.js"></script>
+
+      <script type="text/javascript">
+		$(document).ready(function(){
+			ws_address = 'ws://' + '{{ HOST_ADDRESS }}' + ':' + '{{ WS_PORT}}'
+			try {
+				connection = new ros.Connection( ws_address);
+			} catch (err) {
+				log('Problem creating proxy connection object to' + ws_address);
+				log(err)
+				return;
+			}
+			log("rosbridge connection to " + ws_address )
+			
+			connection.setOnOpen(function(){
+				ros.setupWidgets(connection);
+			});
+			
+		});
+      </script>
+      </head>
+    <body>
+	<div 
+	</body>
+    </html>
