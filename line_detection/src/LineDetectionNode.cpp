@@ -24,8 +24,6 @@
 
 #include "LineDetectionNode.hpp"
 
-PLUGINLIB_DECLARE_CLASS(line_detection, line_nodelet, line_node::LineNodelet, nodelet::Nodelet)
-
 namespace line_node {
 
 cv::Point3d VectorROStoCv(geometry_msgs::Vector3 const &vec)
@@ -37,6 +35,22 @@ cv::Point3d PointROStoCv(geometry_msgs::Point const &pt)
 {
 	return cv::Point3d(pt.x, pt.y, pt.z);
 }
+
+// nodelet conversion
+LineNodelet::LineNodelet(void)
+	: nh_priv("~")
+{}
+
+ros::NodeHandle &LineNodelet::getNodeHandle(void)
+{
+	return nh;
+}
+
+ros::NodeHandle &LineNodelet::getPrivateNodeHandle(void)
+{
+	return nh_priv;
+}
+// nodelet conversion
 
 void LineNodelet::onInit(void)
 {
@@ -204,6 +218,8 @@ void LineNodelet::ImageCallback(Image::ConstPtr const &msg_img,
                                 Plane::ConstPtr const &msg_plane)
 {
 	namespace enc = sensor_msgs::image_encodings;
+
+	ROS_ERROR("callback");
 
 	// Transform msg_plane into the camera's coordinate frame.
 	Plane plane;
@@ -434,3 +450,12 @@ void LineNodelet::PulseFilter(cv::Mat src, cv::Mat &dst, cv::Mat ker,
 	}
 }
 };
+
+int main(int argc, char **argv)
+{
+	ros::init(argc, argv, "line_detection");
+	line_node::LineNodelet node;
+	node.onInit();
+	ros::spin();
+	return 0;
+}

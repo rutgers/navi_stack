@@ -39,9 +39,14 @@ using stereo_plane::Plane;
 typedef pcl::PointCloud<pcl::PointXYZ> PointCloudXYZ;
 typedef mf::sync_policies::ApproximateTime<Image, CameraInfo, Plane> Policy;
 
-class LineNodelet : public nodelet::Nodelet {
+class LineNodelet {
 public:
+	// nodelet conversion
+	LineNodelet(void);
+	ros::NodeHandle &getNodeHandle(void);
+	ros::NodeHandle &getPrivateNodeHandle(void);
 	virtual void onInit(void);
+	// nodelet conversion
 
 	void SetCutoffWidth(int  width);
 	void SetDeadWidth(double width);
@@ -89,6 +94,8 @@ protected:
 	struct Offset {
 		int neg, pos;
 	};
+
+	ros::NodeHandle nh, nh_priv;
 
 	void TransformPlane(Plane const &src, Plane &dst, std::string frame_id);
 
