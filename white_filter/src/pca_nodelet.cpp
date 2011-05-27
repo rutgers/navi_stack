@@ -12,9 +12,23 @@
 #include "csv.hpp"
 #include "pca_nodelet.hpp"
 
-PLUGINLIB_DECLARE_CLASS(white_filter, pca_nodelet, white_filter::PCANodelet, nodelet::Nodelet)
-
 namespace white_filter {
+
+// nodelet conversion
+PCANodelet::PCANodelet(void)
+	: nh_priv("~")
+{}
+
+ros::NodeHandle &PCANodelet::getNodeHandle(void)
+{
+	return nh;
+}
+
+ros::NodeHandle &PCANodelet::getPrivateNodeHandle(void)
+{
+	return nh_priv;
+}
+// nodelet conversion
 
 void PCANodelet::onInit(void)
 {
@@ -46,7 +60,7 @@ void PCANodelet::onInit(void)
 		}
 		m_transforms.push_back(coefs);
 	}
-	NODELET_INFO("loaded %d PCA dimensions from parameter server", (int)transforms.size());
+	ROS_INFO("loaded %d PCA dimensions from parameter server", (int)transforms.size());
 
 	// Load the line properties (in PCA-space) from the parameter server.
 	XmlRpc::XmlRpcValue center;
@@ -130,7 +144,7 @@ void PCANodelet::Callback(sensor_msgs::Image::ConstPtr const &msg_img)
 		cv_bridge::CvImageConstPtr src_tmp = cv_bridge::toCvShare(msg_img, enc::BGR8);
 		src = src_tmp->image;
 	} catch (cv_bridge::Exception const &e) {
-		NODELET_WARN_THROTTLE(10, "unable to parse image message");
+		ROS_WARN_THROTTLE(10, "unable to parse image message");
 		return;
 	}
 
@@ -152,3 +166,12 @@ void PCANodelet::Callback(sensor_msgs::Image::ConstPtr const &msg_img)
 }
 
 };
+
+int main(int argc, char **argv)
+{
+	ros::init(argc, argv, "pca_node");
+	white_filter::PCANodelet node;
+	node.onInit();
+	ros::spin();
+	return 0;
+}
