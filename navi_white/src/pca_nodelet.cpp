@@ -162,7 +162,7 @@ void PCANodelet::Callback(sensor_msgs::Image::ConstPtr const &msg_img)
 	// Blur to reduce the visibility of individual blades of grass.
 	cv::Mat src_blur;
 	if (m_ker_size > 1) {
-		cv::GaussianBlur(src, src_blur, cv::Size(m_ker_size, m_ker_size), 0.0);
+		cv::medianBlur(src, src_blur, m_ker_size);
 	} else {
 		src_blur = src;
 	}
