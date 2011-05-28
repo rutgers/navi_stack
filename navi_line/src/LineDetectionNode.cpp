@@ -66,6 +66,11 @@ void LineNodelet::onInit(void)
 	nh_priv.param<double>("border",    m_width_dead, 0.1452);
 	nh_priv.param<double>("thickness", m_width_line, 0.0726);
 
+	// Static ground plane.
+	nh_priv.param<bool>("cache", m_cache, false);
+	nh_priv.param<std::string>("frame_camera", m_fr_camera, "/camera_link");
+	nh_priv.param<std::string>("frame_ground", m_fr_ground, "/base_footprint");
+
 	m_tf      = boost::make_shared<tf::TransformListener>(nh, ros::Duration(1.0));
 	m_pub_pts = nh.advertise<PointCloudXYZ>("line_points", 10);
 
@@ -76,6 +81,20 @@ void LineNodelet::onInit(void)
 		m_pub_filter_hor = m_it->advertise("line_filter_hor", 10);
 		m_pub_filter_ver = m_it->advertise("line_filter_ver", 10);
 		m_pub_maxima     = m_it->advertise("line_maxima",     10);
+	}
+
+	// Use a static ground plane transform for computing the filter kernel.
+	if (m_cache) {
+		bool valid    = GetTFPlane(ros::Time(0), m_fr_camera, m_fr_ground, m_cache_plane);
+		m_cache_ready = false;
+
+		if (valid) {
+			ROS_INFO("loaded tf frame \"%s\" as static ground plane", m_fr_ground.c_str());
+		} else {
+			ROS_WARN("unable to load \"%s\" to \"%s\" transform as static ground plane; using dynamic ground plane",
+			         m_fr_ground.c_str(), m_fr_camera.c_str());
+			m_cache = false;
+		}
 	}
 
 	// FIXME: Memory leak!
@@ -116,12 +135,14 @@ void LineNodelet::SetInvert(bool invert) {
 
 void LineNodelet::SetGroundPlane(Plane plane)
 {
-	m_valid = m_valid && (plane.point.x == m_plane.point.x)
-	                  && (plane.point.y == m_plane.point.y)
-	                  && (plane.point.z == m_plane.point.z)
-	                  && (plane.normal.x == m_plane.normal.x)
-	                  && (plane.normal.y == m_plane.normal.y)
-	                  && (plane.normal.z == m_plane.normal.z);
+	bool is_same = (plane.point.x == m_plane.point.x)
+	            && (plane.point.y == m_plane.point.y)
+	            && (plane.point.z == m_plane.point.z)
+	            && (plane.normal.x == m_plane.normal.x)
+	            && (plane.normal.y == m_plane.normal.y)
+	            && (plane.normal.z == m_plane.normal.z);
+	bool is_cached = m_cache && m_cache_ready;
+	m_valid = m_valid && (is_cached || is_same);
 	m_plane = plane;
 }
 
@@ -166,7 +187,7 @@ void LineNodelet::NonMaxSupr(cv::Mat src_hor, cv::Mat src_ver, PointCloudXYZ &ds
 
 		// Found a line; project it into 3D using the ground plane.
 		if (is_hor || is_ver) {
-			cv::Point3d pt_3d = GetGroundPoint(cv::Point2d(x, y));
+			cv::Point3d pt_3d = GetGroundPoint(m_plane, cv::Point2d(x, y));
 			pt.x = pt_3d.x;
 			pt.y = pt_3d.y;
 			pt.z = pt_3d.z;
@@ -174,6 +195,41 @@ void LineNodelet::NonMaxSupr(cv::Mat src_hor, cv::Mat src_ver, PointCloudXYZ &ds
 			mask.at<uint8_t>(y, x) = 255;
 		}
 	}
+}
+
+bool LineNodelet::GetTFPlane(ros::Time stamp, std::string fr_fixed,
+                             std::string fr_ground, Plane &plane)
+{
+	geometry_msgs::PointStamped pt_gnd;
+	geometry_msgs::PointStamped pt_fix;
+	pt_gnd.header.frame_id = fr_ground;
+	pt_gnd.header.stamp    = stamp;
+	pt_gnd.point.x = 0.0;
+	pt_gnd.point.y = 0.0;
+	pt_gnd.point.z = 0.0;
+
+	geometry_msgs::Vector3Stamped vec_gnd;
+	geometry_msgs::Vector3Stamped vec_fix;
+	vec_gnd.header.frame_id = fr_ground;
+	vec_gnd.header.stamp    = stamp;
+	vec_gnd.vector.x = 0.0;
+	vec_gnd.vector.y = 0.0;
+	vec_gnd.vector.z = 1.0;
+
+	try {
+		m_tf->transformPoint(fr_fixed, pt_gnd, pt_fix);
+		m_tf->transformVector(fr_fixed, vec_gnd, vec_fix);
+	} catch (tf::TransformException const &e) {
+		return false;
+	}
+
+	plane.point.x = pt_fix.point.x;
+	plane.point.y = pt_fix.point.y;
+	plane.point.z = pt_fix.point.z;
+	plane.normal.x = vec_fix.vector.x;
+	plane.normal.y = vec_fix.vector.y;
+	plane.normal.z = vec_fix.vector.z;
+	return true;
 }
 
 void LineNodelet::UpdateCache(void)
@@ -185,10 +241,15 @@ void LineNodelet::UpdateCache(void)
 	ROS_ASSERT(m_width_dead > 0.0);
 	ROS_ASSERT(m_width_cutoff > 0);
 
+	// Rebuild the static transform instead of the dynamic transform if caching
+	// is enabled.
+	Plane &plane  = (m_cache) ? m_cache_plane : m_plane;
+	m_cache_ready = true;
+
 	if (!m_valid) {
 		// TODO: Switch to the actual vertical kernel.
-		m_horizon_hor = GeneratePulseFilter(dhor, m_kernel_hor, m_offset_hor);
-		m_horizon_ver = GeneratePulseFilter(dhor, m_kernel_ver, m_offset_ver);
+		m_horizon_hor = GeneratePulseFilter(plane, dhor, m_kernel_hor, m_offset_hor);
+		m_horizon_ver = GeneratePulseFilter(plane, dhor, m_kernel_ver, m_offset_ver);
 		//m_horizon_ver = GeneratePulseFilter(dver, m_kernel_ver, m_offset_ver);
 	}
 	m_valid = true;
@@ -324,18 +385,18 @@ void LineNodelet::ImageCallback(Image::ConstPtr const &msg_img,
 	}
 }
 
-cv::Point3d LineNodelet::GetGroundPoint(cv::Point2d pt)
+cv::Point3d LineNodelet::GetGroundPoint(Plane const &plane, cv::Point2d pt)
 {
 	cv::Point3d ray     = m_model.projectPixelTo3dRay(pt);
-	cv::Point3d normal = VectorROStoCv(m_plane.normal);
-	cv::Point3d plane  = PointROStoCv(m_plane.point);
-	return (plane.dot(normal) / ray.dot(normal)) * ray;
+	cv::Point3d normal = VectorROStoCv(plane.normal);
+	cv::Point3d point  = PointROStoCv(plane.point);
+	return (point.dot(normal) / ray.dot(normal)) * ray;
 }
 
-double LineNodelet::ProjectDistance(cv::Point2d pt, cv::Point3d offset)
+double LineNodelet::ProjectDistance(Plane const &plane, cv::Point2d pt, cv::Point3d offset)
 {
 	// Project the expected edge points back into the image.
-	cv::Point3d P = GetGroundPoint(pt);
+	cv::Point3d P = GetGroundPoint(plane, pt);
 	cv::Point2d p1 = m_model.project3dToPixel(P);
 	cv::Point2d p2 = m_model.project3dToPixel(P + offset);
 
@@ -344,16 +405,17 @@ double LineNodelet::ProjectDistance(cv::Point2d pt, cv::Point3d offset)
 	return sqrt(diff.dot(diff));
 }
 
-double LineNodelet::ReprojectDistance(cv::Point2d pt, cv::Point2d offset)
+double LineNodelet::ReprojectDistance(Plane const &plane, cv::Point2d pt, cv::Point2d offset)
 {
-	cv::Point3d P1 = GetGroundPoint(pt);
-	cv::Point3d P2 = GetGroundPoint(pt + offset);
+	cv::Point3d P1 = GetGroundPoint(plane, pt);
+	cv::Point3d P2 = GetGroundPoint(plane, pt + offset);
 
 	cv::Point3d diff = P2 - P1;
 	return sqrt(diff.dot(diff));
 }
 
-int LineNodelet::GeneratePulseFilter(cv::Point3d dw, cv::Mat &kernel, std::vector<Offset> &offsets)
+int LineNodelet::GeneratePulseFilter(Plane const &plane, cv::Point3d dw, cv::Mat &kernel,
+                                     std::vector<Offset> &offsets)
 {
 	static Offset const offset_template = { 0, 0 };
 
@@ -372,8 +434,8 @@ int LineNodelet::GeneratePulseFilter(cv::Point3d dw, cv::Mat &kernel, std::vecto
 
 	for (int r = m_rows - 1; r >= 0; --r) {
 		cv::Point2d middle(m_cols / 2, r);
-		int offs_line_neg = ProjectDistance(middle, -0.5 * m_width_line * dw);
-		int offs_line_pos = ProjectDistance(middle, +0.5 * m_width_line * dw);
+		int offs_line_neg = ProjectDistance(plane, middle, -0.5 * m_width_line * dw);
+		int offs_line_pos = ProjectDistance(plane, middle, +0.5 * m_width_line * dw);
 		int offs_both_neg = m_width_dead * offs_line_neg / m_width_line;
 		int offs_both_pos = m_width_dead * offs_line_pos / m_width_line;
 

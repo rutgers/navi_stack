@@ -100,12 +100,14 @@ protected:
 
 	void TransformPlane(Plane const &src, Plane &dst, std::string frame_id);
 
-	cv::Point3d GetGroundPoint(cv::Point2d pt);
-	double ProjectDistance(cv::Point2d pt, cv::Point3d offset);
-	double ReprojectDistance(cv::Point2d pt, cv::Point2d offset);
-	int GeneratePulseFilter(cv::Point3d dw, cv::Mat &kernel, std::vector<Offset> &offsets);
+	cv::Point3d GetGroundPoint(Plane const &plane, cv::Point2d pt);
+	double ProjectDistance(Plane const &plane, cv::Point2d pt, cv::Point3d offset);
+	double ReprojectDistance(Plane const &plane, cv::Point2d pt, cv::Point2d offset);
+	int GeneratePulseFilter(Plane const &plane, cv::Point3d dw, cv::Mat &kernel, std::vector<Offset> &offsets);
 	void PulseFilter(cv::Mat src, cv::Mat &dst, cv::Mat kernel,
 	                 std::vector<Offset> const &offsets, bool horizontal);
+	bool GetTFPlane(ros::Time stamp, std::string fr_fixed, std::string fr_ground, Plane &plane);
+
 private:
 	bool m_debug;
 	bool m_invert;
@@ -119,6 +121,13 @@ private:
 	int    m_width_cutoff;
 	int m_threshold;
 	stereo_plane::Plane m_plane;
+
+	// static ground plane
+	bool m_cache;
+	bool m_cache_ready;
+	Plane m_cache_plane;
+	std::string m_fr_camera;
+	std::string m_fr_ground;
 
 	int                 m_horizon_ver, m_horizon_hor;
 	cv::Mat             m_kernel_ver,  m_kernel_hor;
