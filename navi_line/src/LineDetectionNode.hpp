@@ -69,6 +69,8 @@ public:
 	 */
 	void MatchedFilter(cv::Mat src, cv::Mat &dst_hor, cv::Mat &dst_ver);
 
+	void BlurFilter(cv::Mat src, cv::Mat dst, int width, bool horizontal);
+
 	/**
 	 * Apply non-maximal supression to the output of the matched pulse-width
 	 * filter to reduce the amount of data.
@@ -110,6 +112,7 @@ private:
 	bool m_valid;
 	int m_rows;
 	int m_cols;
+	int m_blur_size;
 	size_t m_num_prev;
 	double m_width_dead;
 	double m_width_line;

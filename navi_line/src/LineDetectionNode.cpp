@@ -62,6 +62,7 @@ void LineNodelet::onInit(void)
 	nh_priv.param<bool>("debug", m_debug, false);
 	nh_priv.param<int>("cutoff",    m_width_cutoff, 2);
 	nh_priv.param<int>("threshold", m_threshold,    30);
+	nh_priv.param<int>("blur_size", m_blur_size,    5);
 	nh_priv.param<double>("border",    m_width_dead, 0.1452);
 	nh_priv.param<double>("thickness", m_width_line, 0.0726);
 
@@ -254,6 +255,11 @@ void LineNodelet::ImageCallback(Image::ConstPtr const &msg_img,
 	PulseFilter(img_src, img_hor, m_kernel_hor, m_offset_hor, true);
 	PulseFilter(img_src, img_ver, m_kernel_ver, m_offset_ver, false);
 
+	if (m_blur_size > 1) {
+		BlurFilter(img_hor, img_hor, m_blur_size, false);
+		BlurFilter(img_ver, img_ver, m_blur_size, true);
+	}
+
 	PointCloudXYZ::Ptr maxima = boost::make_shared<PointCloudXYZ>();
 	cv::Mat maxima_mask;
 	NonMaxSupr(img_hor, img_ver, *maxima, maxima_mask);
@@ -285,7 +291,7 @@ void LineNodelet::ImageCallback(Image::ConstPtr const &msg_img,
 
 		// Visualize the raw filter responses.
 		cv::Mat img_filter_hor;
-		cv::normalize(img_hor, img_filter_hor, 0, 255, CV_MINMAX, CV_8UC1);
+		img_hor.convertTo(img_filter_hor, CV_8UC1);
 
 		cv_bridge::CvImage msg_filter_hor;
 		msg_filter_hor.header.stamp    = msg_img->header.stamp;
@@ -295,7 +301,7 @@ void LineNodelet::ImageCallback(Image::ConstPtr const &msg_img,
 		m_pub_filter_hor.publish(msg_filter_hor.toImageMsg());
 
 		cv::Mat img_filter_ver;
-		cv::normalize(img_ver, img_filter_ver, 0, 255, CV_MINMAX, CV_8UC1);
+		img_ver.convertTo(img_filter_ver, CV_8UC1);
 
 		cv_bridge::CvImage msg_filter_ver;
 		msg_filter_ver.header.stamp    = msg_img->header.stamp;
@@ -368,8 +374,8 @@ int LineNodelet::GeneratePulseFilter(cv::Point3d dw, cv::Mat &kernel, std::vecto
 		cv::Point2d middle(m_cols / 2, r);
 		int offs_line_neg = ProjectDistance(middle, -0.5 * m_width_line * dw);
 		int offs_line_pos = ProjectDistance(middle, +0.5 * m_width_line * dw);
-		int offs_both_neg = ProjectDistance(middle, -0.5 * (m_width_line + 2.0 * m_width_dead) * dw);
-		int offs_both_pos = ProjectDistance(middle, +0.5 * (m_width_line + 2.0 * m_width_dead) * dw);
+		int offs_both_neg = m_width_dead * offs_line_neg / m_width_line;
+		int offs_both_pos = m_width_dead * offs_line_pos / m_width_line;
 
 		int width_line = offs_line_neg + offs_line_pos;
 		int width_both = offs_both_neg + offs_both_pos;
@@ -464,10 +470,22 @@ void LineNodelet::PulseFilter(cv::Mat src, cv::Mat &dst, cv::Mat ker,
 				}
 			}
 
-			dst.at<double>(r, c) = src_chunk.dot(ker_chunk);
+			double value = src_chunk.dot(ker_chunk);
+			if (value >= m_threshold) {
+				dst.at<double>(r, c) = value;
+			} else {
+				dst.at<double>(r, c) = 0;
+			}
 		}
 	}
 }
+
+void LineNodelet::BlurFilter(cv::Mat src, cv::Mat dst, int width, bool horizontal)
+{
+	cv::Size size = (horizontal) ? cv::Size(width, 1) : cv::Size(1, width);
+	cv::boxFilter(src, dst, CV_64FC1, size);
+}
+
 };
 
 int main(int argc, char **argv)
