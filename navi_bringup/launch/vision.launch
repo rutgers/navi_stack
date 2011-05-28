@@ -1,9 +1,6 @@
 <launch>
 	<group ns="vision">
 		<!-- Stereo Reconstruction -->
-		<node pkg="stereo_mux" type="mux_node" name="stereo_mux">
-			<rosparam command="load" file="$(find navi_cfg)/params/camera_mux.yaml"/>
-		</node>
 		<node pkg="stereo_image_proc" type="stereo_image_proc" name="narrow_proc" ns="narrow">
 			<remap from="stereo"          to="narrow"/>
 			<remap from="left/image_raw"  to="left/image"/>
@@ -16,36 +13,42 @@
 		</node>
 
 		<!-- Stereo Obstacle Detection -->
-		<node pkg="stereo_plane" type="ground_node" name="stereo_ground"
-		      args="stereo_plane/ground_nodelet">
+		<node pkg="stereo_plane" type="ground_node" name="stereo_ground">
 			<rosparam command="load" file="$(find navi_cfg)/params/stereo_ground.yaml"/>
+			<remap from="points" to="narrow/points2"/>
 		</node>
-		<!--
 		<node pkg="stereo_od" type="od_node" name="stereo_od">
 			<rosparam command="load" file="$(find navi_cfg)/params/stereo_od.yaml"/>
 			<remap from="points"      to="narrow/points2"/>
 			<remap from="camera_info" to="narrow/left/camera_info"/>
 		</node>
-		-->
 
 		<!-- Colorspace Transformation -->
 		<node pkg="navi_white" type="pca_node" name="white_left" ns="wheel/left">
 			<rosparam command="load" file="$(find navi_cfg)/params/line_white.yaml"/>
 		</node>
-		<!--
 		<node pkg="navi_white" type="pca_node" name="white_right" ns="wheel/right">
 			<rosparam command="load" file="$(find navi_cfg)/params/line_white.yaml"/>
 		</node>
-		<node pkg="navi_white" type="pca_node" name="white_middle" ns="narrow/right">
+		<node pkg="navi_white" type="pca_node" name="white_middle" ns="narrow/left">
 			<rosparam command="load" file="$(find navi_cfg)/params/line_white.yaml"/>
 		</node>
-		-->
 
 		<!-- Matched Pulse-Width Filter -->
 		<node pkg="navi_line" type="line_node" name="pulse_left" ns="wheel/left">
 			<rosparam command="load" file="$(find navi_cfg)/params/line_pulse.yaml"/>
 			<remap from="ground_plane" to="/vision/ground_plane"/>
 			<param name="frame_camera" value="/wheel_left_camera_link"/>
+		</node>
+		<node pkg="navi_line" type="line_node" name="pulse_right" ns="wheel/right">
+			<rosparam command="load" file="$(find navi_cfg)/params/line_pulse.yaml"/>
+			<remap from="ground_plane" to="/vision/ground_plane"/>
+			<param name="frame_camera" value="/wheel_right_camera_link"/>
+		</node>
+		<node pkg="navi_line" type="line_node" name="pulse_middle" ns="narrow/left">
+			<rosparam command="load" file="$(find navi_cfg)/params/line_pulse.yaml"/>
+			<remap from="ground_plane" to="/vision/ground_plane"/>
+			<param name="frame_camera" value="/camera_link"/>
 		</node>
 
 		<!-- Line Fusion and Outlier Detection -->
