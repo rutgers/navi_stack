@@ -70,6 +70,7 @@ void LineNodelet::onInit(void)
 	nh_priv.param<bool>("cache", m_cache, false);
 	nh_priv.param<std::string>("frame_camera", m_fr_camera, "/camera_link");
 	nh_priv.param<std::string>("frame_ground", m_fr_ground, "/base_footprint");
+	m_cache_ready = false;
 
 	m_tf      = boost::make_shared<tf::TransformListener>(nh, ros::Duration(1.0));
 	m_pub_pts = nh.advertise<PointCloudXYZ>("line_points", 10);
@@ -81,20 +82,6 @@ void LineNodelet::onInit(void)
 		m_pub_filter_hor = m_it->advertise("line_filter_hor", 10);
 		m_pub_filter_ver = m_it->advertise("line_filter_ver", 10);
 		m_pub_maxima     = m_it->advertise("line_maxima",     10);
-	}
-
-	// Use a static ground plane transform for computing the filter kernel.
-	if (m_cache) {
-		bool valid    = GetTFPlane(ros::Time(0), m_fr_camera, m_fr_ground, m_cache_plane);
-		m_cache_ready = false;
-
-		if (valid) {
-			ROS_INFO("loaded tf frame \"%s\" as static ground plane", m_fr_ground.c_str());
-		} else {
-			ROS_WARN("unable to load \"%s\" to \"%s\" transform as static ground plane; using dynamic ground plane",
-			         m_fr_ground.c_str(), m_fr_camera.c_str());
-			m_cache = false;
-		}
 	}
 
 	// FIXME: Memory leak!
@@ -243,13 +230,30 @@ void LineNodelet::UpdateCache(void)
 
 	// Rebuild the static transform instead of the dynamic transform if caching
 	// is enabled.
-	Plane &plane  = (m_cache) ? m_cache_plane : m_plane;
-	m_cache_ready = true;
+	Plane *plane;
+
+	// Use a static ground plane transform for computing the filter kernel.
+	if (m_cache && m_cache_ready) {
+		return;
+	} else if (m_cache && !m_cache_ready) {
+		plane = &m_cache_plane;
+		m_cache_ready = true;
+
+		bool valid = false;
+		while (!valid) {
+			valid = GetTFPlane(ros::Time(0), m_fr_camera, m_fr_ground, m_cache_plane);
+			ROS_WARN_THROTTLE(10, "unable to load \"%s\" to \"%s\" transform as static ground plane",
+			                  m_fr_ground.c_str(), m_fr_camera.c_str());
+		}
+		ROS_INFO("loaded static ground plane transform");
+	} else {
+		plane = &m_plane;
+	}
 
 	if (!m_valid) {
 		// TODO: Switch to the actual vertical kernel.
-		m_horizon_hor = GeneratePulseFilter(plane, dhor, m_kernel_hor, m_offset_hor);
-		m_horizon_ver = GeneratePulseFilter(plane, dhor, m_kernel_ver, m_offset_ver);
+		m_horizon_hor = GeneratePulseFilter(*plane, dhor, m_kernel_hor, m_offset_hor);
+		m_horizon_ver = GeneratePulseFilter(*plane, dhor, m_kernel_ver, m_offset_ver);
 		//m_horizon_ver = GeneratePulseFilter(dver, m_kernel_ver, m_offset_ver);
 	}
 	m_valid = true;
