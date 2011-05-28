@@ -25,3 +25,6 @@ rosbuild_add_executable(pca_node
 	src/pca_nodelet.cpp
 	src/csv.cpp
 )
+rosbuild_add_executable(hack_node
+	src/hack_node.cpp
+)
