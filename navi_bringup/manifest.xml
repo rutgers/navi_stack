@@ -13,10 +13,10 @@
   <depend package="gpsd_client"/>
 
   <!-- vision -->
+  <depend package="navi_mux"/>
   <depend package="navi_line"/>
   <depend package="navi_white"/>
   <depend package="line_tracking"/>
-  <depend package="stereo_mux"/>
   <depend package="stereo_od"/>
   <depend package="stereo_webcam"/>
 

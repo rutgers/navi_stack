@@ -14,7 +14,7 @@
 			<remap from="camera0" to="wheel/left"/>
 			<remap from="camera1" to="wheel/right"/>
 		</node>
-		<node pkg="stereo_mux" type="mux_node" name="stereo_mux">
+		<node pkg="navi_mux" type="image_mux_node" name="stereo_mux">
 			<rosparam command="load" file="$(find navi_cfg)/params/camera_mux.yaml"/>
 		</node>
 	</group>
