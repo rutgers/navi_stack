@@ -22,6 +22,7 @@ public:
 private:
 	ros::NodeHandle nh, nh_priv;
 	int m_threshold;
+	bool m_gazebo;
 
 	boost::shared_ptr<image_transport::ImageTransport> m_it;
 	image_transport::Subscriber m_sub;

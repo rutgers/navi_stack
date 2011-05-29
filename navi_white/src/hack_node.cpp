@@ -35,6 +35,12 @@ void HackNodelet::onInit(void)
 	ros::NodeHandle &nh      = getNodeHandle();
 	ros::NodeHandle &nh_priv = getPrivateNodeHandle();
 
+	nh.param<bool>("/gazebo", m_gazebo, false);
+	if (m_gazebo) {
+		ROS_WARN("using Gazebo-specific whitenes filter");
+	}
+
+
 	nh_priv.param<int>("threshold", m_threshold, -255);
 
 	m_it = boost::make_shared<image_transport::ImageTransport>(nh);
@@ -56,21 +62,26 @@ void HackNodelet::Callback(sensor_msgs::Image::ConstPtr const &msg_img)
 		return;
 	}
 
-	// Intermediate results are in the range [-512,+512].
-	cv::Mat src_16s;
-	src_8u.convertTo(src_16s, CV_16SC3);
-
-	// Hack color-space transformation that seemingly works. Don't know/care why.
-	std::vector<cv::Mat> channels;
-	cv::split(src_16s, channels);
-	cv::Mat &b = channels[0];
-	cv::Mat &g = channels[1];
-	cv::Mat &r = channels[2];
-	cv::Mat dst_16s = 2*b - g - r;
-
-	// Back to 8-bit for publishing.
 	cv::Mat dst_8u;
-	dst_16s.convertTo(dst_8u, CV_8UC1, 0.50, 0);
+	if (m_gazebo) {
+		cv::cvtColor(src_8u, dst_8u, CV_BGR2GRAY);
+		cv::threshold(dst_8u, dst_8u, 150, 255, cv::THRESH_TOZERO);
+	} else {
+		// Intermediate results are in the range [-512,+512].
+		cv::Mat src_16s;
+		src_8u.convertTo(src_16s, CV_16SC3);
+
+		// Hack color-space transformation that seemingly works. Don't know/care why.
+		std::vector<cv::Mat> channels;
+		cv::split(src_16s, channels);
+		cv::Mat &b = channels[0];
+		cv::Mat &g = channels[1];
+		cv::Mat &r = channels[2];
+		cv::Mat dst_16s = 2*b - g - r;
+
+		// Back to 8-bit for publishing.
+		dst_16s.convertTo(dst_8u, CV_8UC1, 0.50, 0);
+	}
 
 	// Convert the OpenCV data to an output message without copying.
 	cv_bridge::CvImage msg_white;
