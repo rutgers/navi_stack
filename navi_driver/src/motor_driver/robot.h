@@ -30,6 +30,7 @@ struct wheel
 			int velCM;   // current velocity counts
 			int error;
 			int errorp;
+			int errorT;
 			char blacklashFlag;// Use for backlash control
 			int pwmPeriod;
 
