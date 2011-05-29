@@ -1,18 +1,30 @@
 #include <pcl/filters/statistical_outlier_removal.h>
 #include <pcl_ros/point_cloud.h>
 #include <pcl_ros/transforms.h>
-#include <pluginlib/class_list_macros.h>
 #include <message_filters/subscriber.h>
 #include <message_filters/synchronizer.h>
 #include <message_filters/sync_policies/approximate_time.h>
-#include <nodelet/nodelet.h>
 #include <tf/transform_listener.h>
 
 #include "line_mux.hpp"
 
-PLUGINLIB_DECLARE_CLASS(line_tracking, mux_nodelet, line_tracking::MuxNodelet, nodelet::Nodelet)
-
 namespace line_tracking {
+
+// Nodelet Conversion
+MuxNodelet::MuxNodelet(void)
+	: nh_priv("~")
+{}
+
+ros::NodeHandle &MuxNodelet::getNodeHandle(void)
+{
+	return nh;
+}
+
+ros::NodeHandle &MuxNodelet::getPrivateNodeHandle(void)
+{
+	return nh_priv;
+}
+// Nodelet Conversion
 
 void MuxNodelet::onInit(void)
 {
@@ -60,7 +72,7 @@ void MuxNodelet::Callback(PointCloudXYZ::ConstPtr const &pc1,
 			m_tf->waitForTransform(m_fr_fixed, pc->header.frame_id, pc->header.stamp, ros::Duration(m_cache_time));
 			pcl_ros::transformPointCloud(m_fr_fixed, *pc, *pc_fixed, *m_tf);
 		} catch (tf::TransformException const &e) {
-			NODELET_ERROR("%s", e.what());
+			ROS_ERROR("%s", e.what());
 			return;
 		}
 		merged->points.insert(merged->points.end(), pc_fixed->points.begin(), pc_fixed->points.end());
@@ -76,5 +88,13 @@ void MuxNodelet::Callback(PointCloudXYZ::ConstPtr const &pc1,
 
 	m_pub.publish(filtered);
 }
-
 };
+
+int main(int argc, char **argv)
+{
+	ros::init(argc, argv, "line_mux");
+	line_tracking::MuxNodelet node;
+	node.onInit();
+	ros::spin();
+	return 0;
+}

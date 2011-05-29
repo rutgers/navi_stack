@@ -15,3 +15,4 @@ set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 
 rosbuild_add_executable(line_node src/LineDetectionNode.cpp)
+rosbuild_add_executable(mux_node  src/line_mux.cpp)
