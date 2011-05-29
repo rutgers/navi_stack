@@ -46,11 +46,9 @@
 		</node>
 
 		<!-- Line Fusion and Outlier Detection -->
-		<!--
-		<node pkg="navi_nodelet" type="nodelet" name="line_mux"
-		      args="line_tracking/mux_nodelet">
+		<node pkg="navi_line" type="mux_node" name="line_mux">
 			<rosparam command="load" file="$(find navi_cfg)/params/line_mux.yaml"/>
-			<remap from="line_points1" to="narrow/right/line_points"/>
+			<remap from="line_points1" to="narrow/left/line_points"/>
 			<remap from="line_points2" to="wheel/left/line_points"/>
 			<remap from="line_points3" to="wheel/right/line_points"/>
 		</node>
