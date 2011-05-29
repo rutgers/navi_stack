@@ -6,6 +6,8 @@ KERNEL=="ttyUSB[0-9]*", ATTRS{product}=="FT232R USB UART", ATTRS{serial}=="A600e
 
 KERNEL=="ttyUSB[0-9]*", ATTRS{product}=="FT232R USB UART", ATTRS{serial}=="A600dSBw", SYMLINK+="imu" 
 
+#blinkm
+KERNEL=="ttyUSB[0-9]*", ATTRS{product}=="FT232R USB UART", ATTRS{serial}=="A700ekPn", SYMLINK+="blinkm"
 
 
 # stereo cameras
