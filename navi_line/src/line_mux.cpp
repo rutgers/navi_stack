@@ -80,12 +80,16 @@ void MuxNodelet::Callback(PointCloudXYZ::ConstPtr const &pc1,
 
 	// Statistical Outlier Detection (SOD) filter.
 	PointCloudXYZ::Ptr filtered = boost::make_shared<PointCloudXYZ>();
-	pcl::StatisticalOutlierRemoval<pcl::PointXYZ> sor;
-	sor.setInputCloud(merged);
-	sor.setMeanK(m_sod_mean);
-	sor.setStddevMulThresh(m_sod_stddev);
-	sor.filter(*filtered);
+	filtered->header.frame_id = m_fr_fixed;
+	filtered->header.stamp    = pc1->header.stamp;
 
+	if (merged->points.size() > 0) {
+		pcl::StatisticalOutlierRemoval<pcl::PointXYZ> sor;
+		sor.setInputCloud(merged);
+		sor.setMeanK(m_sod_mean);
+		sor.setStddevMulThresh(m_sod_stddev);
+		sor.filter(*filtered);
+	}
 	m_pub.publish(filtered);
 }
 };
