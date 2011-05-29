@@ -1,28 +1,29 @@
 <package>
-  <description brief="navi_bringup">
-
-     navi_bringup
-
+  <description brief="launch files for the Rutgers Navigator">
+    Launch files for the Rutgers Navigator.
   </description>
   <author>asher</author>
   <license>BSD</license>
   <review status="unreviewed" notes=""/>
-  <url>http://ros.org/wiki/navi_bringup</url>
-  <depend package="navi_model"/>
-  <depend package="navi_driver"/>
+
+  <!-- hardware -->
+  <depend package="imu_9drazor"/>
+  <depend package="hokuyo_node"/>
   <depend package="gps_common"/>
   <depend package="gpsd_client"/>
-  <depend package="line_detection"/>
-  <depend package="stereo_mux"/>
-  <depend package="stereo_webcam"/>
+
+  <!-- vision -->
+  <depend package="camera_calibration"/>
+  <depend package="camera_pose_calibration"/>
+  <depend package="navi_mux"/>
+  <depend package="navi_line"/>
+  <depend package="navi_white"/>
   <depend package="stereo_od"/>
-  <depend package="white_filter"/>
+  <depend package="stereo_webcam"/>
+
+  <!-- misc -->
+  <depend package="navi_model"/>
+  <depend package="navi_driver"/>
   <depend package="navi_teleop"/>
   <depend package="navi_executive"/>
-  <depend package="line_tracking"/>
-  <depend package="imu_9drazor"/>
-  
-  
 </package>
-
-

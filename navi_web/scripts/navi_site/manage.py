@@ -7,6 +7,8 @@ import sys
 [ sys.stdout.write(' '+ arg) for arg in sys.argv]
 
 sys.argv = sys.argv[0:2]
+sys.argv.append('192.168.233.2:8080')
+
 
 from django.core.management import execute_manager
 try:

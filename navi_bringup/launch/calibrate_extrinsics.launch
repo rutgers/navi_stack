@@ -1,25 +1,26 @@
 <launch>
-	<arg name="cam"/>    <!-- monocular camera (e.g. wheel_left or wheel_right) -->
+	<arg name="cam1"/>
+	<arg name="cam2"/>
 	<arg name="rows"   default="8"/>     <!-- number of chessboard rows -->
 	<arg name="cols"   default="6"/>     <!-- number of chessboard columns -->
 	<arg name="square" default="0.0254"/> <!-- length of a side of one square on the calibration chessboard -->
 
-	<include file="$(find navi_bringup)/launch/hardware.launch"/>
-
-	<group ns="vision">
-		<node type="image_proc" pkg="image_proc" name="image_proc1" ns="left">
-			<remap from="image_raw" to="image"/>
-		</node>
-		<node type="image_proc" pkg="image_proc" name="image_proc2" ns="$(arg cam)">
-			<remap from="image_raw" to="image"/>
-		</node>
-	</group>
+	<node type="image_proc" pkg="image_proc" name="image_proc1" ns="$(arg cam1)">
+		<remap from="image_raw" to="image"/>
+	</node>
+	<node type="image_proc" pkg="image_proc" name="image_proc2" ns="$(arg cam2)">
+		<remap from="image_raw" to="image"/>
+	</node>
 
 	<include file="$(find camera_pose_calibration)/launch_extrinsics/calibrate_2_camera.launch">
-		<arg name="camera1_ns" value="vision/left"/>
-		<arg name="camera2_ns" value="vision/$(arg cam)"/>
+		<arg name="camera1_ns" value="$(arg cam1)"/>
+		<arg name="camera2_ns" value="$(arg cam2)"/>
 		<arg name="checker_rows" value="$(arg rows)"/>
 		<arg name="checker_cols" value="$(arg cols)"/>
 		<arg name="checker_size" value="$(arg square)"/>
+	</include>
+
+	<include file="$(find camera_pose_calibration)/blocks/calibration_tf_publisher.launch">
+		<arg name="cache_file" value="$(find navi_cfg)/calibration/extrinsics.bag"/>
 	</include>
 </launch>

@@ -1,7 +1,0 @@
-<library path="lib/libground_nodelet">
-	<class name="stereo_plane/ground_nodelet"
-	       type="stereo_plane::GroundNodelet"
-	       base_class_type="nodelet::Nodelet">
-		<description>Use RANSAC to fit the ground plane to a stereo point cloud.</description>
-	</class>
-</library>

@@ -4,6 +4,9 @@ KERNEL=="ttyUSB[0-9]*", ATTRS{product}=="FT232R USB UART", ATTRS{serial}=="A700e
 #imu
 KERNEL=="ttyUSB[0-9]*", ATTRS{product}=="FT232R USB UART", ATTRS{serial}=="A600e10y", SYMLINK+="imu"
 
+KERNEL=="ttyUSB[0-9]*", ATTRS{product}=="FT232R USB UART", ATTRS{serial}=="A600dSBw", SYMLINK+="imu" 
+
+
 
 # stereo cameras
 SUBSYSTEM=="video4linux", ATTRS{idVendor}=="1415", ATTRS{idProduct}=="2000", DEVPATH=="*usb9/9-3/9-3.1*", SYMLINK="video_stereo_left"
