@@ -19,9 +19,22 @@
 
 typedef pcl::PointCloud<pcl::PointXYZ> PointCloudXYZ;
 
-PLUGINLIB_DECLARE_CLASS(stereo_plane, ground_nodelet, stereo_plane::GroundNodelet, nodelet::Nodelet)
-
 namespace stereo_plane {
+// nodelet conversion
+GroundNodelet::GroundNodelet(void)
+	: nh_priv("~")
+{}
+
+ros::NodeHandle &GroundNodelet::getNodeHandle(void)
+{
+	return nh;
+}
+
+ros::NodeHandle &GroundNodelet::getPrivateNodeHandle(void)
+{
+	return nh_priv;
+}
+// nodelet conversion
 
 void GroundNodelet::onInit(void)
 {
@@ -62,7 +75,7 @@ void GroundNodelet::Callback(pcl::PointCloud<pcl::PointXYZ>::ConstPtr const &msg
 	try {
 		valid_def = GetTFPlane(msg_stamp, m_fr_fixed, m_fr_default, *plane_def);
 	} catch (tf::TransformException const &e) {
-		NODELET_WARN("%s", e.what());
+		ROS_WARN("%s", e.what());
 		return;
 	}
 
@@ -279,3 +292,12 @@ double GroundNodelet::GetPlaneAngle(Plane const &pt1, Plane const &pt2)
 }
 
 };
+
+int main(int argc, char **argv)
+{
+	ros::init(argc, argv, "ground_node");
+	stereo_plane::GroundNodelet node;
+	node.onInit();
+	ros::spin();
+	return 0;
+}
