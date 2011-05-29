@@ -13,6 +13,8 @@
   <depend package="gpsd_client"/>
 
   <!-- vision -->
+  <depend package="camera_calibration"/>
+  <depend package="camera_pose_calibration"/>
   <depend package="navi_mux"/>
   <depend package="navi_line"/>
   <depend package="navi_white"/>
