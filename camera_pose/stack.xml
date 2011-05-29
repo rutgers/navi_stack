@@ -1,0 +1,18 @@
+<stack>
+  <description brief="Camera Estimatino">
+    This stack contains a set of tools to work with multiple rgb
+    camera's simultaneoulsy.
+  </description>
+  <author>Vijay Pradeep, Wim Meeussen</author>
+  <license>BSD</license>  
+  <review status="Unreviewed" notes=""/>
+  <url>http://ros.org/wiki/camera_pose</url>
+  <depend stack="common_msgs" /> <!-- sensor_msgs, geometry_msgs -->
+  <depend stack="geometry" /> <!-- kdl, tf_conversions -->
+  <depend stack="geometry_experimental" /> <!-- tf2_kdl, tf2_ros -->
+  <depend stack="pr2_calibration" /> <!-- interval_intersection, monocam_settler, image_cb_detector, calibration_msgs, joint_states_settler -->
+  <depend stack="ros" />
+  <depend stack="ros_comm" /> <!-- message_filters -->
+  <depend stack="vision_opencv" /> <!-- opencv2 -->
+
+</stack>
