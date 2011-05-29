@@ -1,4 +1,0 @@
-use_low:  true
-use_high: false
-threshold_hue: 180
-threshold_sat: 127
