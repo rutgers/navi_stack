@@ -1,0 +1,15 @@
+(cl:defpackage camera_pose_calibration-msg
+  (:use )
+  (:export
+   "<CALIBRATIONESTIMATE>"
+   "CALIBRATIONESTIMATE"
+   "<CAMERACALIBRATION>"
+   "CAMERACALIBRATION"
+   "<CAMERAMEASUREMENT>"
+   "CAMERAMEASUREMENT"
+   "<CAMERAPOSE>"
+   "CAMERAPOSE"
+   "<ROBOTMEASUREMENT>"
+   "ROBOTMEASUREMENT"
+  ))
+
