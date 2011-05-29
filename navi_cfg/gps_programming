@@ -4,7 +4,14 @@ following commands.
 
 
 NMEA Output
-log gpggalong ontime 1
+log gpgga ontime 1
+log GPGSA ontime 1
+log GPRMC ontime 1
+log GPRMB ontime 1
+log GPGLL ontime 1
+log GPGSV ontime 1
+log gpgst ontime 1
+saveconfig
 
 Omnistar HP output?  Does it not normally do HP?
 log omnihpposa ontime 1
@@ -12,3 +19,8 @@ log omnihpposa ontime 1
 
 Save the configuration
 saveconfig
+
+#to debug gpsd output, use telnet after it has launched
+telnet localhost 4000
+To see data from the receiver in JSON (if any), enter the command 
+?WATCH={"enable":true,"json":true}. To end JSON output, ?WATCH={"enable":false}. Then control-] and "exit" to exit the telnet client.

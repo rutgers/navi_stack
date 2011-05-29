@@ -110,18 +110,25 @@ ISR(TIMER2_OVF_vect)   // feed back loop interrupt
 	Robot.rightWheel.error = Robot.rightWheel.velD - Robot.rightWheel.vel;
 	Robot.leftWheel.error = Robot.leftWheel.velD - Robot.leftWheel.vel;
 
+	if (abs(Robot.rightWheel.pwmPeriod) <20) Robot.rightWheel.error  *=2;
+	if (abs(Robot.leftWheel.pwmPeriod) <20) Robot.leftWheel.error  *=2;
 
-	Robot.rightWheel.kpGain = Robot.rightWheel.error*3/4;
-	Robot.leftWheel.kpGain = Robot.leftWheel.error*3/4;
+
+	Robot.rightWheel.kpGain = Robot.rightWheel.error*1.5;
+	Robot.leftWheel.kpGain = Robot.leftWheel.error*1.5;
 	
 	
 	Robot.rightWheel.kDGain = (Robot.rightWheel.errorp -Robot.rightWheel.error)*3/4;
 	Robot.leftWheel.kDGain = (Robot.leftWheel.errorp -Robot.leftWheel.error)*3/4;
 
+	Robot.leftWheel.errorT += Robot.leftWheel.error;
+	Robot.rightWheel.errorT +=  Robot.rightWheel.error;
+
 	Robot.rightWheel.kiGain = 0;
 	Robot.leftWheel.kiGain = 0;
 
-
+	
+	
 	Robot.rightWheel.errorp = Robot.rightWheel.error;
 	Robot.leftWheel.errorp = Robot.leftWheel.error;
 
