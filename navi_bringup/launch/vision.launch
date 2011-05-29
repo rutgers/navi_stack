@@ -52,6 +52,5 @@
 			<remap from="line_points2" to="wheel/left/line_points"/>
 			<remap from="line_points3" to="wheel/right/line_points"/>
 		</node>
-		-->
 	</group>
 </launch>
