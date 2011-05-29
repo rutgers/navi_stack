@@ -45,7 +45,7 @@ void Teleop::joyCallback(const joy::Joy::ConstPtr& joy)
   geometry_msgs::Twist cmdvel;
   
       cmdvel.linear.x = l_scale_ * joy->axes[linear_];
-      cmdvel.angular.z = a_scale_ * joy->axes[angular_];
+      cmdvel.angular.z = a_scale_ *( joy->axes[angular_]);
   
   vel_pub_.publish(cmdvel);}
 
