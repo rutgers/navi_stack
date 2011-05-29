@@ -2,11 +2,13 @@
 	<group ns="vision">
 		<!-- Stereo Reconstruction -->
 		<node pkg="stereo_image_proc" type="stereo_image_proc" name="narrow_proc" ns="narrow">
+			<rosparam command="load" file="$(find navi_cfg)/params/stereo_narrow.yaml"/>
 			<remap from="stereo"          to="narrow"/>
 			<remap from="left/image_raw"  to="left/image"/>
 			<remap from="right/image_raw" to="right/image"/>
 		</node>
 		<node pkg="stereo_image_proc" type="stereo_image_proc" name="wide_proc" ns="wide">
+			<rosparam command="load" file="$(find navi_cfg)/params/stereo_wide.yaml"/>
 			<remap from="stereo"          to="wide"/>
 			<remap from="left/image_raw"  to="left/image"/>
 			<remap from="right/image_raw" to="right/image"/>
