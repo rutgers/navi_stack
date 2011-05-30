@@ -27,6 +27,7 @@ struct wheel
 			int vel;
 			int velD;
 			int countD; // desired distance in encoder counts
+			int countA;
 			int velCM;   // current velocity counts
 			int error;
 			int errorp;
