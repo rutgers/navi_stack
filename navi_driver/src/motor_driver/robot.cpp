@@ -110,13 +110,13 @@ void updateWheel(wheel& w){
 	w.countD += w.velD;
 	w.countA += w.vel;
 
-	if ( (w.countD > 3000) && (w.countA >3000) ) {
-		w.countD -= 3000;
-		w.countA-= 3000;
+	if ( (w.countD > 200) && (w.countA >200) ) {
+		w.countD -= 200;
+		w.countA-= 200;
 	}
-	if (  (w.countD < -3000) && (w.countA < -3000) ){
-		w.countD += 3000;
-		w.countA += 3000;	
+	if (  (w.countD < -200) && (w.countA < -200) ){
+		w.countD += 200;
+		w.countA += 200;	
 	}
 
 }
@@ -151,18 +151,18 @@ ISR(TIMER2_OVF_vect)   // feed back loop interrupt
 //	if (abs(Robot.leftWheel.pwmPeriod) <20) Robot.leftWheel.error  *=2;
 
 
-	Robot.rightWheel.kpGain = Robot.rightWheel.error/2;
-	Robot.leftWheel.kpGain = Robot.leftWheel.error/2;
+	Robot.rightWheel.kpGain = Robot.rightWheel.error*2/5;
+	Robot.leftWheel.kpGain = Robot.leftWheel.error*2/5;
 	
 	
-	Robot.rightWheel.kDGain = (Robot.rightWheel.errorp -Robot.rightWheel.error)*6/5;
-	Robot.leftWheel.kDGain = (Robot.leftWheel.errorp -Robot.leftWheel.error)*6/5;
+	Robot.rightWheel.kDGain = (Robot.rightWheel.errorp -Robot.rightWheel.error)*7/4;
+	Robot.leftWheel.kDGain = (Robot.leftWheel.errorp -Robot.leftWheel.error)*7/4;
 
-	Robot.leftWheel.errorT += Robot.leftWheel.error/10;
- Robot.rightWheel.errorT += Robot.rightWheel.error/10;
+	//Robot.leftWheel.errorT += Robot.leftWheel.error/10;
+	//Robot.rightWheel.errorT += Robot.rightWheel.error/10;
 
-	Robot.leftWheel.errorT = limit(20, Robot.leftWheel.errorT);
-	Robot.rightWheel.errorT = limit(20, Robot.rightWheel.errorT);
+	//Robot.leftWheel.errorT = limit(20, Robot.leftWheel.errorT);
+	//Robot.rightWheel.errorT = limit(20, Robot.rightWheel.errorT);
 
 	Robot.rightWheel.kiGain =0;// Robot.rightWheel.errorT ;
 	Robot.leftWheel.kiGain =0;// Robot.leftWheel.errorT;
