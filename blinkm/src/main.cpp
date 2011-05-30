@@ -34,6 +34,11 @@ void blink( bool solid,  char color)
            switch (color)
 		{
 
+		case 'w':  // white
+            BlinkM_stopScript( blinkm_addr );
+			BlinkM_fadeToRGB( blinkm_addr, 0xff,0xff,0xff);  
+			break;
+			
 		case 'r': //RED
 			BlinkM_stopScript( blinkm_addr );
 			BlinkM_fadeToRGB( blinkm_addr, 0xff,0,0);  
@@ -80,7 +85,10 @@ void blink( bool solid,  char color)
                         BlinkM_stopScript( blinkm_addr );
 			BlinkM_playScript( blinkm_addr, 3,0,0 );
 			break;
-
+		case 'w':  // Blink Red
+                        BlinkM_stopScript( blinkm_addr );
+			BlinkM_playScript( blinkm_addr, 2,0,0 );
+			break;
 		case 'g':  // Blink Green
 			BlinkM_stopScript( blinkm_addr );
 			BlinkM_playScript( blinkm_addr, 4,0,0 );
