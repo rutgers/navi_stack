@@ -131,6 +131,9 @@ void setup()
     Serial.begin(57600);
     pinMode(13, OUTPUT); //set up the LED
 
+	BlinkM_beginWithPower();
+	delay(100);
+	BlinkM_stopScript(blinkm_addr);  // turn off startup script
 	blink(false, 0);
     node.subscribe("status_light",light_cb, &status_light);
 
