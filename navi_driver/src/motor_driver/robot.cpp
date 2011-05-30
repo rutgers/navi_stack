@@ -9,10 +9,12 @@ Robot.c
 #include <stdint.h>
 #include "motorcontrol.h"
 
+#define pos(x) (x>=0)
+
 
 robotState Robot;
 
-
+#define DEADBAND 10 
 void RobotInit(void){
 
 	initMotorDriver();
@@ -65,6 +67,9 @@ void initSpeedControl()
 	Robot.rightWheel.countD = 0;
 	Robot.rightWheel.errorp =0;
 	Robot.rightWheel.kiGain =0;
+	Robot.rightWheel.errorT =0;
+	Robot.rightWheel.countA=0;
+
 
 	Robot.leftWheel.vel = 0;
 	Robot.leftWheel.velD = 0;
@@ -72,6 +77,8 @@ void initSpeedControl()
 	Robot.leftWheel.countD = 0;
 	Robot.leftWheel.errorp=0;
 	Robot.leftWheel.kiGain =0;
+	Robot.leftWheel.errorT = 0;
+	Robot.leftWheel.countA=0;
 
 	Robot.feedbackState = 0;
 	sei();
@@ -80,13 +87,39 @@ void initSpeedControl()
 
 int limitSpeedMax(int speed)
 {
-	if (speed > 255) return 255;  // max duty cycle is 510
+	int dead = DEADBAND;
+	
+	if (speed > 255)  return 255;  // max duty cycle is 510
 	if (speed < -255) return -255; // max duty cycle is 510
+	
+	if ( (speed >0 ) && (speed < dead) )return dead;
+	if ( (speed <0) &&  (speed > -dead) ) return -dead;
 	return speed;
 }
 
 
+int limit(int lim, int val)
+{
+        if (val > lim) return lim;  // max duty cycle is 510
+        if (val < -lim) return -lim; // max duty cycle is 510
+        return val;
+}
 
+
+void updateWheel(wheel& w){
+	w.countD += w.velD;
+	w.countA += w.vel;
+
+	if ( (w.countD > 3000) && (w.countA >3000) ) {
+		w.countD -= 3000;
+		w.countA-= 3000;
+	}
+	if (  (w.countD < -3000) && (w.countA < -3000) ){
+		w.countD += 3000;
+		w.countA += 3000;	
+	}
+
+}
 
 
 ISR(TIMER2_OVF_vect)   // feed back loop interrupt
@@ -98,6 +131,10 @@ ISR(TIMER2_OVF_vect)   // feed back loop interrupt
 		Robot.rightWheel.vel = Robot.rightWheel.encoder.count() - Robot.rightWheel.previousCount;
 
 		Robot.leftWheel.vel = Robot.leftWheel.encoder.count() - Robot.leftWheel.previousCount;
+
+		updateWheel(Robot.rightWheel);
+		updateWheel(Robot.leftWheel);
+
 		if (Robot.clearEncoder){
 			Robot.rightWheel.previousCount = 0;
 			Robot.leftWheel.previousCount = 0;
@@ -107,25 +144,28 @@ ISR(TIMER2_OVF_vect)   // feed back loop interrupt
 		}
 
 
-	Robot.rightWheel.error = Robot.rightWheel.velD - Robot.rightWheel.vel;
-	Robot.leftWheel.error = Robot.leftWheel.velD - Robot.leftWheel.vel;
+	Robot.rightWheel.error = Robot.rightWheel.countD - Robot.rightWheel.countA;
+	Robot.leftWheel.error = Robot.leftWheel.countD - Robot.leftWheel.countA;
 
-	if (abs(Robot.rightWheel.pwmPeriod) <20) Robot.rightWheel.error  *=2;
-	if (abs(Robot.leftWheel.pwmPeriod) <20) Robot.leftWheel.error  *=2;
+//if (abs(Robot.rightWheel.pwmPeriod) <20) Robot.rightWheel.error  *=2;
+//	if (abs(Robot.leftWheel.pwmPeriod) <20) Robot.leftWheel.error  *=2;
 
 
-	Robot.rightWheel.kpGain = Robot.rightWheel.error*1.5;
-	Robot.leftWheel.kpGain = Robot.leftWheel.error*1.5;
+	Robot.rightWheel.kpGain = Robot.rightWheel.error*2/4;
+	Robot.leftWheel.kpGain = Robot.leftWheel.error*2/4;
 	
 	
 	Robot.rightWheel.kDGain = (Robot.rightWheel.errorp -Robot.rightWheel.error)*3/4;
 	Robot.leftWheel.kDGain = (Robot.leftWheel.errorp -Robot.leftWheel.error)*3/4;
 
-	Robot.leftWheel.errorT += Robot.leftWheel.error;
-	Robot.rightWheel.errorT +=  Robot.rightWheel.error;
+	Robot.leftWheel.errorT += Robot.leftWheel.error/10;
+ Robot.rightWheel.errorT += Robot.rightWheel.error/10;
 
-	Robot.rightWheel.kiGain = 0;
-	Robot.leftWheel.kiGain = 0;
+	Robot.leftWheel.errorT = limit(20, Robot.leftWheel.errorT);
+	Robot.rightWheel.errorT = limit(20, Robot.rightWheel.errorT);
+
+	Robot.rightWheel.kiGain =0;// Robot.rightWheel.errorT ;
+	Robot.leftWheel.kiGain =0;// Robot.leftWheel.errorT;
 
 	
 	
@@ -142,17 +182,23 @@ ISR(TIMER2_OVF_vect)   // feed back loop interrupt
 		Robot.rightWheel.pwmPeriod = limitSpeedMax(Robot.rightWheel.pwmPeriod);
 
 
-		if((Robot.leftWheel.velD == 0) && (abs(Robot.leftWheel.pwmPeriod) < 30))
+		if((Robot.leftWheel.velD == 0) && (abs(Robot.leftWheel.pwmPeriod) < DEADBAND+1) )
 		{
+			if (pos(Robot.leftWheel.error) != pos(Robot.leftWheel.pwmPeriod) )
 			setMotor2Speed(2);
+			else  setMotor2Speed(Robot.leftWheel.pwmPeriod);
 		}
 		else
 		{
 			setMotor2Speed(Robot.leftWheel.pwmPeriod);
 		}
-		if((Robot.rightWheel.velD == 0) && (abs(Robot.rightWheel.pwmPeriod) < 30))
+		if((Robot.rightWheel.velD == 0) && (abs(Robot.rightWheel.pwmPeriod) < DEADBAND+1))
 		{
-			setMotor1Speed(2);
+		if (pos(Robot.rightWheel.error) != pos(Robot.rightWheel.pwmPeriod) )
+
+                        setMotor1Speed(2);
+                        else  setMotor1Speed(Robot.rightWheel.pwmPeriod);
+
 		}
 		else setMotor1Speed(Robot.rightWheel.pwmPeriod);
 
