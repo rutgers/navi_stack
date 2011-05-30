@@ -72,7 +72,35 @@ def encoder_cb(model, odom_pub, tfBroad, msg):
                      'odom',
                      "drive_footprint")
 	
-def cmd_vel_cb(model,velT_units, motor_pub, cmd_vel_msg):
+
+c_vel = Twist()
+g_vel = Twist()
+g_vel_reached = True
+
+def cmd_vel_cb(cmd_vel):
+	global g_vel
+	global g_vel_reached
+	g_vel = cmd_vel
+	g_vel_reached = False;
+	
+
+def update_cvel(max_linear_acc,c_vel, g_vel):
+	"""
+		Takes max linear acceleration, current c_vel and goal
+		and returns new c_vel
+	"""
+	done = False
+	diff = (g_vel_msg.linear.x - c_vel_msg.linear.x)
+	sign = diff/diff
+	c_vel_msg.linear.x += sign*max_linear_acc
+	
+	if (abs(c_vel_msg.linear.x) > abs(g_vel_msg.linear.x) :
+		c_vel_msg.linear.x  = g_vel_msg.linear.x
+		done = True
+	return c_vel, done
+		
+
+def pub_cmd_vel(model,velT_units, motor_pub, cmd_vel_msg):
 	"""
 	"""
 	angular = cmd_vel_msg.angular.z
@@ -106,7 +134,11 @@ if __name__ == '__main__':
 	sub_encoder = rospy.Subscriber('encoder', Encoder, lambda msg : encoder_cb(model,pub_odom, tfBroad,msg))
 	
 	pub_motor_cmd = rospy.Publisher('motor_cmd', MotorCmd)
-	sub_cmd_vel =rospy.Subscriber("cmd_vel", Twist, lambda msg: cmd_vel_cb(model, velocity_units_secs, pub_motor_cmd, msg) )
+	sub_cmd_vel   = rospy.Subscriber("cmd_vel", Twist, cmd_vel_cb )
 	
-	rospy.spin()
+	while not rospy.is_shutdown():
+		if (not g_vel_reached):
+			c_vel, g_vel_reached = update_cvel(0.3/20.0, c_vel, g_vel)
+			pub_cmd_vel(model, velocity_units_secs, pub_motor_cmd, c_vel)
+		rospy.sleep(0.05)
 	
