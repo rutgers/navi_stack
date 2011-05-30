@@ -13,8 +13,8 @@
 
 using namespace std;
 typedef struct latlong {
-	float lat;
-	float lon;
+	double lat;
+	double lon;
 } latlong;
 
 typedef struct UTM {
@@ -46,11 +46,13 @@ ostream& operator<< (ostream& s,  UTM& coord){
 }
 
 
-void planRoute(std::vector<UTM>& waypoints, std::vector<UTM>& plan){
+void planRoute(std::vector<UTM>& waypoints, std::vector<UTM>& plan, std::vector<int>& wp){
 
 	std::vector<bool> used;
 	used.resize(waypoints.size(), false);
 	plan.clear();
+	wp.clear();
+	wp.push_back(0);
 	plan.push_back(waypoints[0]);
 
 	used[0] = true; //the first one is the start location
@@ -74,6 +76,7 @@ void planRoute(std::vector<UTM>& waypoints, std::vector<UTM>& plan){
 
 		plan.push_back(waypoints[best_point]);
 		used[best_point] = true;
+		wp.push_back(best_point);
 		num_used++;
 	}
 
@@ -95,8 +98,13 @@ void cvtLLToUTM(std::vector<latlong>& ll, std::vector<UTM>& utm){
 }
 int main(int argc, char** argv){
 	
-	fstream fcoords ("test.coords", fstream::in );
+	cout.precision(10);
+
+	string inFile = argv[1];
+	fstream fcoords (inFile.c_str(), fstream::in );
 	
+	fcoords.precision(10);
+
 	std::vector<latlong> coords;
 
 	while (! fcoords.eof()){
@@ -105,16 +113,28 @@ int main(int argc, char** argv){
 		fcoords.getline(temp,100);
 		stringstream ss(temp);
 		ss >>coord;
-		cout << coord;
+		cout << coord << endl;
 		coords.push_back(coord);
 	}
-	cout << "The robot starts at" << coords[0] << '\n';
-	for (int i=1; i<coords.size(); i++){
-		cout <<  coords[i] << '\n';
-	}
 	
+
 	std::vector<UTM> coords_utm;
 	cvtLLToUTM(coords,coords_utm);
 
+	std::vector<UTM> route;
+	std::vector<int> wps;
 
+	planRoute(coords_utm, route,wps);
+
+	cout<< "The transformed UTM coordinates are\n";
+	for (int i=0; i<coords_utm.size(); i++){
+			cout <<  coords_utm[i] << '\n';
+		}
+
+
+	fstream fout_coords (( string("routed_")+inFile).c_str(), fstream::out );
+	fout_coords.precision(8);
+	for (int i=0; i<route.size(); i++){
+			cout <<  route[i] << coords[wps[i]] << '\n';
+		}
 }
