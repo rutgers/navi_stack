@@ -80,6 +80,8 @@ g_vel_reached = True
 def cmd_vel_cb(cmd_vel):
 	global g_vel
 	global g_vel_reached
+	global c_vel
+	c_vel.angular = cmd_vel.angular
 	g_vel = cmd_vel
 	g_vel_reached = False;
 	
@@ -90,12 +92,14 @@ def update_cvel(max_linear_acc,c_vel, g_vel):
 		and returns new c_vel
 	"""
 	done = False
-	diff = (g_vel_msg.linear.x - c_vel_msg.linear.x)
-	sign = diff/diff
-	c_vel_msg.linear.x += sign*max_linear_acc
+	diff = (g_vel.linear.x - c_vel.linear.x)
+	sign =1
+	if (diff < 0):
+		sign =-1
+	c_vel.linear.x += sign*max_linear_acc
 	
-	if (abs(c_vel_msg.linear.x) > abs(g_vel_msg.linear.x) :
-		c_vel_msg.linear.x  = g_vel_msg.linear.x
+	if (abs(c_vel.linear.x) > abs(g_vel.linear.x)) :
+		c_vel.linear.x  = g_vel.linear.x
 		done = True
 	return c_vel, done
 		
@@ -138,7 +142,7 @@ if __name__ == '__main__':
 	
 	while not rospy.is_shutdown():
 		if (not g_vel_reached):
-			c_vel, g_vel_reached = update_cvel(0.3/20.0, c_vel, g_vel)
+			c_vel, g_vel_reached = update_cvel(0.8/20.0, c_vel, g_vel)
 			pub_cmd_vel(model, velocity_units_secs, pub_motor_cmd, c_vel)
 		rospy.sleep(0.05)
 	
