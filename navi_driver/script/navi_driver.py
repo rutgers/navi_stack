@@ -80,6 +80,8 @@ g_vel_reached = True
 def cmd_vel_cb(cmd_vel):
 	global g_vel
 	global g_vel_reached
+	global c_vel
+	c_vel.angular = cmd_vel.angular
 	g_vel = cmd_vel
 	g_vel_reached = False;
 	
