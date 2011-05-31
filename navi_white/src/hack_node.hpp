@@ -27,20 +27,23 @@ private:
 
 	bool m_debug;
 	bool m_gazebo;
-	int m_val_min;
-	int m_hue_min;
-	int m_hue_max;
+
 	int m_sat_split;
+	int m_shadow_hue,   m_shadow_val;
+	int m_sunlight_hue, m_sunlight_val;
 
 
 	boost::shared_ptr<image_transport::ImageTransport> m_it;
 	image_transport::Subscriber m_sub;
 	image_transport::Publisher  m_pub;
-	image_transport::Publisher  m_pub_hue;
-	image_transport::Publisher  m_pub_sat;
-	image_transport::Publisher  m_pub_val;
-	image_transport::Publisher  m_pub_hi;
-	image_transport::Publisher  m_pub_lo;
+	image_transport::Publisher  m_pub_blur;
+	image_transport::Publisher  m_pub_split;
+	image_transport::Publisher  m_pub_shadow;
+	image_transport::Publisher  m_pub_shadow_hue;
+	image_transport::Publisher  m_pub_shadow_val;
+	image_transport::Publisher  m_pub_sunlight;
+	image_transport::Publisher  m_pub_sunlight_hue;
+	image_transport::Publisher  m_pub_sunlight_val;
 	dr::Server<NaviWhiteConfig> m_srv_dr;
 };
 };

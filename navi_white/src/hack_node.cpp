@@ -45,11 +45,6 @@ void HackNodelet::onInit(void)
 	}
 
 	nh_priv.param<bool>("debug", m_debug, false);
-	nh_priv.param<int>("val_min",   m_val_min,   45);
-	nh_priv.param<int>("hue_min",   m_hue_min,  130);
-	nh_priv.param<int>("hue_max",   m_hue_max,  180);
-	nh_priv.param<int>("sat_split", m_sat_split, 30);
-
 	// Use dynamic_reconfigure to get all other parameters.
 	m_srv_dr.setCallback(boost::bind(&HackNodelet::ReconfigureCallback, this, _1, _2));
 
@@ -60,27 +55,26 @@ void HackNodelet::onInit(void)
 	}
 	if (m_debug) {
 		ROS_WARN("debug topics enabled; performance may be degraded");
-		m_pub_hue = m_it->advertise("white_hue", 1);
-		m_pub_sat = m_it->advertise("white_sat", 1);
-		m_pub_val = m_it->advertise("white_val", 1);
-		m_pub_hi  = m_it->advertise("white_hi", 1);
-		m_pub_lo  = m_it->advertise("white_lo", 1);
+		m_pub_blur         = m_it->advertise("white_blur",         1);
+		m_pub_split        = m_it->advertise("white_split",        1);
+		m_pub_shadow       = m_it->advertise("white_shadow",       1);
+		m_pub_shadow_hue   = m_it->advertise("white_shadow_hue",   1);
+		m_pub_shadow_val   = m_it->advertise("white_shadow_val",   1);
+		m_pub_sunlight     = m_it->advertise("white_sunlight",     1);
+		m_pub_sunlight_hue = m_it->advertise("white_sunlight_hue", 1);
+		m_pub_sunlight_val = m_it->advertise("white_sunlight_val", 1);
 	}
 	m_sub = m_it->subscribe("image", 1, &HackNodelet::Callback, this);
 }
 
 void HackNodelet::ReconfigureCallback(NaviWhiteConfig &config, int32_t level)
 {
-	m_val_min   = config.val_min;
-	m_hue_min   = config.hue_min;
-	m_hue_max   = config.hue_max;
-	m_sat_split = config.sat_split;
+	m_sat_split    = config.sat_split;
+	m_shadow_hue   = config.shadow_hue;
+	m_shadow_val   = config.shadow_val;
+	m_sunlight_hue = config.sunlight_hue;
+	m_sunlight_val = config.sunlight_val;
 }
-
-#if 0
-void HackNodelet::cvtCYMK(cv::Mat src, cv::Mat &c, cv::Mat &y, cv::Mat &m, cv::Mat k)
-{}
-#endif
 
 void HackNodelet::Callback(sensor_msgs::Image::ConstPtr const &msg_img)
 {
@@ -110,66 +104,74 @@ void HackNodelet::Callback(sensor_msgs::Image::ConstPtr const &msg_img)
 		cv::cvtColor(src_blur, hsv_8u, CV_BGR2HSV);
 		cv::split(hsv_8u, hsv_ch);
 
-		// Eliminate areas that have very low intensity since they have
-		// arbitrary hue and saturation.
-		cv::Mat mask_val;
-		cv::threshold(hsv_ch[VAL], mask_val, m_val_min, 255, cv::THRESH_BINARY);
+		cv::Mat shadow_sat, sunlight_sat;
+		cv::threshold(hsv_ch[SAT], sunlight_sat, m_sat_split + 1, 255, cv::THRESH_BINARY_INV);
+		cv::threshold(hsv_ch[SAT], shadow_sat,   m_sat_split + 0, 255, cv::THRESH_BINARY);
 
-		// Hue does not change with illumination.
-		// TODO: Need to binarize this
-		cv::Mat mask_hue, mask_hue_min, mask_hue_max;
-		cv::threshold(hsv_ch[HUE], mask_hue_min, m_hue_min, 255, cv::THRESH_BINARY);
-		cv::threshold(hsv_ch[HUE], mask_hue_max, m_hue_max, 255, cv::THRESH_BINARY_INV);
-		cv::min(mask_hue_min, mask_hue_max, mask_hue);
+		cv::Mat shadow, shadow_hue, shadow_val;
+		cv::threshold(hsv_ch[HUE], shadow_hue, m_shadow_hue, 255, cv::THRESH_BINARY);
+		cv::threshold(hsv_ch[VAL], shadow_val, m_shadow_val, 255, cv::THRESH_BINARY);
+		cv::min(shadow_hue, shadow_val, shadow);
+		cv::min(shadow_sat, shadow,     shadow);
 
-		// Split regions of low and high saturation.
-		cv::Mat mask_sat_lo, mask_sat_hi;
-		cv::threshold(hsv_ch[SAT], mask_sat_lo, m_sat_split, 255, cv::THRESH_BINARY_INV);
-		cv::threshold(hsv_ch[SAT], mask_sat_hi, m_sat_split, 255, cv::THRESH_BINARY);
+		cv::Mat sunlight, sunlight_hue, sunlight_val;
+		cv::threshold(hsv_ch[HUE], sunlight_hue, m_sunlight_hue, 255, cv::THRESH_BINARY);
+		cv::threshold(hsv_ch[VAL], sunlight_val, m_sunlight_val, 255, cv::THRESH_BINARY);
+		cv::min(sunlight_hue, sunlight_val, sunlight);
+		cv::min(sunlight_sat, sunlight,     sunlight);
 
-		// White looks different in direct sunlight and in shadows:
-		//  1. sunlight: low saturation, high value
-		//  2. shadow: high saturation, high hue
-		cv::Mat mask_combo_hi;
-		cv::min(mask_sat_hi, mask_hue, mask_combo_hi);
-		cv::max(mask_sat_lo, mask_combo_hi, dst_8u);
-		cv::min(mask_val, dst_8u, dst_8u);
+		cv::max(shadow, sunlight, dst_8u);
 
 		if (m_debug) {
-			// Thresholded hue for the entire image.
-			cv_bridge::CvImage msg_hue;
-			msg_hue.header   = msg_img->header;
-			msg_hue.encoding = enc::MONO8;
-			msg_hue.image    = mask_hue;
-			m_pub_hue.publish(msg_hue.toImageMsg());
+			cv_bridge::CvImage msg_blur;
+			msg_blur.header   = msg_img->header;
+			msg_blur.encoding = enc::MONO8;
+			msg_blur.image    = src_blur;
+			m_pub_blur.publish(msg_blur.toImageMsg());
 
-			// Thresholded saturation for the entire image.
-			cv_bridge::CvImage msg_sat;
-			msg_sat.header   = msg_img->header;
-			msg_sat.encoding = enc::MONO8;
-			msg_sat.image    = mask_sat_lo;
-			m_pub_sat.publish(msg_sat.toImageMsg());
+			cv_bridge::CvImage msg_split;
+			msg_split.header   = msg_img->header;
+			msg_split.encoding = enc::MONO8;
+			msg_split.image    = shadow_sat;
+			m_pub_split.publish(msg_split.toImageMsg());
 
-			// Thresholded value for the entire image.
-			cv_bridge::CvImage msg_val;
-			msg_val.header   = msg_img->header;
-			msg_val.encoding = enc::MONO8;
-			msg_val.image    = mask_val;
-			m_pub_val.publish(msg_val.toImageMsg());
+			// Shadow
+			cv_bridge::CvImage msg_shadow_hue;
+			msg_shadow_hue.header   = msg_img->header;
+			msg_shadow_hue.encoding = enc::MONO8;
+			msg_shadow_hue.image    = shadow_hue;
+			m_pub_shadow_hue.publish(msg_shadow_hue.toImageMsg());
 
-			// Output from regions of high saturation.
-			cv_bridge::CvImage msg_hi;
-			msg_hi.header   = msg_img->header;
-			msg_hi.encoding = enc::MONO8;
-			msg_hi.image    = mask_combo_hi;
-			m_pub_hi.publish(msg_hi.toImageMsg());
+			cv_bridge::CvImage msg_shadow_val;
+			msg_shadow_val.header   = msg_img->header;
+			msg_shadow_val.encoding = enc::MONO8;
+			msg_shadow_val.image    = shadow_val;
+			m_pub_shadow_val.publish(msg_shadow_val.toImageMsg());
 
-			// Output from regions of low saturation.
-			cv_bridge::CvImage msg_lo;
-			msg_lo.header   = msg_img->header;
-			msg_lo.encoding = enc::MONO8;
-			msg_lo.image    = mask_sat_lo;
-			m_pub_lo.publish(msg_lo.toImageMsg());
+			cv_bridge::CvImage msg_shadow;
+			msg_shadow.header   = msg_img->header;
+			msg_shadow.encoding = enc::MONO8;
+			msg_shadow.image    = shadow;
+			m_pub_shadow.publish(msg_shadow.toImageMsg());
+
+			// Sunlight
+			cv_bridge::CvImage msg_sunlight_hue;
+			msg_sunlight_hue.header   = msg_img->header;
+			msg_sunlight_hue.encoding = enc::MONO8;
+			msg_sunlight_hue.image    = sunlight_hue;
+			m_pub_sunlight_hue.publish(msg_sunlight_hue.toImageMsg());
+
+			cv_bridge::CvImage msg_sunlight_val;
+			msg_sunlight_val.header   = msg_img->header;
+			msg_sunlight_val.encoding = enc::MONO8;
+			msg_sunlight_val.image    = sunlight_val;
+			m_pub_sunlight_val.publish(msg_sunlight_val.toImageMsg());
+
+			cv_bridge::CvImage msg_sunlight;
+			msg_sunlight.header   = msg_img->header;
+			msg_sunlight.encoding = enc::MONO8;
+			msg_sunlight.image    = sunlight;
+			m_pub_sunlight.publish(msg_sunlight.toImageMsg());
 		}
 	}
 

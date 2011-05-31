@@ -1,5 +1,7 @@
 debug: true
-val_min: 144
-hue_min: 100
-hue_max: 150
-sat_split: 45
+
+shadow_hue:    90
+shadow_val:    40
+sunlight_hue: 105
+sunlight_val: 155
+sat_split:    125
