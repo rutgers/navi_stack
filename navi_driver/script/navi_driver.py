@@ -67,10 +67,11 @@ def encoder_cb(model, odom_pub, tfBroad, msg):
 	
 	#now broadcast tf..
 	x,y,z, theta = model.position()
-	tfBroad.sendTransform((x, y, 0),
-		tf.transformations.quaternion_from_euler(0, 0, model.theta),rospy.Time.now(),
-                     'odom',
-                     "drive_footprint")
+	print "The model position is " , model.position()
+	tfBroad.sendTransform( (x, y, 0),
+		tf.transformations.quaternion_from_euler(0, 0, theta),rospy.Time.now(),
+                     'drive_footprint',
+                     "odom")
 	
 
 c_vel = Twist()
