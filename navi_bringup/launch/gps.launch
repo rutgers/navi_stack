@@ -1,5 +1,5 @@
 <launch>
-	<node ns="gps" pkg="navi_bringup" type="gpsd.sh" name="gpsd.sh"/>
+	<node ns="gps" pkg="navi_bringup" type="gpsd.sh" name="gpsd"/>
 	<node ns="gps" pkg="gpsd_client" type="gpsd_client" name="gpsd_client">
 		<param name="port" value="4000"/>
 	</node>
