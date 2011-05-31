@@ -1,5 +1,5 @@
 <launch>
-	<arg name="rate" default="15.0"/>
+	<arg name="rate" default="10.0"/>
 	<group ns="vision">
 		<node pkg="stereo_webcam" type="stereo_node" name="camera_front">
 			<rosparam command="load" file="$(find navi_cfg)/params/camera_general.yaml"/>

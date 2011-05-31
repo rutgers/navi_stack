@@ -5,7 +5,7 @@
 
 #include <ros/ros.h>
 #include <cv_bridge/cv_bridge.h>
-#include <pluginlib/class_list_macros.h>
+#include <dynamic_reconfigure/server.h>
 #include <sensor_msgs/image_encodings.h>
 #include <opencv/cv.h>
 
@@ -16,7 +16,7 @@
 #define SAT 1
 #define VAL 2
 
-namespace white_filter {
+namespace navi_white {
 
 // nodelet conversion
 HackNodelet::HackNodelet(void)
@@ -44,14 +44,37 @@ void HackNodelet::onInit(void)
 		ROS_WARN("using Gazebo-specific whitenes filter");
 	}
 
-	nh_priv.param<int>("val_min", m_val_min, 45);
-	nh_priv.param<int>("hue_min", m_hue_min, 130);
-	nh_priv.param<int>("hue_max", m_hue_max, 180);
+	nh_priv.param<bool>("debug", m_debug, false);
+	nh_priv.param<int>("val_min",   m_val_min,   45);
+	nh_priv.param<int>("hue_min",   m_hue_min,  130);
+	nh_priv.param<int>("hue_max",   m_hue_max,  180);
 	nh_priv.param<int>("sat_split", m_sat_split, 30);
+
+	// Use dynamic_reconfigure to get all other parameters.
+	m_srv_dr.setCallback(boost::bind(&HackNodelet::ReconfigureCallback, this, _1, _2));
 
 	m_it = boost::make_shared<image_transport::ImageTransport>(nh);
 	m_pub = m_it->advertise("white", 1);
+	if (m_debug && m_gazebo) {
+		ROS_WARN("debug topics are unsupported in Gazebo");
+	}
+	if (m_debug) {
+		ROS_WARN("debug topics enabled; performance may be degraded");
+		m_pub_hue = m_it->advertise("white_hue", 1);
+		m_pub_sat = m_it->advertise("white_sat", 1);
+		m_pub_val = m_it->advertise("white_val", 1);
+		m_pub_hi  = m_it->advertise("white_hi", 1);
+		m_pub_lo  = m_it->advertise("white_lo", 1);
+	}
 	m_sub = m_it->subscribe("image", 1, &HackNodelet::Callback, this);
+}
+
+void HackNodelet::ReconfigureCallback(NaviWhiteConfig &config, int32_t level)
+{
+	m_val_min   = config.val_min;
+	m_hue_min   = config.hue_min;
+	m_hue_max   = config.hue_max;
+	m_sat_split = config.sat_split;
 }
 
 #if 0
@@ -73,6 +96,10 @@ void HackNodelet::Callback(sensor_msgs::Image::ConstPtr const &msg_img)
 		return;
 	}
 
+	// Remove noise in the grass by filtering.
+	cv::Mat src_blur;
+	cv::medianBlur(src_8u, src_blur, 5);
+
 	cv::Mat dst_8u;
 	if (m_gazebo) {
 		cv::cvtColor(src_8u, dst_8u, CV_BGR2GRAY);
@@ -80,7 +107,7 @@ void HackNodelet::Callback(sensor_msgs::Image::ConstPtr const &msg_img)
 	} else {
 		cv::Mat hsv_8u;
 		std::vector<cv::Mat> hsv_ch;
-		cv::cvtColor(src_8u, hsv_8u, CV_BGR2HSV);
+		cv::cvtColor(src_blur, hsv_8u, CV_BGR2HSV);
 		cv::split(hsv_8u, hsv_ch);
 
 		// Eliminate areas that have very low intensity since they have
@@ -89,10 +116,11 @@ void HackNodelet::Callback(sensor_msgs::Image::ConstPtr const &msg_img)
 		cv::threshold(hsv_ch[VAL], mask_val, m_val_min, 255, cv::THRESH_BINARY);
 
 		// Hue does not change with illumination.
-		cv::Mat mask_hue;
-		cv::threshold(hsv_ch[HUE], mask_hue, m_hue_min, 255, cv::THRESH_TOZERO);
-		cv::threshold(mask_hue,    mask_hue, m_hue_max, 255, cv::THRESH_TOZERO_INV);
-		dst_8u = mask_hue;
+		// TODO: Need to binarize this
+		cv::Mat mask_hue, mask_hue_min, mask_hue_max;
+		cv::threshold(hsv_ch[HUE], mask_hue_min, m_hue_min, 255, cv::THRESH_BINARY);
+		cv::threshold(hsv_ch[HUE], mask_hue_max, m_hue_max, 255, cv::THRESH_BINARY_INV);
+		cv::min(mask_hue_min, mask_hue_max, mask_hue);
 
 		// Split regions of low and high saturation.
 		cv::Mat mask_sat_lo, mask_sat_hi;
@@ -107,7 +135,42 @@ void HackNodelet::Callback(sensor_msgs::Image::ConstPtr const &msg_img)
 		cv::max(mask_sat_lo, mask_combo_hi, dst_8u);
 		cv::min(mask_val, dst_8u, dst_8u);
 
-		dst_8u = mask_combo_hi;
+		if (m_debug) {
+			// Thresholded hue for the entire image.
+			cv_bridge::CvImage msg_hue;
+			msg_hue.header   = msg_img->header;
+			msg_hue.encoding = enc::MONO8;
+			msg_hue.image    = mask_hue;
+			m_pub_hue.publish(msg_hue.toImageMsg());
+
+			// Thresholded saturation for the entire image.
+			cv_bridge::CvImage msg_sat;
+			msg_sat.header   = msg_img->header;
+			msg_sat.encoding = enc::MONO8;
+			msg_sat.image    = mask_sat_lo;
+			m_pub_sat.publish(msg_sat.toImageMsg());
+
+			// Thresholded value for the entire image.
+			cv_bridge::CvImage msg_val;
+			msg_val.header   = msg_img->header;
+			msg_val.encoding = enc::MONO8;
+			msg_val.image    = mask_val;
+			m_pub_val.publish(msg_val.toImageMsg());
+
+			// Output from regions of high saturation.
+			cv_bridge::CvImage msg_hi;
+			msg_hi.header   = msg_img->header;
+			msg_hi.encoding = enc::MONO8;
+			msg_hi.image    = mask_combo_hi;
+			m_pub_hi.publish(msg_hi.toImageMsg());
+
+			// Output from regions of low saturation.
+			cv_bridge::CvImage msg_lo;
+			msg_lo.header   = msg_img->header;
+			msg_lo.encoding = enc::MONO8;
+			msg_lo.image    = mask_sat_lo;
+			m_pub_lo.publish(msg_lo.toImageMsg());
+		}
 	}
 
 	// Convert the OpenCV data to an output message without copying.
@@ -123,7 +186,7 @@ void HackNodelet::Callback(sensor_msgs::Image::ConstPtr const &msg_img)
 int main(int argc, char **argv)
 {
 	ros::init(argc, argv, "hack_node");
-	white_filter::HackNodelet node;
+	navi_white::HackNodelet node;
 	node.onInit();
 	ros::spin();
 	return 0;

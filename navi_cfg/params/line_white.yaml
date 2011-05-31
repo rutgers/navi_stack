@@ -1,1 +1,5 @@
-threshold: 0
+debug: true
+val_min: 144
+hue_min: 100
+hue_max: 150
+sat_split: 45

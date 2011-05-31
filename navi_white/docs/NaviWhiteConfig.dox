@@ -1,0 +1,9 @@
+\subsubsection parameters ROS parameters
+
+Reads and maintains the following parameters on the ROS server
+
+- \b "~val_min" : \b [int] lowest value where saturation is defined min: 0, default: 0, max: 255
+- \b "~hue_min" : \b [int] minimum hue of white pixels min: 0, default: 0, max: 255
+- \b "~hue_max" : \b [int] maximum hue of white pixels min: 0, default: 255, max: 255
+- \b "~sat_split" : \b [int] lowest saturation where hue is valid min: 0, default: 0, max: 255
+
