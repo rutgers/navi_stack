@@ -1,11 +1,4 @@
-points_min:   250
+simple:       true
 height_min:   0.30
 height_max:   1.00
 distance_max: 5.00
-theta:        1.047
-
-
-# threshold-based obstacle detection
-simple:        true
-simple_mean:   50.0
-simple_stddev: 1.0

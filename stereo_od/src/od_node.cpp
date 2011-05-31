@@ -31,11 +31,8 @@ using stereo_plane::Plane;
 
 typedef pcl::PointCloud<pcl::PointXYZ> PointCloudXYZ;
 
-static bool   m_simple;
-static double m_simple_mean;
-static double m_simple_stddev;
-
-static int    m_pmin;
+static bool m_simple;
+static int m_pmin;
 static double m_dmax;
 static double m_hmin;
 static double m_hmax;
@@ -58,7 +55,7 @@ float dist(Plane const &plane, pcl::PointXYZ const &pt)
 	double b = plane.normal.y;
 	double c = plane.normal.z;
 	double d = -(a * plane.point.x + b * plane.point.y + c * plane.point.z);
-	return abs(a*pt.x + b*pt.y + c*pt.z + d) / sqrt(pow(a, 2) + pow(b, 2) + pow(c, 2));
+	return (a*pt.x + b*pt.y + c*pt.z + d) / sqrt(pow(a, 2) + pow(b, 2) + pow(c, 2));
 }
 
 void TransformPlane(Plane const &src, Plane &dst, std::string frame_id)
@@ -175,7 +172,6 @@ void RemovePlane(PointCloudXYZ const &msg_src, PointCloudXYZ &msg_dst,
 	}
 }
 
-
 void Callback(PointCloudXYZ::ConstPtr const &pts, CameraInfo::ConstPtr const &info,
               Plane::ConstPtr const &msg_plane)
 {
@@ -185,6 +181,13 @@ void Callback(PointCloudXYZ::ConstPtr const &pts, CameraInfo::ConstPtr const &in
 	} catch (tf::TransformException const &e) {
 		ROS_WARN("%s", e.what());
 		return;
+	}
+
+	// Make sure the normal vector is pointing "up".
+	if (plane.normal.z < 0) {
+		plane.normal.x *= -1;
+		plane.normal.y *= -1;
+		plane.normal.z *= -1;
 	}
 
 	// Extract the camera's focal length from the CameraInfo message. Because
@@ -199,23 +202,7 @@ void Callback(PointCloudXYZ::ConstPtr const &pts, CameraInfo::ConstPtr const &in
 
 	PointCloudXYZ::Ptr obstacles  = boost::make_shared<PointCloudXYZ>();
 
-	if (m_simple) {
-		// Downsample the pointcloud to speed processing (using a VoxelGrid).
-		PointCloudXYZ::Ptr sampled = boost::make_shared<PointCloudXYZ>();
-		pcl::VoxelGrid<pcl::PointXYZ> vg;
-		vg.setInputCloud(candidates);
-		vg.setLeafSize(0.05, 0.05, 0.05);
-		vg.filter(*sampled);
-
-		// Use a statistical outlier removal filter to remove incorrect stereo
-		// correspondances.
-		pcl::StatisticalOutlierRemoval<pcl::PointXYZ> sor;
-		sor.setInputCloud(sampled);
-		sor.setMeanK(m_simple_mean);
-		sor.setStddevMulThresh(m_simple_stddev);
-		sor.filter(*obstacles);
-		obstacles = candidates;
-	} else {
+	if (!m_simple) {
 		FindObstacles(*candidates, *obstacles, m_hmin, m_hmax, flen, m_theta);
 	}
 
@@ -231,11 +218,8 @@ int main(int argc, char **argv)
 	ros::NodeHandle nh;
 	ros::NodeHandle nh_priv("~");
 
-	nh_priv.param<bool>("simple",          m_simple,        true);
-	nh_priv.param<double>("simple_mean",   m_simple_mean,   50.0);
-	nh_priv.param<double>("simple_stddev", m_simple_stddev, 1.0);
-
-	nh_priv.param<int>("points_min",      m_pmin,  25);
+	nh_priv.param<bool>("simple", m_simple, true);
+	nh_priv.param<int>("points_min", m_pmin, 25);
 	nh_priv.param<double>("distance_max", m_dmax,  5.0);
 	nh_priv.param<double>("height_min",   m_hmin,  0.1);
 	nh_priv.param<double>("height_max",   m_hmax,  2.0);
