@@ -1,4 +1,7 @@
 bin/
-cfg/
 lib/
 build/
+cfg/cpp/
+cfg/*.cfgc
+docs/NaviWhiteConfig*
+src/navi_white/cfg/
