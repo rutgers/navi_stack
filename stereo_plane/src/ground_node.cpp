@@ -43,8 +43,10 @@ void GroundNodelet::onInit(void)
 
 	m_valid_prev = false;
 	nh_priv.param<int>("inliers_min", m_inliers_min, 1000);
+	nh_priv.param<int>("iterations",  m_iterations,   500);
 	nh_priv.param<bool>("static", m_static, false);
-	nh_priv.param<double>("range_max", m_range_max, 3.00);
+	nh_priv.param<double>("probability",   m_prob,          0.99);
+	nh_priv.param<double>("range_max",     m_range_max,     3.00);
 	nh_priv.param<double>("error_default", m_error_default, 0.20);
 	nh_priv.param<double>("error_inlier",  m_error_inlier,  0.20);
 	nh_priv.param<double>("error_angle",   m_error_angle,   M_PI/6);
@@ -179,6 +181,8 @@ bool GroundNodelet::GetSACPlane(pcl::PointCloud<pcl::PointXYZ>::ConstPtr const &
 	filter_seg.setModelType(pcl::SACMODEL_PLANE);
 	filter_seg.setMethodType(pcl::SAC_RANSAC);
 	filter_seg.setDistanceThreshold(m_error_inlier);
+	filter_seg.setMaxIterations(m_iter);
+	filter_seg.setProbability(m_prob);
 	filter_seg.setInputCloud(pc_pass);
 	filter_seg.segment(inliers, *coef);
 
