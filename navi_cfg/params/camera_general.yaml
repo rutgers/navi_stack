@@ -5,7 +5,7 @@ threshold: 0.05
 # dynamic_reconfigure defaults
 auto_gain:     false
 auto_exposure: false
-auto_white:    true
+auto_white:    false
 
 hflip: false
 vflip: false
