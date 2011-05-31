@@ -21,8 +21,12 @@ public:
 
 private:
 	ros::NodeHandle nh, nh_priv;
-	int m_threshold;
+
 	bool m_gazebo;
+	int m_val_min;
+	int m_hue_min;
+	int m_hue_max;
+	int m_sat_split;
 
 	boost::shared_ptr<image_transport::ImageTransport> m_it;
 	image_transport::Subscriber m_sub;
