@@ -1,6 +1,6 @@
 thickness: 0.0762
 border:    0.2500
-threshold: 20
+threshold: 75
 cutoff:    4
 blur_size: 3
 

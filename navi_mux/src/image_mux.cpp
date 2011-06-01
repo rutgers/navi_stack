@@ -51,7 +51,7 @@ void recieve(Image::ConstPtr const &msg_left, Image::ConstPtr const &msg_middle,
 
 	// Backwards jump in time probably means that simulated time was restarted.
 	if (now < then) {
-		then = ros::Time(0);
+		ROS_WARN("backward jump in time detected");
 	}
 	// Too soon.
 	else if (now - then < gap) {
@@ -141,7 +141,7 @@ int main(int argc, char **argv)
 	// Cap the output FPS at a fixed rate.
 	nh_priv.param<double>("fps", fps, 0.0);
 	if (fps > 0) {
-		gap = ros::Duration(ros::Rate(fps));
+		gap = ros::Duration(1.0 / fps);
 	} else {
 		gap = ros::Duration(0.0);
 	}
