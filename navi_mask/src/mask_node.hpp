@@ -34,6 +34,7 @@ class MaskNode {
 public:
 	void onInit(void);
 	void transformLaserScanToPointCloud(std::string fr_fixed, LaserScan const &src, PointCloudXYZ &dst);
+	void transformPlane(Plane const &src, Plane &dst, std::string frame_id);
 	void ProjectPointCloud(PointCloudXYZ const &src, PointCloudXYZ &dst, Plane const &plane);
 	void Callback(LaserScan::ConstPtr const &scan, CameraInfo::ConstPtr const &info, Plane::ConstPtr const &plane);
 

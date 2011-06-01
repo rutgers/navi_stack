@@ -54,6 +54,27 @@ void MaskNode::transformLaserScanToPointCloud(std::string      fr_fixed,
 	pcl::fromROSMsg(dst_pc2, dst);
 }
 
+void MaskNode::transformPlane(Plane const &src, Plane &dst, std::string frame_id)
+{
+	geometry_msgs::PointStamped src_point;
+	geometry_msgs::PointStamped dst_point;
+	src_point.header = src.header;
+	src_point.point  = src.point;
+
+	geometry_msgs::Vector3Stamped src_normal;
+	geometry_msgs::Vector3Stamped dst_normal;
+	src_normal.header = src.header;
+	src_normal.vector = src.normal;
+
+	m_tf->transformPoint(frame_id, src_point, dst_point);
+	m_tf->transformVector(frame_id, src_normal, dst_normal);
+
+	dst.header = src.header;
+	dst.point  = dst_point.point;
+	dst.normal = dst_normal.vector;
+	dst.type   = src.type;
+}
+
 void MaskNode::Callback(LaserScan::ConstPtr  const &scan,
                         CameraInfo::ConstPtr const &info,
                         Plane::ConstPtr      const &plane)
@@ -64,7 +85,10 @@ void MaskNode::Callback(LaserScan::ConstPtr  const &scan,
 	// Convert the laser scan into a point cloud to simplify projection.
 	PointCloudXYZ::Ptr scan_fixed  = boost::make_shared<PointCloudXYZ>();
 	PointCloudXYZ::Ptr scan_camera = boost::make_shared<PointCloudXYZ>();
+	Plane plane_camera;
+
 	try {
+		transformPlane(*plane, plane_camera, fr_camera);
 		transformLaserScanToPointCloud(m_fr_fixed, *scan, *scan_fixed);
 		pcl_ros::transformPointCloud(fr_camera, time_camera, *scan_fixed, m_fr_fixed, *scan_camera, *m_tf);
 	} catch (tf::TransformException const &e) {
@@ -74,7 +98,7 @@ void MaskNode::Callback(LaserScan::ConstPtr  const &scan,
 
 	// Project the laser scan on to the ground plane.
 	PointCloudXYZ::Ptr scan_ground = boost::make_shared<PointCloudXYZ>();
-	ProjectPointCloud(*scan_camera, *scan_ground, *plane);
+	ProjectPointCloud(*scan_camera, *scan_ground, plane_camera);
 
 	// TODO: create a mask image
 
