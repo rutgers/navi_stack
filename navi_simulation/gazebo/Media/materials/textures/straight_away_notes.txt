@@ -1,0 +1,9 @@
+1px per 2 inch
+1.5 inch = 0.0381 meters
+
+30x20 =  787x524
+
+start = -12,0
+end = 12,0
+
+get through ob
