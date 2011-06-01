@@ -13,4 +13,5 @@
 	<depend package="nodelet"/>
 	<depend package="opencv2"/>
 	<depend package="sensor_msgs"/>
+	<depend package="dynamic_reconfigure"/>
 </package>

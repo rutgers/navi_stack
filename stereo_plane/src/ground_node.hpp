@@ -37,8 +37,10 @@ private:
 	Plane::Ptr m_prev;
 	bool       m_valid_prev;
 
+	int m_iter;
 	int m_inliers_min;
 	bool m_static;
+	double m_prob;
 	double m_cache_time;
 	double m_range_max;
 	double m_error_default;

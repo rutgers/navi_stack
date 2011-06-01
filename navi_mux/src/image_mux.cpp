@@ -40,11 +40,23 @@ static std::string info_wl, info_wr;
 
 static double min_n, max_n;
 static double min_w, max_w;
+static double fps;
+static ros::Time then;
+static ros::Duration gap;
 
 void recieve(Image::ConstPtr const &msg_left, Image::ConstPtr const &msg_middle,
              Image::ConstPtr const &msg_right)
 {
 	ros::Time now = msg_left->header.stamp;
+
+	// Backwards jump in time probably means that simulated time was restarted.
+	if (now < then) {
+		ROS_WARN("backward jump in time detected");
+	}
+	// Too soon.
+	else if (now - then < gap) {
+		return;
+	}
 
 	CameraInfo info_nl = man_nl->getCameraInfo();
 	CameraInfo info_nr = man_nr->getCameraInfo();
@@ -66,6 +78,7 @@ void recieve(Image::ConstPtr const &msg_left, Image::ConstPtr const &msg_middle,
 	pub_nr.publish(*msg_middle, info_nr);
 	pub_wl.publish(*msg_left,   info_wl);
 	pub_wr.publish(*msg_right,  info_wr);
+	then = now;
 }
 
 void merge(PointCloud2::ConstPtr const &pts2_narrow, PointCloud2::ConstPtr const &pts2_wide)
@@ -125,12 +138,19 @@ int main(int argc, char **argv)
 	nh_priv.param<std::string>("info_wl", info_wl, "");
 	nh_priv.param<std::string>("info_wr", info_wr, "");
 
+	// Cap the output FPS at a fixed rate.
+	nh_priv.param<double>("fps", fps, 0.0);
+	if (fps > 0) {
+		gap = ros::Duration(1.0 / fps);
+	} else {
+		gap = ros::Duration(0.0);
+	}
+
 	man_nl = new CameraInfoManager(nh_nl, "", info_nl);
 	man_nr = new CameraInfoManager(nh_nr, "", info_nr);
 	man_wl = new CameraInfoManager(nh_wl, "", info_wl);
 	man_wr = new CameraInfoManager(nh_wr, "", info_wr);
 
-	// Cap the output FPS at a fixed rate.
 	nh_priv.param<double>("narrow_min", min_n, 0.0);
 	nh_priv.param<double>("narrow_max", max_n, INFINITY);
 	nh_priv.param<double>("wide_min",   min_w, 0.0);

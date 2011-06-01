@@ -26,9 +26,15 @@
 		</node>
 
 		<!-- Colorspace Transformation -->
-		<node pkg="navi_white" type="hack_node" name="white_left" ns="wheel/left"/>
-		<node pkg="navi_white" type="hack_node" name="white_right" ns="wheel/right"/>
-		<node pkg="navi_white" type="hack_node" name="white_middle" ns="narrow/left"/>
+		<node pkg="navi_white" type="hack_node" name="white_left" ns="wheel/left">
+			<rosparam command="load" file="$(find navi_cfg)/params/line_white.yaml"/>
+		</node>
+		<node pkg="navi_white" type="hack_node" name="white_right" ns="wheel/right">
+			<rosparam command="load" file="$(find navi_cfg)/params/line_white.yaml"/>
+		</node>
+		<node pkg="navi_white" type="hack_node" name="white_middle" ns="narrow/left">
+			<rosparam command="load" file="$(find navi_cfg)/params/line_white.yaml"/>
+		</node>
 
 		<!-- Matched Pulse-Width Filter -->
 		<node pkg="navi_line" type="line_node" name="pulse_left" ns="wheel/left">

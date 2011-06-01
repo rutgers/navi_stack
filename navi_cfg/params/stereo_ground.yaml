@@ -1,3 +1,8 @@
+# speed vs accuracy tradeoff
+iterations:    200
+probability:   0.75
+
+# requirements for a good fit
 inliers_min:   5000
 range_max:     3.50
 error_default: 0.20
