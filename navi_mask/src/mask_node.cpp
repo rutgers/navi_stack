@@ -8,9 +8,11 @@ void MaskNode::onInit(void)
 
 	nh_priv.param<std::string>("fr_fixed", m_fr_fixed, "/base_link");
 
+	m_it = new it::ImageTransport(nh);
 	m_tf = boost::make_shared<tf::TransformListener>(nh, ros::Duration(1.0));
 
-	m_pub_pts   = nh.advertise<PointCloudXYZ>("laser_ground", 1);
+	m_pub_mask  = m_it->advertise("obstacle_mask", 1);
+
 	m_sub_laser = new mf::Subscriber<LaserScan>(nh, "laser_scan", 1);
 	m_sub_info  = new mf::Subscriber<CameraInfo>(nh, "camera_info", 1);
 	m_sub_plane = new mf::Subscriber<Plane>(nh, "ground_plane", 1);
@@ -75,6 +77,11 @@ void MaskNode::transformPlane(Plane const &src, Plane &dst, std::string frame_id
 	dst.type   = src.type;
 }
 
+bool CompareXCoordinates(cv::Point2d const &p1, cv::Point2d const &p2)
+{
+	return p1.x < p2.x;
+}
+
 void MaskNode::Callback(LaserScan::ConstPtr  const &scan,
                         CameraInfo::ConstPtr const &info,
                         Plane::ConstPtr      const &plane)
@@ -88,6 +95,7 @@ void MaskNode::Callback(LaserScan::ConstPtr  const &scan,
 	Plane plane_camera;
 
 	try {
+		// TODO: wait for transformation
 		transformPlane(*plane, plane_camera, fr_camera);
 		transformLaserScanToPointCloud(m_fr_fixed, *scan, *scan_fixed);
 		pcl_ros::transformPointCloud(fr_camera, time_camera, *scan_fixed, m_fr_fixed, *scan_camera, *m_tf);
@@ -100,11 +108,40 @@ void MaskNode::Callback(LaserScan::ConstPtr  const &scan,
 	PointCloudXYZ::Ptr scan_ground = boost::make_shared<PointCloudXYZ>();
 	ProjectPointCloud(*scan_camera, *scan_ground, plane_camera);
 
-	// TODO: create a mask image
+	// Project each obstacle point into the image. Most of these points will
+	// not be in the bounds of the image.
+	std::vector<cv::Point2d> scan_img;
+	scan_img.reserve(scan_ground->points.size());
+	m_pinhole.fromCameraInfo(*info);
 
-	scan_ground->header.stamp    = info->header.stamp;
-	scan_ground->header.frame_id = fr_camera;
-	m_pub_pts.publish(scan_ground);
+	for (size_t i = 0; i < scan_ground->points.size(); ++i) {
+		PointXYZ   &pt = scan_ground->points[i];
+		cv::Point3d pt_3d(pt.x, pt.y, pt.z);
+		cv::Point2d pt_2d = m_pinhole.project3dToPixel(pt_3d);
+
+		if (0 <= pt_2d.x && pt_2d.x < info->width) {
+			scan_img.push_back(pt_2d);
+		}
+	}
+
+	// Arrange the points from left-to-right so we can easily interpret the
+	// missing depths. Connect the points to form a closed polygon.
+	cv::Mat mask(info->height, info->width, CV_8UC1, cv::Scalar(0));
+	std::sort(scan_img.begin(), scan_img.end(), &CompareXCoordinates);
+
+	// TODO: improve handling of the image's edges.
+	for (size_t i = 1; i < scan_img.size(); ++i) {
+		cv::Point2d const &pt1 = scan_img[i - 1];
+		cv::Point2d const &pt2 = scan_img[i];
+		cv::line(mask, pt1, pt2, cv::Scalar(255), 3);
+	}
+
+	cv_bridge::CvImage msg_mask;
+	msg_mask.header.stamp    = time_camera;
+	msg_mask.header.frame_id = fr_camera;
+	msg_mask.encoding = enc::MONO8;
+	msg_mask.image    = mask;
+	m_pub_mask.publish(msg_mask.toImageMsg());
 }
 
 };

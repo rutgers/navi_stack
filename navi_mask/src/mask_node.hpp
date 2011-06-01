@@ -4,6 +4,10 @@
 #include <cmath>
 #include <string>
 
+#include <opencv/cv.h>
+#include <cv_bridge/cv_bridge.h>
+#include <image_geometry/pinhole_camera_model.h>
+#include <image_transport/image_transport.h>
 #include <laser_geometry/laser_geometry.h>
 #include <message_filters/subscriber.h>
 #include <message_filters/sync_policies/approximate_time.h>
@@ -19,6 +23,8 @@
 
 namespace navi_mask {
 
+namespace enc = sensor_msgs::image_encodings;
+namespace it = image_transport;
 namespace mf = message_filters;
 
 using sensor_msgs::CameraInfo;
@@ -40,11 +46,14 @@ public:
 
 private:
 	std::string m_fr_fixed;
+
 	boost::shared_ptr<tf::TransformListener> m_tf;
-	laser_geometry::LaserProjection m_projector;
+	it::ImageTransport                      *m_it;
 
-	ros::Publisher m_pub_pts;
+	laser_geometry::LaserProjection    m_projector;
+	image_geometry::PinholeCameraModel m_pinhole;
 
+	it::Publisher m_pub_mask;
 	mf::Subscriber<LaserScan>  *m_sub_laser;
 	mf::Subscriber<CameraInfo> *m_sub_info;
 	mf::Subscriber<Plane>      *m_sub_plane;
