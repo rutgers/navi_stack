@@ -67,12 +67,45 @@ def encoder_cb(model, odom_pub, tfBroad, msg):
 	
 	#now broadcast tf..
 	x,y,z, theta = model.position()
-	tfBroad.sendTransform((x, y, 0),
-		tf.transformations.quaternion_from_euler(0, 0, model.theta),rospy.Time.now(),
-                     'odom',
-                     "drive_footprint")
+	print "The model position is " , model.position()
+	tfBroad.sendTransform( (x, y, 0),
+		tf.transformations.quaternion_from_euler(0, 0, theta),rospy.Time.now(),
+                     'drive_footprint',
+                     "odom")
 	
-def cmd_vel_cb(model,velT_units, motor_pub, cmd_vel_msg):
+
+c_vel = Twist()
+g_vel = Twist()
+g_vel_reached = True
+
+def cmd_vel_cb(cmd_vel):
+	global g_vel
+	global g_vel_reached
+	global c_vel
+	c_vel.angular = cmd_vel.angular
+	g_vel = cmd_vel
+	g_vel_reached = False;
+	
+
+def update_cvel(max_linear_acc,c_vel, g_vel):
+	"""
+		Takes max linear acceleration, current c_vel and goal
+		and returns new c_vel
+	"""
+	done = False
+	diff = (g_vel.linear.x - c_vel.linear.x)
+	sign =1
+	if (diff < 0):
+		sign =-1
+	c_vel.linear.x += sign*max_linear_acc
+	
+	if (abs(c_vel.linear.x) > abs(g_vel.linear.x)) :
+		c_vel.linear.x  = g_vel.linear.x
+		done = True
+	return c_vel, done
+		
+
+def pub_cmd_vel(model,velT_units, motor_pub, cmd_vel_msg):
 	"""
 	"""
 	angular = cmd_vel_msg.angular.z
@@ -106,7 +139,11 @@ if __name__ == '__main__':
 	sub_encoder = rospy.Subscriber('encoder', Encoder, lambda msg : encoder_cb(model,pub_odom, tfBroad,msg))
 	
 	pub_motor_cmd = rospy.Publisher('motor_cmd', MotorCmd)
-	sub_cmd_vel =rospy.Subscriber("cmd_vel", Twist, lambda msg: cmd_vel_cb(model, velocity_units_secs, pub_motor_cmd, msg) )
+	sub_cmd_vel   = rospy.Subscriber("cmd_vel", Twist, cmd_vel_cb )
 	
-	rospy.spin()
+	while not rospy.is_shutdown():
+		if (not g_vel_reached):
+			c_vel, g_vel_reached = update_cvel(0.8/20.0, c_vel, g_vel)
+			pub_cmd_vel(model, velocity_units_secs, pub_motor_cmd, c_vel)
+		rospy.sleep(0.05)
 	
