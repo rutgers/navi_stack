@@ -1,0 +1,20 @@
+<launch>
+	<include file="$(find navi_simulation)/launch/simulation.launch" >
+		<arg name="world" value="straight_away"/>
+	</include>
+	<include file="$(find navi_model)/launch/model_upload.launch"/>
+	
+	<node pkg="joint_state_publisher" type="joint_state_publisher" name="joint_publisher"/>
+	<node pkg="robot_state_publisher" type="state_publisher" name="state_publisher"/>
+
+<node name="spawn_navi" type="spawn_model" pkg="gazebo" args="-param robot_description -urdf -model navi -x -12 0 "/>
+	<node name="fake_localization" type="fake_localization" pkg="fake_localization">
+		<remap from="base_pose_ground_truth" to="/drive/odom"/>
+		<param name="odom_frame_id" value="odom"/>
+		<param name="base_frame_id" value="base_link"/>
+	</node>
+<node pkg="tf" type="static_transform_publisher" name="odom_static_broadcaster" args="0 0 0 0 0 0 odom base_footprint 30" />
+
+
+
+</launch>

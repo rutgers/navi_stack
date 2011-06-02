@@ -50,3 +50,22 @@ material Navi/checkerboard
 		}
 	}
 }
+
+
+material Navi/straight_away
+{
+	receive_shadows on
+
+	technique
+	{
+		pass
+		{
+			texture_unit
+			{
+				texture straight_away.png
+				filtering anisotropic
+				max_anisotropy 16
+			}
+		}
+	}
+}
