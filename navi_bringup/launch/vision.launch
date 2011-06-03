@@ -11,11 +11,13 @@
 			<rosparam command="load" file="$(find navi_cfg)/params/stereo_ground.yaml"/>
 			<remap from="points" to="stereo/points2"/>
 		</node>
+<!--
 		<node pkg="stereo_od" type="od_node" name="stereo_od">
 			<rosparam command="load" file="$(find navi_cfg)/params/stereo_od.yaml"/>
 			<remap from="points"      to="narrow/points2"/>
 			<remap from="camera_info" to="narrow/left/camera_info"/>
 		</node>
+  -->
 
 		<!-- Colorspace Transformation -->
 		<node pkg="navi_white" type="hack_node" name="white_left" ns="wheel/left">
@@ -46,11 +48,13 @@
 		</node>
 
 		<!-- Misc. Line Detection -->
+<!--
 		<node pkg="navi_mask" type="mask_node" name="mask_node">
 			<remap from="laser_scan"   to="/base_laser/scan"/>
 			<remap from="camera_info"  to="/vision/narrow/left/camera_info"/>
 			<remap from="ground_plane" to="/vision/ground_plane"/>
 		</node>
+  -->
 		<node pkg="navi_line" type="mux_node" name="line_mux">
 			<rosparam command="load" file="$(find navi_cfg)/params/line_mux.yaml"/>
 			<remap from="line_points1" to="wheel/left/line_points"/>
