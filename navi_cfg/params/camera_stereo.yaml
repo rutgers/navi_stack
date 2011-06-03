@@ -1,13 +1,10 @@
 width:  640
 height: 480
 
-cameras: 3
+cameras: 2
 device0: '/dev/video_stereo_left'
 device1: '/dev/video_stereo_middle'
-device2: '/dev/video_stereo_right'
 calib0: 'package://navi_cfg/calibration/mono_front_left.yaml'
 calib1: 'package://navi_cfg/calibration/mono_front_middle.yaml'
-calib2: 'package://navi_cfg/calibration/mono_front_right.yaml'
 frame0: '/camera_link'
 frame1: '/camera_link'
-frame2: '/camera_link'
