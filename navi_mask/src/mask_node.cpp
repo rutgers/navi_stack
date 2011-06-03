@@ -111,7 +111,7 @@ void MaskNode::Callback(LaserScan::ConstPtr  const &scan,
 	// Project each obstacle point into the image. Most of these points will
 	// not be in the bounds of the image.
 	std::vector<cv::Point2d> scan_img;
-	scan_img.reserve(scan_ground->points.size());
+	scan_img.reserve(scan_ground->points.size() + 2);
 	m_pinhole.fromCameraInfo(*info);
 
 	for (size_t i = 0; i < scan_ground->points.size(); ++i) {
@@ -125,16 +125,34 @@ void MaskNode::Callback(LaserScan::ConstPtr  const &scan,
 	}
 
 	// Arrange the points from left-to-right so we can easily interpret the
-	// missing depths. Connect the points to form a closed polygon.
-	cv::Mat mask(info->height, info->width, CV_8UC1, cv::Scalar(0));
+	// missing depths.
 	std::sort(scan_img.begin(), scan_img.end(), &CompareXCoordinates);
 
-	// TODO: improve handling of the image's edges.
-	for (size_t i = 1; i < scan_img.size(); ++i) {
-		cv::Point2d const &pt1 = scan_img[i - 1];
-		cv::Point2d const &pt2 = scan_img[i];
-		cv::line(mask, pt1, pt2, cv::Scalar(255), 3);
+	// Connect the points to form a closed polygon that borders the top edge of
+	// the image.
+	size_t n = scan_img.size();
+	cv::Point *pts = new cv::Point[n + 4];
+	pts[0] = cv::Point(0, 0);
+	pts[1] = cv::Point(0, scan_img[0].y);
+	pts[n + 2] = cv::Point(info->width - 1, scan_img[n - 1].y);
+	pts[n + 3] = cv::Point(info->width - 1, 0);
+
+	cv::Mat mask(info->height, info->width, CV_8UC1, cv::Scalar(0));
+	for (size_t i = 0; i < scan_img.size(); ++i) {
+		pts[i + 2] = scan_img[i];
 	}
+
+	for (size_t i = 0; i < scan_img.size(); ++i) {
+		int x = scan_img[i].x;
+		int y = scan_img[i].y;
+
+		if (0 <= x && x  < info->width && 0 <= y && y < info->height) {
+			std::cout << "x = " << x << std::endl;
+			mask.at<uint8_t>(y, x) = 255;
+		}
+	}
+
+	//cv::fillConvexPoly(mask, pts, 255, 255);
 
 	cv_bridge::CvImage msg_mask;
 	msg_mask.header.stamp    = time_camera;
