@@ -14,4 +14,5 @@ rosbuild_init()
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 
-rosbuild_add_executable(image_mux_node  src/image_mux.cpp)
+rosbuild_add_executable(image_mux_node     src/image_mux.cpp)
+rosbuild_add_executable(sync_throttle_node src/sync_throttle.cpp)
