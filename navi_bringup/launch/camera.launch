@@ -1,31 +1,28 @@
 <launch>
-	<arg name="rate" default="10.0"/>
 	<group ns="vision">
 		<node pkg="stereo_webcam" type="stereo_node" name="camera_front">
 			<rosparam command="load" file="$(find navi_cfg)/params/camera_general.yaml"/>
 			<rosparam command="load" file="$(find navi_cfg)/params/camera_stereo.yaml"/>
-			<remap from="camera0" to="left"/>
-			<remap from="camera1" to="middle"/>
-			<remap from="camera2" to="right"/>
+			<remap from="camera0" to="stereo/left"/>
+			<remap from="camera1" to="stereo/right"/>
+			<remap from="image" to="image_fast"/>
 		</node>
 		<node pkg="stereo_webcam" type="stereo_node" name="camera_wheel">
 			<rosparam command="load" file="$(find navi_cfg)/params/camera_general.yaml"/>
 			<rosparam command="load" file="$(find navi_cfg)/params/camera_wheel.yaml"/>
 			<remap from="camera0" to="wheel/left"/>
 			<remap from="camera1" to="wheel/right"/>
-			<remap from="wheel/left/image"  to="wheel/left/image_fast"/>
-			<remap from="wheel/right/image" to="wheel/right/image_fast"/>
+			<remap from="image" to="image_fast"/>
 		</node>
 
-		<!-- Throttle the wheel cameras from 30 Hz down to 10 Hz. -->
-		<node pkg="topic_tools" type="throttle" name="throttle_wheel_left"
-		      args="messages image_fast $(arg rate) image" ns="wheel/left"/>
-		<node pkg="topic_tools" type="throttle" name="throttle_front_right"
-		      args="messages image_fast $(arg rate) image" ns="wheel/right"/>
-
-		<node pkg="navi_mux" type="image_mux_node" name="stereo_mux">
-			<rosparam command="load" file="$(find navi_cfg)/params/camera_mux.yaml"/>
+		<!-- Throttle all of the cameras down to 10 Hz. -->
+		<node pkg="navi_mux" type="sync_throttle_node" name="throttle_stereo">
+			<param name="x" value="1"/>
+			<param name="y" value="3"/>
 		</node>
-
+		<node pkg="navi_mux" type="sync_throttle_node" name="throttle_wheel">
+			<param name="x" value="2"/>
+			<param name="x" value="3"/>
+		</node>
 	</group>
 </launch>
