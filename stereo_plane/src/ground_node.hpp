@@ -48,6 +48,9 @@ private:
 	double m_error_angle;
 	std::string m_fr_fixed;
 	std::string m_fr_default;
+
+	double m_gamma;
+	Plane  m_avg;
 };
 };
 #endif

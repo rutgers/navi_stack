@@ -43,14 +43,16 @@ void GroundNodelet::onInit(void)
 
 	m_valid_prev = false;
 	nh_priv.param<int>("inliers_min", m_inliers_min, 1000);
-	nh_priv.param<int>("iterations",  m_iterations,   500);
+	nh_priv.param<int>("iterations",  m_iter,        250);
 	nh_priv.param<bool>("static", m_static, false);
 	nh_priv.param<double>("probability",   m_prob,          0.99);
 	nh_priv.param<double>("range_max",     m_range_max,     3.00);
+	nh_priv.param<double>("threshold",     m_threshold,     0.30);
 	nh_priv.param<double>("error_default", m_error_default, 0.20);
 	nh_priv.param<double>("error_inlier",  m_error_inlier,  0.20);
 	nh_priv.param<double>("error_angle",   m_error_angle,   M_PI/6);
 	nh_priv.param<double>("cache_time",    m_cache_time,    1.00);
+	nh_priv.param<double>("gamma",         m_gamma,         0.00);
 	nh_priv.param<std::string>("frame_fixed",   m_fr_fixed,   "/base_link");
 	nh_priv.param<std::string>("frame_default", m_fr_default, "/base_footprint");
 
@@ -82,8 +84,15 @@ void GroundNodelet::Callback(pcl::PointCloud<pcl::PointXYZ>::ConstPtr const &msg
 	}
 
 	// Detect the ground plane by using RANSAC to fit a plane to the stereo data.
+	PointCloudXYZ::Ptr pts_filt = boost::make_shared<PointCloudXYZ>();
+	pcl::PassThrough<PointXYZ> pass;
+	pass.setInputPointCloud(*msg_pts);
+	pass.setFilterFieldName("z");
+	pass.setFilterLimits(-m_threshold, +m_threshold);
+	pass.filter(*pts_filt);
+
 	Plane::Ptr plane_fit = boost::make_shared<Plane>();
-	bool valid_fit = GetSACPlane(msg_pts, m_fr_fixed, *plane_fit);
+	bool valid_fit = GetSACPlane(pass, m_fr_fixed, *plane_fit);
 
 	// Perform a sanity check against our guess before accepting the fit.
 	double distance  = GetPlaneDistance(*plane_def, *plane_fit);
@@ -103,16 +112,29 @@ void GroundNodelet::Callback(pcl::PointCloud<pcl::PointXYZ>::ConstPtr const &msg
 		plane = plane_def;
 		plane->type = Plane::TYPE_DEFAULT;
 	} else {
+		plane = plane_fit;
 		return;
 	}
-	plane->header.frame_id = m_fr_fixed;
-	plane->header.stamp    = msg_stamp;
+
+	// Average the planes over time to act like a LPF.
+	m_avg.type = plane->type;
+	m_avg.normal.x = (1.0 - m_gamma) * plane->normal.x + m_gamma * m_avg.normal.x;
+	m_avg.normal.y = (1.0 - m_gamma) * plane->normal.y + m_gamma * m_avg.normal.y;
+	m_avg.normal.z = (1.0 - m_gamma) * plane->normal.z + m_gamma * m_avg.normal.z;
+	m_avg.point.x = (1.0 - m_gamma) * plane->point.x + m_gamma * m_avg.point.x;
+	m_avg.point.y = (1.0 - m_gamma) * plane->point.y + m_gamma * m_avg.point.y;
+	m_avg.point.z = (1.0 - m_gamma) * plane->point.z + m_gamma * m_avg.point.z;
+
+	// Need to copy the plane before publishing because it might be modified.
+	Plane::Ptr plane_out = boost::make_shared<Plane>(m_avg);
+	plane_out->header.frame_id = m_fr_fixed;
+	plane_out->header.stamp    = msg_stamp;
 
 	visualization_msgs::Marker::Ptr viz = boost::make_shared<visualization_msgs::Marker>();
-	RenderPlane(*plane, 0.5, *viz);
+	RenderPlane(*plane_out, 0.5, *viz);
 
 	m_pub_viz.publish(viz);
-	m_pub_plane.publish(plane);
+	m_pub_plane.publish(plane_out);
 }
 
 
