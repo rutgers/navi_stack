@@ -5,4 +5,5 @@
 		<param name="rate" value="40"/>
 	</node>
 	<node pkg="robot_state_publisher" type="state_publisher" name="state_publisher"/>
+	<node pkg="tf" type="static_transform_publisher" name="drive_to_base_static_tf" args="0 0 0  0 0 0 base_footprint drive_footprint 50" />
 </launch>
