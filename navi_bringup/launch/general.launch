@@ -6,4 +6,9 @@
 	</node>
 	<node pkg="robot_state_publisher" type="state_publisher" name="state_publisher"/>
 	<node pkg="tf" type="static_transform_publisher" name="drive_to_base_static_tf" args="0 0 0  0 0 0  base_footprint drive_footprint 20" />
+
+	<!-- Calibrated Camera Extrinsics -->
+	<include file="$(find camera_pose_calibration)/blocks/calibration_tf_publisher.launch">
+		<arg name="cache_file" value="$(find navi_cfg)/calibration/extrinsics.bag"/>
+	</include>
 </launch>
