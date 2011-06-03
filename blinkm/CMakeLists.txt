@@ -26,7 +26,7 @@ set(AVR_BRIDGE_CONFIG blinkm.yaml)
 set(ARDUINO_TYPE "arduino_diecimila")
 rosbuild_find_ros_package(avr_bridge)
 include(${avr_bridge_PACKAGE_PATH}/arduino_cmake/avrbuild.cmake)
-
+set(ARDUINO_PORT "/dev/blinkm")
 
 set(PROJECT_SRC src/main.cpp src/Wire.cpp src/twi.c src/avr_ros_user.cpp)
 
