@@ -49,6 +49,9 @@ private:
 	std::string m_fr_fixed;
 	std::string m_fr_default;
 
+	double m_threshold_min;
+	double m_threshold_max;
+
 	double m_gamma;
 	Plane  m_avg;
 };

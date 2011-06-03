@@ -1,9 +1,10 @@
 <launch>
 	<group ns="vision">
 		<!-- Stereo Reconstruction -->
-		<node pkg="stereo_image_proc" type="stereo_image_proc" name="narrow_proc" ns="stereo">
+		<node pkg="stereo_image_proc" type="stereo_image_proc" name="stereo_proc" ns="stereo">
 			<rosparam command="load" file="$(find navi_cfg)/params/stereo_narrow.yaml"/>
-			<remap from="image_raw"  to="image"/>
+			<remap from="left/image_raw"  to="left/image"/>
+			<remap from="right/image_raw" to="right/image"/>
 		</node>
 
 		<!-- Stereo Obstacle Detection -->

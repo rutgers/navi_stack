@@ -47,7 +47,6 @@ void GroundNodelet::onInit(void)
 	nh_priv.param<bool>("static", m_static, false);
 	nh_priv.param<double>("probability",   m_prob,          0.99);
 	nh_priv.param<double>("range_max",     m_range_max,     3.00);
-	nh_priv.param<double>("threshold",     m_threshold,     0.30);
 	nh_priv.param<double>("error_default", m_error_default, 0.20);
 	nh_priv.param<double>("error_inlier",  m_error_inlier,  0.20);
 	nh_priv.param<double>("error_angle",   m_error_angle,   M_PI/6);
@@ -55,6 +54,14 @@ void GroundNodelet::onInit(void)
 	nh_priv.param<double>("gamma",         m_gamma,         0.00);
 	nh_priv.param<std::string>("frame_fixed",   m_fr_fixed,   "/base_link");
 	nh_priv.param<std::string>("frame_default", m_fr_default, "/base_footprint");
+
+	// Note: this threshold is in the camera coordinate frame.
+	double thresh_center;
+	double thresh_offset;
+	nh_priv.param<double>("threshold_center", thresh_center, 48.00);
+	nh_priv.param<double>("threshold_offset", thresh_offset,  0.30);
+	m_threshold_min = thresh_center - thresh_offset;
+	m_threshold_max = thresh_center + thresh_offset;
 
 	m_pub_tf = boost::make_shared<tf::TransformBroadcaster>();
 	m_sub_tf = boost::make_shared<tf::TransformListener>(nh, ros::Duration(m_cache_time));
@@ -85,14 +92,14 @@ void GroundNodelet::Callback(pcl::PointCloud<pcl::PointXYZ>::ConstPtr const &msg
 
 	// Detect the ground plane by using RANSAC to fit a plane to the stereo data.
 	PointCloudXYZ::Ptr pts_filt = boost::make_shared<PointCloudXYZ>();
-	pcl::PassThrough<PointXYZ> pass;
-	pass.setInputPointCloud(*msg_pts);
-	pass.setFilterFieldName("z");
-	pass.setFilterLimits(-m_threshold, +m_threshold);
+	pcl::PassThrough<pcl::PointXYZ> pass;
+	pass.setInputCloud(msg_pts);
+	pass.setFilterFieldName("y");
+	pass.setFilterLimits(m_threshold_min, m_threshold_max);
 	pass.filter(*pts_filt);
 
 	Plane::Ptr plane_fit = boost::make_shared<Plane>();
-	bool valid_fit = GetSACPlane(pass, m_fr_fixed, *plane_fit);
+	bool valid_fit = GetSACPlane(pts_filt, m_fr_fixed, *plane_fit);
 
 	// Perform a sanity check against our guess before accepting the fit.
 	double distance  = GetPlaneDistance(*plane_def, *plane_fit);
