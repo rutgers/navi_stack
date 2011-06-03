@@ -5,4 +5,6 @@
 	<include file="$(find navi_driver)/launch/drive.launch"/>
 	<include file="$(find imu_9drazor)/imu.launch"/>
 	<include file="$(find navi_bringup)/launch/laser.launch"/>
+	<node pkg="avr_bridge" name="blinkm" type="bridge_node.py" args="$(find blinkm)/blinkm.yaml"/>
+
 </launch>
