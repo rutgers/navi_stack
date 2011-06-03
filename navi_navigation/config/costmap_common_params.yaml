@@ -4,10 +4,10 @@ raytrace_range: 3
 # where should the foot print be centered?  
 # is the use of the inflation radius valid here?
 #footprint: [[x0, y0], [x1, y1], ... [xn, yn]]
-robot_radius: 0.55
-inflation_radius: 0.55
+robot_radius: 0.8
+inflation_radius: 0.8
 
-#observation_sources: #laser_scan_sensor 
+observation_sources: laser_scan_sensor 
 #stereo_objects
 
 laser_scan_sensor: {sensor_frame: base_laser_link, data_type: LaserScan, topic: base_laser/scan, marking: true, clearing: true}

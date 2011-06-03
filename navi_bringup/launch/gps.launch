@@ -4,6 +4,7 @@
 		<param name="port" value="4000"/>
 	</node>
 	<node ns="gps" pkg="gps_common" type="utm_odometry_node" name="utm_odom_node">
-		<param name="frame_id" value="base_link"/>
+		<param name="frame_id" value="/base_link"/>
 	</node>
+	
 </launch>
