@@ -18,8 +18,8 @@ void callback(Image::ConstPtr const &img_l, Image::ConstPtr const &img_r)
 	if (i % y >= x) {
 		pub_l.publish(img_l);
 		pub_r.publish(img_r);
-		i = (i + 1) % y;
 	}
+	i = (i + 1) % y;
 }
 
 int main(int argc, char **argv)
