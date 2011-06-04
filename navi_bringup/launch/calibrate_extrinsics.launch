@@ -21,6 +21,6 @@
 	</include>
 
 	<include file="$(find camera_pose_calibration)/blocks/calibration_tf_publisher.launch">
-		<arg name="cache_file" value="$(find navi_cfg)/calibration/extrinsics.bag"/>
+		<arg name="cache_file" value="$(find navi_cfg)/calibration/extrinsics_temp.bag"/>
 	</include>
 </launch>
