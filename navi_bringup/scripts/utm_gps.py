@@ -51,7 +51,7 @@ def parseBESTUTMA(  gps_string):
 
 	northing = float(tokens[13])
 	easting = float(tokens[14])
-	print "Solution_type", tokens[10], "  -  ".   "Northing ", northing , "Easting ", easting 
+	print "Solution_type", tokens[10], "  -  ",   "Northing ", northing , "Easting ", easting 
 	
 	
 	if (start_x != None):
@@ -93,7 +93,15 @@ if __name__ == '__main__':
 	
 	print "Opening up ", port_name
 	
-	#port = serial.Serial(port_name, 115200)
+	port = serial.Serial(port_name, 115200, timeout=0.75)
+		
+	pub = rospy.Publisher('/gps/odom', Odometry)
 	
-	print parseBESTUTMA(ex_utm_string)
-	print parseBESTUTMA(ex_utm_string)
+	while not rospy.is_shutdown():
+		try:
+			line = port.readline()
+			odom = parseBESTUTMA(line)
+			if (odom != None):
+				pub.publish(odom)
+		except:
+			pass
