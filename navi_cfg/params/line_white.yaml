@@ -4,4 +4,4 @@ sunlight_hue: 105
 sunlight_val: 155
 sat_split:    125
 
-debug: false
+debug: true
