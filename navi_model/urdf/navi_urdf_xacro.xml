@@ -18,7 +18,7 @@
 	<include filename="$(find navi_model)/urdf/laser_urdf_xacro.xml"/>
 	
 	<include filename="$(find navi_model)/urdf/wheel_cam_urdf_xacro.xml"/>
-
+	<include filename="$(find navi_model)/urdf/imu_urdf_xacro.xml"/>
 	  
 	<navi_base name="base"/> 
 	<wheel prefix="fl" reflect_x="1" reflect_y="-1"/>
@@ -31,7 +31,7 @@
 	<!--<diffdrive prefix="b" /> -->
 
 	<laser/>
-
+	<imu/>
 
 	<stereo-camera prefix="narrow" topic="vision/narrow" baseline="${baseline_narrow}"/>
 	<stereo-camera prefix="wide"   topic="vision/wide"   baseline="${baseline_wide}"/>
