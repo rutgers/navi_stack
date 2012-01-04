@@ -16,6 +16,7 @@ static int16_t int_angvel1 = 0;
 static int16_t int_angvel2 = 0;
 
 // PID Parameters.
+static int16_t threshold = 0;
 static int16_t int_max = 255;
 static float kp1 = 0.0f, kp2 = kp1;
 static float ki1 = 0.0f, ki2 = ki1;
@@ -25,6 +26,8 @@ static float kd1 = 0.0f, kd2 = kd1;
     (((_x_) < (_a_)) ? (_a_) :   \
     (((_x_) > (_b_)) ? (_b_) :   \
                        (_x_)));
+
+#define THRESHOLD(_x_, _t_) ((-(_t_) <= (_x_) && (_x_) <= +(_t_)) ? (_x_) : 0)
 
 void pid_init(void)
 {
@@ -56,7 +59,7 @@ ISR(TIMER2_COMPA_vect)
 		motor2_ticks = 0;
 	}
 
-	int16_t const error = angvel_setpt - angvel1;
+	int16_t const error = THRESHOLD(angvel_setpt - angvel1, threshold);
 	int16_t const prop1 = error;
 	int16_t const diff1 = angvel1 - last_angvel1;
 	int16_t const int1  = CONSTRAIN(int1 + error, -int_max, int_max);
