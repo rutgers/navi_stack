@@ -75,6 +75,7 @@ static int16_t pid_tick(struct pid_t *pid, int16_t value)
 
 ISR(TIMER2_COMPA_vect)
 {
+#if 0
 	int16_t const pwm1 = pid_tick(&pid1, motor1_ticks);
 	int16_t const pwm2 = pid_tick(&pid2, motor2_ticks);
 	motor_set(pwm1, pwm2);
@@ -82,4 +83,5 @@ ISR(TIMER2_COMPA_vect)
 	motor1_ticks = 0;
 	motor2_ticks = 0;
 	TCNT2 = 0;
+#endif
 }

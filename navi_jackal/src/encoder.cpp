@@ -1,3 +1,4 @@
+#include <WProgram.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <avr/interrupt.h>
@@ -35,14 +36,20 @@ static inline int8_t encoder_tick(bool last_a, bool last_b,
 	} else if (last_a && !curr_a) {
 		return (!curr_b) ? +1 : -1;
 	}
+
+	if (!last_b && curr_b) {
+		return (!curr_a) ? +1 : -1;
+	} else if (last_b && !curr_b) {
+		return (!curr_a) ? -1 : +1;
+	}
 }
 
 ISR(PCINT2_vect)
 {
-	bool const enc1a = PIND | 1 << MOTOR1_ENCA;
-	bool const enc1b = PIND | 1 << MOTOR1_ENCB;
-	bool const enc2a = PIND | 1 << MOTOR2_ENCA;
-	bool const enc2b = PIND | 1 << MOTOR2_ENCB;
+	bool const enc1a = !!(PIND | 1 << MOTOR1_ENCA);
+	bool const enc1b = !!(PIND | 1 << MOTOR1_ENCB);
+	bool const enc2a = !!(PIND | 1 << MOTOR2_ENCA);
+	bool const enc2b = !!(PIND | 1 << MOTOR2_ENCB);
 
 	motor1_ticks += encoder_tick(last_enc1a, last_enc1b, enc1a, enc1b);
 	motor2_ticks += encoder_tick(last_enc2a, last_enc2b, enc2a, enc2b);
