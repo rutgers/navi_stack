@@ -39,10 +39,10 @@ void setup(void)
 void loop(void)
 {
 	ATOMIC_BLOCK (ATOMIC_FORCEON) {
-		msg_encoder.data = pid_count;
+		msg_encoder.data = period_us;
 	}
 	pub_encoder.publish(&msg_encoder);
 
 	nh.spinOnce();
-	delay(1000);
+	delay(2);
 }

@@ -4,6 +4,7 @@
 #include <util/atomic.h>
 #include "config.hpp"
 #include "encoder.hpp"
+#include "motor.hpp"
 #include "pid.hpp"
 
 #define CONSTRAIN(_x_, _a_, _b_) (((_x_) < (_a_)) ? (_a_) :         \
@@ -19,21 +20,16 @@ volatile uint16_t pid_count = 0;
 static int16_t angvel_setpt = 0;
 uint16_t period_us = 0;
 
-// Previous velocity used to estimate the derivative of error.
-static int16_t last_angvel1 = 0;
-static int16_t last_angvel2 = 0;
+struct pid_t {
+	int16_t threshold;
+	int16_t last;
+	int16_t integral;
+	int16_t integral_max;
+	float kp, ki, kd;
+};
 
-// Counter used to estimate the integral of error.
-static int16_t int_angvel1 = 0;
-static int16_t int_angvel2 = 0;
-
-// PID Parameters.
-static int16_t threshold = 0;
-static int16_t int_max = 255;
-static float kp1 = 0.0f, kp2 = kp1;
-static float ki1 = 0.0f, ki2 = ki1;
-static float kd1 = 0.0f, kd2 = kd1;
-
+static struct pid_t pid1 = { 0 };
+static struct pid_t pid2 = { 0 };
 
 void pid_init(void)
 {
@@ -48,6 +44,12 @@ void pid_init(void)
 
 	// Reset the timer.
 	TCNT2  = 0;
+
+	pid1.integral     = pid2.integral     = 0;
+	pid1.integral_max = pid2.integral_max = 255;
+	pid1.kp = pid2.kp = 0.0f;
+	pid1.ki = pid2.ki = 0.0f;
+	pid1.kd = pid2.kd = 0.0f;
 }
 
 void pid_set_angvel(float omega)
@@ -67,14 +69,16 @@ ISR(TIMER2_COMPA_vect)
 	motor1_ticks = 0;
 	motor2_ticks = 0;
 
-	int16_t const error = THRESHOLD(angvel_setpt - angvel1, threshold);
-	int16_t const prop1 = error;
-	int16_t const diff1 = angvel1 - last_angvel1;
-	int16_t const int1  = CONSTRAIN(int1 + error, -int_max, int_max);
+	int16_t const error = THRESHOLD(angvel_setpt - angvel1, pid1.threshold);
+	int16_t const prop = error;
+	int16_t const diff = angvel1 - pid1.last;
+	int16_t const inte = CONSTRAIN(pid1.integral + error, -pid1.integral_max,
+	                                pid1.integral_max);
 
 	// Calculate the PWM output using PID.
-	float   const pwm_raw = (kp1 * prop1) + (kd1 * diff1) + (ki1 * int1);
+	float   const pwm_raw = pid1.kp * prop + pid1.kd * diff + pid1.ki * inte;
 	int16_t const pwm     = (int16_t)CONSTRAIN(pwm_raw, -255.0, 255.0);
 
 	// TODO: Set motor outputs.
+	motor_set(pwm, 0);
 }
