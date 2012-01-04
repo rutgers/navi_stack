@@ -10,6 +10,7 @@
 #include <std_msgs/Float32.h>
 #include "config.hpp"
 #include "encoder.hpp"
+#include "pid.hpp"
 #include "main.hpp"
 
 static std_msgs::Float32 msg_angvel;
@@ -27,6 +28,7 @@ void change_setpt(std_msgs::Float32 const &msg)
 void setup(void)
 {
 	encoder_init();
+	pid_init();
 
 	nh.initNode();
 	nh.advertise(pub_angvel);
@@ -37,10 +39,9 @@ void setup(void)
 void loop(void)
 {
 	ATOMIC_BLOCK (ATOMIC_FORCEON) {
-		msg_encoder.data = motor1_ticks;
+		msg_encoder.data = pid_count;
 	}
 	pub_encoder.publish(&msg_encoder);
-
 
 	nh.spinOnce();
 	delay(1000);

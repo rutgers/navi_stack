@@ -6,6 +6,6 @@ include(${rosserial_arduino_PACKAGE_PATH}/cmake_scripts/rosserial.cmake)
 
 set(FIRMWARE_NAME chatter)
 set(${FIRMWARE_NAME}_BOARD atmega328)
-set(${FIRMWARE_NAME}_SRCS src/main.cpp src/encoder.cpp)
+set(${FIRMWARE_NAME}_SRCS src/main.cpp src/encoder.cpp src/pid.cpp)
 set(${FIRMWARE_NAME}_PORT /dev/ttyUSB0)
 generate_ros_firmware(${FIRMWARE_NAME})
