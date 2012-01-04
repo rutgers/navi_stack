@@ -6,6 +6,8 @@
 #include <WProgram.h>
 #include <ros.h>
 #include <std_msgs/Float32.h>
+#include "config.hpp"
+#include "encoder.hpp"
 #include "main.hpp"
 
 static std_msgs::Float32 msg_angvel;
@@ -20,6 +22,8 @@ void change_setpt(std_msgs::Float32 const &msg)
 
 void setup(void)
 {
+	encoder_init();
+
 	nh.initNode();
 	nh.advertise(pub_angvel);
 	nh.subscribe(sub_angvel_setp);
