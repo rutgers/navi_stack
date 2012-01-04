@@ -9,8 +9,8 @@
 #define MOTOR2_EN  12
 
 #define MOTOR1_ENCA 2
-#define MOTOR2_ENCA 4
 #define MOTOR1_ENCB 3
+#define MOTOR2_ENCA 4
 #define MOTOR2_ENCB 5
 
 #define TICKS_PER_REV 1000

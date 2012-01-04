@@ -49,11 +49,11 @@ void setup(void)
 void loop(void)
 {
 	ATOMIC_BLOCK (ATOMIC_FORCEON) {
-		msg_encoder1.data = motor1_ticks;
+		//msg_encoder1.data = motor1_ticks;
 		msg_encoder2.data = motor2_ticks;
 	}
-	pub_encoder1.publish(&msg_encoder1);
+	//pub_encoder1.publish(&msg_encoder1);
 	pub_encoder2.publish(&msg_encoder2);
 	nh.spinOnce();
-	delay(10);
+	delay(100);
 }

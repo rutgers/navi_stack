@@ -16,17 +16,13 @@ volatile int32_t motor2_ticks = 0;
 void encoder_init(void)
 {
 	//************* Intialize encoders	*********************
+	// Initialize 
 	DDRD &=  ~_BV(PIN2) & ~_BV(PIN3)& ~_BV(PIN4)& ~_BV(PIN5);
 	PORTD = _BV(PIN2) | _BV(PIN3) |  _BV(PIN4) | _BV(PIN5);
 
 	cli();
-
-	/*
-	 * Using PCINT18,19,20,6
-	 */
 	PCICR  |= _BV(PCIE2);
 	PCMSK2 = _BV(PCINT18) | _BV(PCINT19) | _BV(PCINT20) | _BV(PCINT21);
-
 	sei();
 }
 
@@ -71,5 +67,5 @@ static inline void encoder_tick(volatile uint8_t &priorA,   volatile uint8_t &pr
 ISR(PCINT2_vect)
 {
 	encoder_tick(last_enc1a, last_enc1b, bit_is_set(PIND, PIN5), bit_is_set(PIND, PIN4), motor1_ticks);
-	encoder_tick(last_enc2a, last_enc2b, bit_is_set(PIND, PIN2), bit_is_set(PIND, PIN3), motor2_ticks);
+	encoder_tick(last_enc2a, last_enc2b, bit_is_set(PIND, PIN2), bit_is_set(PIND, PIN3), motor2_ticks); // BROKEN
 }
