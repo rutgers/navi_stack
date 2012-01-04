@@ -6,7 +6,7 @@
 #include <util/atomic.h>
 #include <WProgram.h>
 #include <ros.h>
-#include <std_msgs/Int16.h>
+#include <std_msgs/Int32.h>
 #include <std_msgs/Float32.h>
 #include "config.hpp"
 #include "encoder.hpp"
@@ -15,8 +15,8 @@
 #include "main.hpp"
 
 static std_msgs::Float32 msg_angvel;
-static std_msgs::Int16   msg_encoder1;
-static std_msgs::Int16   msg_encoder2;
+static std_msgs::Int32   msg_encoder1;
+static std_msgs::Int32   msg_encoder2;
 
 ros::NodeHandle nh;
 ros::Publisher pub_angvel("angvel", &msg_angvel);

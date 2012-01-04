@@ -3,8 +3,8 @@
 
 #include <stdint.h>
 
-extern volatile int16_t motor1_ticks;
-extern volatile int16_t motor2_ticks;
+extern volatile int32_t motor1_ticks;
+extern volatile int32_t motor2_ticks;
 
 void encoder_init(void);
 
