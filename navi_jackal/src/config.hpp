@@ -13,4 +13,6 @@
 #define MOTOR2_ENCA 4
 #define MOTOR2_ENCB 5
 
+#define TICKS_PER_REV 100
+
 #endif
