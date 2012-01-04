@@ -10,6 +10,7 @@
 #include <std_msgs/Float32.h>
 #include "config.hpp"
 #include "encoder.hpp"
+#include "motor.hpp"
 #include "pid.hpp"
 #include "main.hpp"
 
@@ -23,12 +24,18 @@ ros::Subscriber<std_msgs::Float32> sub_angvel_setp("angvel_setp", &change_setpt)
 
 void change_setpt(std_msgs::Float32 const &msg)
 {
+	// TODO: Listen for separate left and right angular velocities.
+	pid_set_target(msg.data, msg.data);
 }
 
 void setup(void)
 {
 	encoder_init();
+	motor_init();
 	pid_init();
+
+	motor_enable(1);
+	pid_set_target(0.0f, 0.0f);
 
 	nh.initNode();
 	nh.advertise(pub_angvel);
@@ -38,11 +45,6 @@ void setup(void)
 
 void loop(void)
 {
-	ATOMIC_BLOCK (ATOMIC_FORCEON) {
-		msg_encoder.data = period_us;
-	}
-	pub_encoder.publish(&msg_encoder);
-
 	nh.spinOnce();
-	delay(2);
+	delay(10);
 }
