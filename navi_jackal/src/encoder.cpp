@@ -19,7 +19,7 @@ void encoder_init(void)
 	DDRD  &= ~(1 << MOTOR1_ENCA | 1 << MOTOR1_ENCB
 	         | 1 << MOTOR2_ENCA | 1 << MOTOR2_ENCB);
 	PORTD |=   1 << MOTOR1_ENCA | 1 << MOTOR1_ENCB
-	         | 1 << MOTOR2_ENCB | 1 << MOTOR2_ENCB;
+	         | 1 << MOTOR2_ENCA | 1 << MOTOR2_ENCB;
 
 	// Enable pin-change interrupts.
 	cli();
@@ -46,10 +46,10 @@ static inline int8_t encoder_tick(bool last_a, bool last_b,
 
 ISR(PCINT2_vect)
 {
-	bool const enc1a = !!(PIND | 1 << MOTOR1_ENCA);
-	bool const enc1b = !!(PIND | 1 << MOTOR1_ENCB);
-	bool const enc2a = !!(PIND | 1 << MOTOR2_ENCA);
-	bool const enc2b = !!(PIND | 1 << MOTOR2_ENCB);
+	bool const enc1a = !!(PIND & 1 << MOTOR1_ENCA);
+	bool const enc1b = !!(PIND & 1 << MOTOR1_ENCB);
+	bool const enc2a = !!(PIND & 1 << MOTOR2_ENCA);
+	bool const enc2b = !!(PIND & 1 << MOTOR2_ENCB);
 
 	motor1_ticks += encoder_tick(last_enc1a, last_enc1b, enc1a, enc1b);
 	motor2_ticks += encoder_tick(last_enc2a, last_enc2b, enc2a, enc2b);
