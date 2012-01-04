@@ -1,7 +1,8 @@
-src/ros_lib
+src/ros_lib/
 CMakeFiles/
 CMakeCache.txt
+Makefile
+*.a
 *.eep
 *.elf
 *.hex
-*.a
