@@ -18,7 +18,7 @@ void encoder_init(void)
 	DDRD  &= ~(1 << MOTOR1_ENCA | 1 << MOTOR1_ENCB
 	         | 1 << MOTOR2_ENCA | 1 << MOTOR2_ENCB);
 	PORTD |=   1 << MOTOR1_ENCA | 1 << MOTOR1_ENCB
-	         | 1 << MOTOR1_ENCB | 1 << MOTOR2_ENCB;
+	         | 1 << MOTOR2_ENCB | 1 << MOTOR2_ENCB;
 
 	// Enable pin-change interrupts.
 	cli();
