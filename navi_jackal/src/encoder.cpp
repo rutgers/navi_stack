@@ -1,5 +1,4 @@
 #include <WProgram.h>
-#include <stdbool.h>
 #include <stdint.h>
 #include <avr/interrupt.h>
 #include "config.hpp"
@@ -15,10 +14,11 @@ volatile int32_t motor2_ticks = 0;
 
 void encoder_init(void)
 {
-	//************* Intialize encoders	*********************
-	// Initialize 
-	DDRD &=  ~_BV(PIN2) & ~_BV(PIN3)& ~_BV(PIN4)& ~_BV(PIN5);
-	PORTD = _BV(PIN2) | _BV(PIN3) |  _BV(PIN4) | _BV(PIN5);
+	// Set pins as inputs (DDRD = 0) with an internal pull-up (PORTD = 1).
+	DDRD  &= ~(1 << PIN2 | 1 << PIN3
+	         | 1 << PIN4 | 1 << PIN5);
+	PORTD |=   1 << PIN2 | 1 << PIN3
+	         | 1 << PIN4 | 1 << PIN5;
 
 	cli();
 	PCICR  |= _BV(PCIE2);
@@ -26,46 +26,47 @@ void encoder_init(void)
 	sei();
 }
 
-static inline void encoder_tick(volatile uint8_t &priorA,   volatile uint8_t &priorB,
-                                uint8_t           channelA, uint8_t           channelB,
-                                volatile int32_t &encoderCount)
+static inline int8_t encoder_tick(uint8_t last_a, uint8_t last_b,
+                                  uint8_t curr_a, uint8_t curr_b,
+								  volatile int16_t *ticks)
 {
-	   if (!(priorA ) && (channelA)) {
-	     if (!channelB) {
-	       encoderCount--;
-	     } else {
-	       encoderCount++;
-	     }
-	   }
-	   if ((priorA) && !(channelA)) {
-	     if (!channelB ) {
-	       encoderCount++;
-	     } else {
-	       encoderCount--;
-	     }
-	   }
+	if (!last_a && curr_a) {
+		if (!curr_b)
+			*ticks -= 1;
+		else
+			*ticks += 1;
+	} else if (last_a && !curr_a) {
+		if (!curr_b)
+			*ticks += 1;
+		else
+			*ticks -= 1;
+	}
 
-	   priorA  = channelA;
-
-	  if (!(priorB) && (channelB)) {
-	   	     if (!channelA) {
-	   	       encoderCount++;
-	   	     } else {
-	   	       encoderCount--;
-	   	     }
-	   	   }
-	   	   if ((priorB) && (!channelB)) {
-	   	     if (!channelA ) {
-	   	       encoderCount--;
-	   	     } else {
-	   	       encoderCount++;
-	   	     }
-	   	   }
-	   priorB = channelB;
+	if (!last_b && curr_b) {
+		if (!curr_a)
+			*ticks += 1;
+		else
+			*ticks -= 1;
+	} else if (last_b && !curr_b) {
+		if (!curr_a)
+			*ticks -= 1;
+		else
+			*ticks += 1;
+	}
 }
 
 ISR(PCINT2_vect)
 {
-	encoder_tick(last_enc1a, last_enc1b, bit_is_set(PIND, PIN5), bit_is_set(PIND, PIN4), motor1_ticks);
-	encoder_tick(last_enc2a, last_enc2b, bit_is_set(PIND, PIN2), bit_is_set(PIND, PIN3), motor2_ticks); // BROKEN
+	uint8_t const enc1a = !!(PIND & 1 << PIN2);
+	uint8_t const enc1b = !!(PIND & 1 << PIN3);
+	uint8_t const enc2a = !!(PIND & 1 << PIN4);
+	uint8_t const enc2b = !!(PIND & 1 << PIN5);
+
+	encoder_tick(last_enc1a, last_enc1b, enc1a, enc1b, &motor1_ticks);
+	encoder_tick(last_enc2a, last_enc2b, enc2a, enc2b, &motor2_ticks);
+
+	last_enc1a = enc1a;
+	last_enc1b = enc1b;
+	last_enc2a = enc2a;
+	last_enc2b = enc2b;
 }
