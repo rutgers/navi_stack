@@ -1,0 +1,14 @@
+<package>
+  <description brief="navi_jackal_msgs">
+
+     navi_jackal_msgs
+
+  </description>
+  <author>Michael Koval</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/navi_jackal_msgs</url>
+
+</package>
+
+
