@@ -13,21 +13,23 @@ from dynamic_reconfigure.server import Server
 class JackalNode:
     def __init__(self):
         rospy.init_node('navi_jackal')
-        self.pub_setpoint    = rospy.Publisher('setpoint', VelocitySetpoint)
-        self.pub_omega_left  = rospy.Publisher('angvel_left',  Float64)
-        self.pub_omega_right = rospy.Publisher('angvel_right', Float64)
+        self.pub_setpoint = rospy.Publisher('setpoint', VelocitySetpoint)
+        self.pub_velocity = rospy.Publisher('velocity', Twist)
         self.sub_cmd      = rospy.Subscriber('cmd_vel', Twist, self.change_setpoint)
-        self.sub_encoders = rospy.Subscriber('encoders', EncoderTicks, self.tick)
+        self.sub_encoders = rospy.Subscriber('encoder_velocity', EncoderTicks, self.update_velocity)
 
         self.setpoint_left  = 0
         self.setpoint_right = 0
 
     def reconfigure(self, config, level):
-        if level & 2:
-            self.robot_radius  = config['robot_radius']
+        if level & 2: self.robot_radius  = config['robot_radius']
             self.wheel_radius  = config['wheel_radius']
-            self.ticks_per_ref = config['ticks_per_rev']
-            self.pid_freq      = config['pid_frequency']
+            self.ticks_per_rev = config['ticks_per_rev']
+            self.pid_freq = config['pid_frequency']
+            self.pwm_max  = config['pwm_max']
+
+    def constrain_pwm(self, pwm):
+        return min(max(self, -self.pwm_max), self.pwm_max)
 
     def change_setpoint(self, msg_twist):
         msg_setpoint = VelocitySetpoint()
@@ -46,15 +48,14 @@ class JackalNode:
         # the motors to estimate the PWM value necessary to reach the desired
         # angular velocity. Again, this minimizes the amount of floating point
         # math done on the microcontroller.
-        msg_setpoint.ff_left  = int(-self.tau * log(1 - omega_left  / self.k))
-        msg_setpoint.ff_right = int(-self.tau * log(1 - omega_right / self.k))
+        feedforward_left  = -self.tau * log(1 - omega_left  / self.k)
+        feedforward_right = -self.tau * log(1 - omega_right / self.k)
+        msg_setpoint.ff_left  = int(self.constrain_pwm(feedforward_left))
+        msg_setpoint.ff_right = int(self.constrain_pwm(feedforward_right))
 
         self.pub_setpoint.publish(msg_setpoint)
 
-    def tick(self, msg_encoder):
-        msg_omega_left  = Float64()
-        msg_omega_right = Float64()
-
+    def update_velocity(self, msg_encoder):
         ticks_to_vel = 2 * pi / (self.ticks_per_rev * self.pid_freq)
         msg_omega_left.data  = ticks_to_vel * msg_encoder.ticks_left
         msg_omega_right.data = ticks_to_vel * msg_encoder.ticks_right
