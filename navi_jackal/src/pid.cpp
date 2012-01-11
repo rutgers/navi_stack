@@ -30,6 +30,9 @@ struct pid_t {
 static struct pid_t pid1 = { 0 };
 static struct pid_t pid2 = { 0 };
 
+volatile int16_t encoder1_buffer = 0;
+volatile int16_t encoder2_buffer = 0;
+
 void pid_init(void)
 {
 	// Interrupt on match (TIMSK2) and set the target value (OCR2A).
@@ -75,13 +78,14 @@ static int16_t pid_tick(struct pid_t *pid, int16_t value)
 
 ISR(TIMER2_COMPA_vect)
 {
-#if 0
 	int16_t const pwm1 = pid_tick(&pid1, motor1_ticks);
 	int16_t const pwm2 = pid_tick(&pid2, motor2_ticks);
-	motor_set(pwm1, pwm2);
+	//motor_set(pwm1, pwm2);
 
+	// Accumulate the encoder ticks in a buffer for debugging.
+	encoder1_buffer += motor1_ticks;
+	encoder2_buffer += motor2_ticks;
 	motor1_ticks = 0;
 	motor2_ticks = 0;
 	TCNT2 = 0;
-#endif
 }
