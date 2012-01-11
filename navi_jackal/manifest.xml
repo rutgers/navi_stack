@@ -1,16 +1,14 @@
 <package>
-  <description brief="navi_jackal">
+  <description brief="navi_jackal_msgs">
 
-     navi_jackal
+     navi_jackal_msgs
 
   </description>
   <author>Michael Koval</author>
   <license>BSD</license>
   <review status="unreviewed" notes=""/>
-  <url>http://ros.org/wiki/navi_jackal</url>
-  <depend package="rosserial_arduino"/>
-  <depend package="navi_jackal_msgs"/>
-  <depend package="std_msgs"/>
+  <url>http://ros.org/wiki/navi_jackal_msgs</url>
+
 </package>
 
 

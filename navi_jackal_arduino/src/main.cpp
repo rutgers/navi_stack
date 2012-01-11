@@ -1,12 +1,7 @@
-/*
- * rosserial Publisher Example
- * Prints "hello world!"
- */
-
 #include <util/atomic.h>
 #include <WProgram.h>
 #include <ros.h>
-#include <navi_jackal_msgs/EncoderTicks.h>
+#include <navi_jackal/EncoderTicks.h>
 #include <std_msgs/Int32.h>
 #include <std_msgs/Float32.h>
 #include "config.hpp"
@@ -16,8 +11,8 @@
 #include "main.hpp"
 
 
-static std_msgs::Float32              msg_angvel;
-static navi_jackal_msgs::EncoderTicks msg_encoder;
+static std_msgs::Float32         msg_angvel;
+static navi_jackal::EncoderTicks msg_encoder;
 
 ros::NodeHandle nh;
 ros::Publisher pub_angvel("angvel", &msg_angvel);
