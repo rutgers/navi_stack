@@ -18,15 +18,23 @@ class JackalNode:
         self.sub_cmd      = rospy.Subscriber('cmd_vel', Twist, self.change_setpoint)
         self.sub_encoders = rospy.Subscriber('encoder_velocity', EncoderTicks, self.update_velocity)
 
+        try:
+            self.robot_radius  = rospy.get_param('~robot_radius')
+            self.wheel_radius  = rospy.get_param('~wheel_radius')
+            self.ticks_per_rev = rospy.get_param('~ticks_per_rev')
+            self.pid_freq = rospy.get_param('~pid_frequency')
+            self.pwm_max  = rospy.get_param('~pwm_max')
+        except KeyError, e:
+            (param, ) = e.args
+            message = 'Missing required parameter "{0}".'.format(param)
+            rospy.logerr(message)
+            rospy.signal_shutdown(message)
+
         self.setpoint_left  = 0
         self.setpoint_right = 0
 
     def reconfigure(self, config, level):
-        if level & 2: self.robot_radius  = config['robot_radius']
-            self.wheel_radius  = config['wheel_radius']
-            self.ticks_per_rev = config['ticks_per_rev']
-            self.pid_freq = config['pid_frequency']
-            self.pwm_max  = config['pwm_max']
+        return config
 
     def constrain_pwm(self, pwm):
         return min(max(self, -self.pwm_max), self.pwm_max)
@@ -70,3 +78,5 @@ if __name__ == '__main__':
         rospy.spin()
     except rospy.ROSInterruptException:
         pass
+
+# vim: set et:set sw=4 ts=4:
