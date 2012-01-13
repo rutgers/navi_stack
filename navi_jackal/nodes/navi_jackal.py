@@ -7,12 +7,13 @@ from std_msgs.msg import Float64
 from geometry_msgs.msg import Twist
 from math import log, pi
 from navi_jackal.cfg import JackalConfig
-from navi_jackal.msg import EncoderTicks, VelocitySetpoint
+from navi_jackal.msg import ControlConstants, EncoderTicks, VelocitySetpoint
 from dynamic_reconfigure.server import Server
 
 class JackalNode:
     def __init__(self):
         rospy.init_node('navi_jackal')
+        self.pub_consts   = rospy.Publisher('controls', ControlConstants, latch=True)
         self.pub_setpoint = rospy.Publisher('setpoint', VelocitySetpoint)
         self.pub_velocity = rospy.Publisher('velocity', Twist)
         self.sub_cmd      = rospy.Subscriber('cmd_vel', Twist, self.change_setpoint)
@@ -34,6 +35,13 @@ class JackalNode:
         self.setpoint_right = 0
 
     def reconfigure(self, config, level):
+        msg_consts = ControlConstants()
+        msg_consts.feedforward  = config['F']
+        msg_consts.proportional = config['P']
+        msg_consts.integral     = config['I']
+        msg_consts.derivative   = config['D']
+        msg_consts.threshold    = config['threshold']
+        self.pub_consts.publish(msg_consts)
         return config
 
     def constrain_pwm(self, pwm):
