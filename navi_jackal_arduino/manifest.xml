@@ -1,8 +1,6 @@
 <package>
   <description brief="navi_jackal">
-
      navi_jackal
-
   </description>
   <author>Michael Koval</author>
   <license>BSD</license>
@@ -12,5 +10,3 @@
   <depend package="navi_jackal"/>
   <depend package="std_msgs"/>
 </package>
-
-

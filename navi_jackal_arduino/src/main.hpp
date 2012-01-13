@@ -1,7 +1,7 @@
 #ifndef MAIN_HPP_
 #define MAIN_HPP_
 
-void change_setpt(std_msgs::Float32 const &msg);
+#include <navi_jackal/VelocitySetpoint.h>
 
 void setup(void);
 void loop(void);

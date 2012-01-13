@@ -1,29 +1,32 @@
 #include <util/atomic.h>
 #include <WProgram.h>
+
 #include <ros.h>
+#include <navi_jackal/ControlConstants.h>
 #include <navi_jackal/EncoderTicks.h>
+#include <navi_jackal/VelocitySetpoint.h>
 #include <std_msgs/Int32.h>
 #include <std_msgs/Float32.h>
+
 #include "config.hpp"
 #include "encoder.hpp"
 #include "motor.hpp"
 #include "pid.hpp"
 #include "main.hpp"
 
+using navi_jackal::EncoderTicks;
+using navi_jackal::ControlConstants;
+using navi_jackal::VelocitySetpoint;
 
-static std_msgs::Float32         msg_angvel;
-static navi_jackal::EncoderTicks msg_encoder;
+static void update_constants(ControlConstants const &msg_consts);
+static void update_setpoints(VelocitySetpoint const &msg_setpoints);
 
-ros::NodeHandle nh;
-ros::Publisher pub_angvel("angvel", &msg_angvel);
-ros::Publisher pub_encoder("encoder", &msg_encoder);
-ros::Subscriber<std_msgs::Float32> sub_angvel_setp("angvel_setp", &change_setpt);
+static EncoderTicks msg_encoders;
 
-void change_setpt(std_msgs::Float32 const &msg)
-{
-	// TODO: Listen for separate left and right angular velocities.
-	pid_set_target(msg.data, msg.data);
-}
+static ros::NodeHandle nh;
+static ros::Publisher pub_encoders("encoders", &msg_encoders);
+static ros::Subscriber<ControlConstants> sub_constants("constants", &update_constants);
+static ros::Subscriber<VelocitySetpoint> sub_setpoints("setpoint", &update_setpoints);
 
 void setup(void)
 {
@@ -32,23 +35,38 @@ void setup(void)
 	pid_init();
 
 	motor_enable(1);
-	//pid_set_target(0.0f, 0.0f);
 
 	nh.initNode();
-	nh.advertise(pub_angvel);
-	nh.advertise(pub_encoder);
-	nh.subscribe(sub_angvel_setp);
+	nh.advertise(pub_encoders);
+	nh.subscribe(sub_constants);
+	nh.subscribe(sub_setpoints);
 }
 
 void loop(void)
 {
 	ATOMIC_BLOCK (ATOMIC_FORCEON) {
-		msg_encoder.ticks_left  = encoder1_buffer;
-		msg_encoder.ticks_right = encoder2_buffer;
+		msg_encoders.ticks_left  = encoder1_buffer;
+		msg_encoders.ticks_right = encoder2_buffer;
 		encoder1_buffer = 0;
 		encoder2_buffer = 0;
 	}
-	pub_encoder.publish(&msg_encoder);
+	pub_encoders.publish(&msg_encoders);
 	nh.spinOnce();
 	delay(100);
+}
+
+static void update_constants(ControlConstants const &msg_constants)
+{
+	pid_set_constants(
+		msg_constants.feedforward,
+		msg_constants.proportional,
+		msg_constants.integral,
+		msg_constants.derivative,
+		msg_constants.threshold
+	);
+}
+
+static void update_setpoints(VelocitySetpoint const &msg_setpoints)
+{
+	// TODO
 }

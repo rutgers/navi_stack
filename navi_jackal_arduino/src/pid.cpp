@@ -24,7 +24,7 @@ struct pid_t {
 	int16_t last;
 	int16_t integral;
 	int16_t integral_max;
-	float kp, ki, kd;
+	float kf, kp, ki, kd;
 };
 
 static struct pid_t pid1 = { 0 };
@@ -52,6 +52,15 @@ void pid_init(void)
 	pid1.kp = pid2.kp = 0.0f;
 	pid1.ki = pid2.ki = 0.0f;
 	pid1.kd = pid2.kd = 0.0f;
+}
+
+void pid_set_constants(float kf, float kp, float kd, float ki, int16_t threshold)
+{
+	pid1.kf = pid2.kf = kf;
+	pid1.kp = pid2.kp = kp;
+	pid1.ki = pid2.ki = ki;
+	pid1.kd = pid2.kd = kd;
+	pid1.threshold = pid2.threshold = threshold;
 }
 
 void pid_set_target(float omega1, float omega2)
