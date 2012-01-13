@@ -32,23 +32,31 @@ void pid_init(void)
 
 static int16_t pid_tick(pid_t *pid, int16_t value)
 {
-	int16_t const error = THRESHOLD(pid->target - value, pid->threshold);
-	int16_t const prop = error;
-	int16_t const diff = value - pid1.last;
-	int16_t const inte = CONSTRAIN(pid->integral + error, -pid->integral_max,
-	                               pid->integral_max);
+	int16_t const error      = pid->target - value;
+	int16_t const derivative = value - pid->last;
+	int16_t const integral   = CONSTRAIN(pid->integral + error,
+	                                     -pid->integral_max, pid->integral_max);
 
-	// Calculate the PWM output using PID.
-	float const pwm_raw = pid->kp * prop + pid->kd * diff + pid->ki * inte;
-	return (int16_t)CONSTRAIN(pwm_raw, -255.0, 255.0);
+	float const pwm_raw = pid->kf * pid->feedforward
+	                    + pid->kp * error
+	                    + pid->ki * integral
+	                    + pid->kd * derivative;
 
+	// Prevent integral windup when the controller is saturated and by capping
+	// the integral at a reasonable value.
+	if (abs(pwm_raw) < PWM_MAX && abs(pid->integral) < pid->integral_max) {
+		pid->integral += error;
+	}
+	pid->last = value;
+
+	return (int16_t)CONSTRAIN(pwm_raw, -PWM_MAX, PWM_MAX);
 }
 
 ISR(TIMER2_COMPA_vect)
 {
 	int16_t const pwm1 = pid_tick(&pid1, motor1_ticks);
 	int16_t const pwm2 = pid_tick(&pid2, motor2_ticks);
-	//motor_set(pwm1, pwm2);
+	motor_set(pwm1, pwm2);
 
 	// Accumulate the encoder ticks in a buffer for debugging.
 	encoder1_buffer += motor1_ticks;

@@ -13,6 +13,7 @@
 #define MOTOR2_ENCA 4
 #define MOTOR2_ENCB 5
 
+#define PWM_MAX 255
 #define TICKS_PER_REV 1000
 
 #endif
