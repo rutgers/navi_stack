@@ -3,12 +3,19 @@
 
 #include <stdint.h>
 
-extern volatile int16_t encoder1_buffer;
-extern volatile int16_t encoder2_buffer;
+struct pid_t {
+	int16_t target;
+	int16_t feedforward;
+	int16_t threshold;
+	int16_t last;
+	int16_t integral;
+	int16_t integral_max;
+	float kf, kp, ki, kd;
+};
 
-extern uint16_t period_us;
+extern pid_t pid1, pid2;
+extern volatile int16_t encoder1_buffer, encoder2_buffer;
 
 void pid_init(void);
-void pid_set_constants(float kf, float kp, float kd, float ki, int16_t threshold);
 
 #endif

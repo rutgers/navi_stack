@@ -57,16 +57,17 @@ void loop(void)
 
 static void update_constants(ControlConstants const &msg_constants)
 {
-	pid_set_constants(
-		msg_constants.feedforward,
-		msg_constants.proportional,
-		msg_constants.integral,
-		msg_constants.derivative,
-		msg_constants.threshold
-	);
+	pid1.kf = pid2.kf = msg_constants.feedforward;
+	pid1.kp = pid2.kp = msg_constants.proportional;
+	pid1.ki = pid2.ki = msg_constants.integral;
+	pid1.kd = pid2.kd = msg_constants.derivative;
+	pid1.threshold = pid2.threshold = msg_constants.threshold;
 }
 
 static void update_setpoints(VelocitySetpoint const &msg_setpoints)
 {
-	// TODO
+	pid1.feedforward = msg_setpoints.ff_left;
+	pid2.feedforward = msg_setpoints.ff_right;
+	pid1.target = msg_setpoints.setpoint_left;
+	pid2.target = msg_setpoints.setpoint_right;
 }
