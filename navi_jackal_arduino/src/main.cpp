@@ -12,7 +12,6 @@
 #include "encoder.hpp"
 #include "motor.hpp"
 #include "pid.hpp"
-#include "main.hpp"
 
 using navi_jackal::EncoderTicks;
 using navi_jackal::ControlConstants;
