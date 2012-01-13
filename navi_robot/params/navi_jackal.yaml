@@ -1,0 +1,17 @@
+# PID Constants
+F: 0.0
+P: 0.0
+I: 0.0
+D: 0.0
+threshold: 0
+
+# Plant Model
+tau: 1.0
+k:   1.0
+
+# Robot Model
+robot_radius:  0.762 # meters
+wheel_radius:  0.127 # meters
+ticks_per_rev: 800   # encoder ticks per wheel revolution
+pid_frequency: 61.27 # Hz
+pwm_max:       255

@@ -1,0 +1,7 @@
+<launch>
+	<node name="arduino" pkg="rosserial_python" type="serial_node.py"
+	      args="/dev/ttyUSB0"/>
+	<node name="wrapper" pkg="navi_jackal" type="navi_jackal.py">
+		<rosparam file="$(find navi_robot)/params/navi_jackal.yaml"/>
+	</node>
+</launch>

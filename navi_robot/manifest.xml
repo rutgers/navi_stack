@@ -1,0 +1,14 @@
+<package>
+  <description brief="navi_config">
+
+     navi_config
+
+  </description>
+  <author>Michael Koval</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/navi_config</url>
+
+</package>
+
+
