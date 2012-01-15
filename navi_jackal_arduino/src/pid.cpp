@@ -54,9 +54,11 @@ static int16_t pid_tick(pid_t *pid, int16_t value)
 
 ISR(TIMER2_COMPA_vect)
 {
-	int16_t const pwm1 = pid_tick(&pid1, motor1_ticks);
-	int16_t const pwm2 = pid_tick(&pid2, motor2_ticks);
-	motor_set(pwm1, pwm2);
+	if (pid1.enable && pid2.enable) {
+		int16_t const pwm1 = pid_tick(&pid1, motor1_ticks);
+		int16_t const pwm2 = pid_tick(&pid2, motor2_ticks);
+		motor_set(pwm1, pwm2);
+	}
 
 	// Accumulate the encoder ticks in a buffer for debugging.
 	encoder1_buffer += motor1_ticks;

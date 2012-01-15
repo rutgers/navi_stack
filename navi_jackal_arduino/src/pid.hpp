@@ -4,6 +4,7 @@
 #include <stdint.h>
 
 struct pid_t {
+	bool enable;
 	int16_t target;
 	int16_t feedforward;
 	int16_t threshold;
