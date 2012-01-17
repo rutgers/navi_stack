@@ -9,11 +9,8 @@ def main():
     rospy.init_node('step')
 
     try:
-        args = rospy.myargv()
-        vel1 = args[0] # meters per second
-        vel2 = args[1] # meters per second
-        step = args[2] # seconds
-    except IndexError:
+        (vel1, vel2, step) = rospy.myargv()
+    except ValueError:
         rospy.logerr('Incorrect number of arguments.')
         rospy.logger('usage: ./step.py <before> <after> <time>')
         rospy.signal_shutdown('Incorrect number of arguments.')
