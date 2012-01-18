@@ -12,7 +12,7 @@ def main():
         (vel1, vel2, step) = rospy.myargv()
     except ValueError:
         rospy.logerr('Incorrect number of arguments.')
-        rospy.logger('usage: ./step.py <before> <after> <time>')
+        rospy.logerr('usage: ./step.py <before> <after> <time>')
         rospy.signal_shutdown('Incorrect number of arguments.')
 
     twist     = Twist()
