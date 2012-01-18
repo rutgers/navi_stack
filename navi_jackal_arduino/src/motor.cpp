@@ -3,6 +3,17 @@
 #include "config.hpp"
 #include "motor.hpp"
 
+void motor_set_one(int16_t vel, int16_t pin_dir, int16_t pin_pwm)
+{
+	if (vel > 0) {
+		digitalWrite(pin_dir, 0);
+		analogWrite(pin_pwm, vel);
+	} else {
+		digitalWrite(pin_dir, 1);
+		analogWrite(pin_pwm, vel + 255);
+	}
+}
+
 void motor_init(void)
 {
 	pinMode(MOTOR1_DIR, OUTPUT);
@@ -22,8 +33,6 @@ void motor_enable(bool enabled)
 
 void motor_set(int16_t left, int16_t right)
 {
-	digitalWrite(MOTOR1_DIR, left < 0);
-	digitalWrite(MOTOR2_DIR, right < 0);
-	analogWrite(MOTOR1_PWM, (uint8_t)abs(left));
-	analogWrite(MOTOR2_PWM, (uint8_t)abs(right));
+	motor_set_one(left, MOTOR1_DIR, MOTOR1_PWM);
+	motor_set_one(right, MOTOR2_DIR, MOTOR2_PWM);
 }

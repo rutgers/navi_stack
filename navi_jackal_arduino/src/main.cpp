@@ -28,7 +28,7 @@ static EncoderTicks msg_encoders;
 static ros::NodeHandle nh;
 static ros::Publisher pub_encoders("encoders", &msg_encoders);
 static ros::Subscriber<ControlConstants> sub_constants("constants", &update_constants);
-static ros::Subscriber<VelocitySetpoint> sub_setpoints("setpoint", &update_setpoints);
+//static ros::Subscriber<VelocitySetpoint> sub_setpoints("setpoint", &update_setpoints);
 static ros::Subscriber<VoltageSetpoint>  sub_voltages("voltages", &update_voltages);
 
 void setup(void)
@@ -42,7 +42,10 @@ void setup(void)
 	nh.initNode();
 	nh.advertise(pub_encoders);
 	nh.subscribe(sub_constants);
-	nh.subscribe(sub_setpoints);
+	//nh.subscribe(sub_setpoints);
+	nh.subscribe(sub_voltages);
+
+	nh.loginfo("Jackal Init");
 }
 
 void loop(void)
@@ -54,6 +57,7 @@ void loop(void)
 		encoder2_buffer = 0;
 	}
 	pub_encoders.publish(&msg_encoders);
+
 	nh.spinOnce();
 	delay(100);
 }
