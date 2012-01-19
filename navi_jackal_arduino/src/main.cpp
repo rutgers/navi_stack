@@ -12,13 +12,10 @@
 #include "motor.hpp"
 #include "pid.hpp"
 
-#ifndef JACKAL_CALIBRATION
-#warning "Calibration service is disabled, so no encoder ticks will be published."
-#endif
-
 using navi_jackal::CalibrationSetpointRequest;
 using navi_jackal::CalibrationSetpointResponse;
 using navi_jackal::ControlConstants;
+using navi_jackal::EncoderTicks;
 using navi_jackal::VelocitySetpoint;
 
 static void update_constants(ControlConstants const &msg_consts);
@@ -33,6 +30,9 @@ static ros::Subscriber<ControlConstants> sub_constants("constants", &update_cons
 //static ros::Subscriber<VelocitySetpoint> sub_setpoints("setpoint", &update_setpoints);
 #ifdef JACKAL_CALIBRATION
 static ros::ServiceServer<CalibrationSetpointRequest, CalibrationSetpointResponse> srv_calibrate("calibrate", &update_calibration);
+#else
+static EncoderTicks msg_encoders;
+static ros::Publisher pub_encoders("encoders", &msg_encoders);
 #endif
 
 void setup(void)
@@ -48,15 +48,25 @@ void setup(void)
 	//nh.subscribe(sub_setpoints);
 #ifdef JACKAL_CALIBRATION
 	nh.advertiseService(srv_calibrate);
+#else
+	nh.advertise(pub_encoders);
 #endif
-
-	nh.loginfo("Jackal Init");
 }
 
 void loop(void)
 {
+	// These encoder ticks are stored as 32-bit integers, so the operations
+	// will be non-atomic.
+	ATOMIC_BLOCK (ATOMIC_FORCEON) {
+		msg_encoders.ticks_left  = encoders[0].ticks_long;
+		msg_encoders.ticks_right = encoders[1].ticks_long;
+		encoders[0].ticks_long = 0;
+		encoders[1].ticks_long = 0;
+	}
+	pub_encoders.publish(&msg_encoders);
+
 	nh.spinOnce();
-	delay(100);
+	delay(ENCODERS_PERIOD_MS);
 }
 
 static void update_constants(ControlConstants const &msg_constants)

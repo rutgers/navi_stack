@@ -4,6 +4,7 @@
 #include <stdint.h>
 
 #define ENCODERS_NUM 2
+#define ENCODERS_PERIOD_MS 25
 
 struct encoder_t {
 	bool const pin1, pin2;
