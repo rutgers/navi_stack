@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 
+#define PIDS_NUM 2
+
 struct pid_t {
 	bool enable;
 	int16_t target;
@@ -14,8 +16,7 @@ struct pid_t {
 	float kf, kp, ki, kd;
 };
 
-extern pid_t pid1, pid2;
-extern volatile int16_t encoder1_buffer, encoder2_buffer;
+extern pid_t pids[PIDS_NUM];
 
 void pid_init(void);
 

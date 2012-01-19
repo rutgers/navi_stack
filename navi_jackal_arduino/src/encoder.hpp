@@ -3,8 +3,16 @@
 
 #include <stdint.h>
 
-extern volatile int16_t motor1_ticks;
-extern volatile int16_t motor2_ticks;
+#define ENCODERS_NUM 2
+
+struct encoder_t {
+	bool const pin1, pin2;
+	volatile bool pin1_last, pin2_last;
+	volatile int16_t ticks_short;
+	volatile int32_t ticks_long;
+};
+
+extern encoder_t encoders[ENCODERS_NUM];
 
 void encoder_init(void);
 

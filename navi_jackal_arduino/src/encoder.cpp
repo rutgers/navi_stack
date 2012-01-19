@@ -4,17 +4,15 @@
 #include "config.hpp"
 #include "encoder.hpp"
 
-static volatile uint8_t last_enc1a = 0;
-static volatile uint8_t last_enc1b = 0;
-static volatile uint8_t last_enc2a = 0;
-static volatile uint8_t last_enc2b = 0;
-
-volatile int16_t motor1_ticks = 0;
-volatile int16_t motor2_ticks = 0;
+extern encoder_t encoders[ENCODERS_NUM] = {
+	{ MOTOR1_ENCA, MOTOR1_ENCB, 0, 0, 0, 0 },
+	{ MOTOR2_ENCA, MOTOR2_ENCB, 0, 0, 0, 0 }
+};
 
 void encoder_init(void)
 {
 	// Set pins as inputs (DDRD = 0) with an internal pull-up (PORTD = 1).
+	// TODO: Generalize the initialization using the array of encoder structs.
 	DDRD  &= ~(1 << PIN2 | 1 << PIN3 | 1 << PIN4 | 1 << PIN5);
 	PORTD |=   1 << PIN2 | 1 << PIN3 | 1 << PIN4 | 1 << PIN5;
 
@@ -24,47 +22,47 @@ void encoder_init(void)
 	sei();
 }
 
-static inline int8_t encoder_tick(uint8_t last_a, uint8_t last_b,
-                                  uint8_t curr_a, uint8_t curr_b,
-								  volatile int16_t *ticks)
+static inline int8_t encoder_tick(encoder_t *const encoder)
 {
+	bool const last_a = encoder->pin1_last;
+	bool const last_b = encoder->pin2_last;
+	bool const curr_a = digitalRead(encoder->pin1);
+	bool const curr_b = digitalRead(encoder->pin2);
+	int8_t delta = 0;
+
 	if (!last_a && curr_a) {
 		if (!curr_b)
-			*ticks -= 1;
+			delta--;
 		else
-			*ticks += 1;
+			delta++;
 	} else if (last_a && !curr_a) {
 		if (!curr_b)
-			*ticks += 1;
+			delta++;
 		else
-			*ticks -= 1;
+			delta--;
 	}
 
 	if (!last_b && curr_b) {
 		if (!curr_a)
-			*ticks += 1;
+			delta++;
 		else
-			*ticks -= 1;
+			delta--;
 	} else if (last_b && !curr_b) {
 		if (!curr_a)
-			*ticks -= 1;
+			delta++;
 		else
-			*ticks += 1;
+			delta--;
 	}
+
+	encoder->ticks_short += delta;
+	encoder->ticks_long  += delta;
+	encoder->pin1_last = curr_a;
+	encoder->pin2_last = curr_b;
 }
 
 ISR(PCINT2_vect)
 {
-	uint8_t const enc1a = PIND & 1 << PIN2;
-	uint8_t const enc1b = PIND & 1 << PIN3;
-	uint8_t const enc2a = PIND & 1 << PIN4;
-	uint8_t const enc2b = PIND & 1 << PIN5;
-
-	encoder_tick(last_enc1a, last_enc1b, enc1a, enc1b, &motor1_ticks);
-	encoder_tick(last_enc2a, last_enc2b, enc2a, enc2b, &motor2_ticks);
-
-	last_enc1a = enc1a;
-	last_enc1b = enc1b;
-	last_enc2a = enc2a;
-	last_enc2b = enc2b;
+	for (size_t i = 0; i < ENCODERS_NUM; i++) {
+		encoder_tick(encoders + i);
+	}
 }

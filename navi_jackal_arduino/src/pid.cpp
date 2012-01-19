@@ -52,18 +52,28 @@ static int16_t pid_tick(pid_t *pid, int16_t value)
 	return (int16_t)CONSTRAIN(pwm_raw, -PWM_MAX, PWM_MAX);
 }
 
-ISR(TIMER2_COMPA_vect)
+ISR(TIMER2_COMPA_vect, ISR_NOBLOCK)
 {
-	if (pid1.enable && pid2.enable) {
-		int16_t const pwm1 = pid_tick(&pid1, motor1_ticks);
-		int16_t const pwm2 = pid_tick(&pid2, motor2_ticks);
-		motor_set(pwm1, pwm2);
+	int16_t ticks[PIDS_NUM], pwms[PIDS_NUM];
+
+	// Accumulate the encoder ticks in a buffer for debugging. We need to be
+	// especially careful here because interrupts are still enabled and 16-bit
+	// operations are not atomic.
+	ATOMIC_BLOCK (ATOMIC_FORCEON) {
+		for (size_t i = 0; i < ENCODERS_NUM; i++) {
+			ticks[i] = encoders[i].ticks_short;
+			encoders[i].ticks_short = 0;
+		}
 	}
 
-	// Accumulate the encoder ticks in a buffer for debugging.
-	encoder1_buffer += motor1_ticks;
-	encoder2_buffer += motor2_ticks;
-	motor1_ticks = 0;
-	motor2_ticks = 0;
+	// TODO: Generalize this to an arbitrary number of motors.
+	for (size_t i = 0; i < ENCODERS_NUM; i++) {
+		if (pid[i].enable) {
+			pwms[i] = pid_tick(pid + i, ticks + i);
+		}
+	}
+	motor_set(pwms[0], pwms[1]);
+
+	// Reset the timer.
 	TCNT2 = 0;
 }
