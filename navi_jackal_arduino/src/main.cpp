@@ -63,6 +63,7 @@ void loop(void)
 		encoders[0].ticks_long = 0;
 		encoders[1].ticks_long = 0;
 	}
+	msg_encoders.stamp = nh.now();
 	pub_encoders.publish(&msg_encoders);
 
 	nh.spinOnce();
