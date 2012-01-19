@@ -63,6 +63,6 @@ static inline int8_t encoder_tick(encoder_t *const encoder)
 ISR(PCINT2_vect)
 {
 	for (size_t i = 0; i < ENCODERS_NUM; i++) {
-		encoder_tick(encoders + i);
+		encoder_tick(&encoders[i]);
 	}
 }

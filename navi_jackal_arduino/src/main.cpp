@@ -38,10 +38,9 @@ static ros::Publisher pub_encoders("encoders", &msg_encoders);
 void setup(void)
 {
 	encoder_init();
-	motor_init();
-	pid_init();
-
-	motor_enable(1);
+	//motor_init();
+	//pid_init();
+	//motor_enable(1);
 
 	nh.initNode();
 	nh.subscribe(sub_constants);
@@ -55,6 +54,7 @@ void setup(void)
 
 void loop(void)
 {
+#ifndef JACKAL_CALIBRATION
 	// These encoder ticks are stored as 32-bit integers, so the operations
 	// will be non-atomic.
 	ATOMIC_BLOCK (ATOMIC_FORCEON) {
@@ -67,6 +67,7 @@ void loop(void)
 
 	nh.spinOnce();
 	delay(ENCODERS_PERIOD_MS);
+#endif
 }
 
 static void update_constants(ControlConstants const &msg_constants)
