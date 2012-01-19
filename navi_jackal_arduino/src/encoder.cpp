@@ -4,7 +4,7 @@
 #include "config.hpp"
 #include "encoder.hpp"
 
-extern encoder_t encoders[ENCODERS_NUM] = {
+encoder_t encoders[ENCODERS_NUM] = {
 	{ MOTOR1_ENCA, MOTOR1_ENCB, 0, 0, 0, 0 },
 	{ MOTOR2_ENCA, MOTOR2_ENCB, 0, 0, 0, 0 }
 };

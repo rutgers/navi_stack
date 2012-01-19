@@ -1,6 +1,9 @@
 #ifndef CONFIG_HPP_
 #define CONFIG_HPP_
 
+// Enable the calibration service for measuring the motor curve.
+#define JACKAL_CALIBRATION
+
 #define MOTOR1_DIR 7
 #define MOTOR2_DIR 8
 #define MOTOR1_PWM 9

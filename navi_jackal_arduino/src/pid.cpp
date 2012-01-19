@@ -11,10 +11,8 @@
                                  (((_x_) > (_b_)) ? (_b_) : (_x_)))
 #define THRESHOLD(_x_, _t_) ((-(_t_) <= (_x_) && (_x_) <= +(_t_)) ? (_x_) : 0)
 
-struct pid_t pid1 = { 0 };
-struct pid_t pid2 = { 0 };
-volatile int16_t encoder1_buffer = 0;
-volatile int16_t encoder2_buffer = 0;
+
+pid_t pids[PIDS_NUM] = { 0 };
 
 void pid_init(void)
 {
@@ -68,8 +66,8 @@ ISR(TIMER2_COMPA_vect, ISR_NOBLOCK)
 
 	// TODO: Generalize this to an arbitrary number of motors.
 	for (size_t i = 0; i < ENCODERS_NUM; i++) {
-		if (pid[i].enable) {
-			pwms[i] = pid_tick(pid + i, ticks + i);
+		if (pids[i].enable) {
+			pwms[i] = pid_tick(&pids[i], ticks[i]);
 		}
 	}
 	motor_set(pwms[0], pwms[1]);
