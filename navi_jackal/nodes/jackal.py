@@ -25,6 +25,7 @@ class JackalNode:
             self.ticks_per_rev = rospy.get_param('~ticks_per_rev')
             self.pid_freq = rospy.get_param('~pid_frequency')
             self.pwm_max  = rospy.get_param('~pwm_max')
+            self.decay = rospy.get_param('~lpf_decay')
         except KeyError, e:
             (param, ) = e.args
             message = 'Missing required parameter "{0}".'.format(param)
@@ -33,6 +34,8 @@ class JackalNode:
 
         self.setpoint_left  = 0
         self.setpoint_right = 0
+        self.lpf_left  = 0.0
+        self.lpf_right = 0.0
 
     def reconfigure(self, config, level):
         msg_consts = ControlConstants()
@@ -72,12 +75,16 @@ class JackalNode:
         self.pub_setpoint.publish(msg_setpoint)
 
     def update_velocity(self, msg_encoder):
-        ticks_to_vel = 2 * pi / (self.ticks_per_rev * self.pid_freq)
-        msg_omega_left.data  = ticks_to_vel * msg_encoder.ticks_left
-        msg_omega_right.data = ticks_to_vel * msg_encoder.ticks_right
+        # Filter the noisy encoder readings using an exponential running
+        # average to act as a low-pass filter. This greatly reduces the
+        # sampling noise and gives a more accurate velocity estimate.
+        a = self.decay
+        self.lpf_left  = a * self.lpf_left  + (1 - a) * msg_encoder.ticks_left
+        self.lpf_right = a * self.lpf_right + (1 - a) * msg_encoder.ticks_right
 
-        self.pub_omega_left.publish(msg_omega_left)
-        self.pub_omega_right.publish(msg_omega_right)
+        ticks_to_vel = 2*pi / (self.ticks_per_rev * self.pid_freq)
+        self.pub_omega_left.publish(ticks_to_vel * self.lpf_left)
+        self.pub_omega_right.publish(ticks_to_vel * self.lpf_right)
 
 if __name__ == '__main__':
     try:
