@@ -10,7 +10,8 @@ class Calibrator:
     def __init__(self, dur_delay, dur_sample):
         self.pub_pwm = rospy.Publisher('voltages', VoltageSetpoint)
         self.sub_enc = rospy.Subscriber('encoders', EncoderTicks, self.encoders_tick)
-        self.ticks = 0
+        self.ticks_left  = 0
+        self.ticks_right = 0
 
         self.pid_freq = rospy.get_param('~pid_frequency')
         self.pwm_max  = rospy.get_param('~pwm_max')
