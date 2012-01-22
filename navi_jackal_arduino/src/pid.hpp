@@ -17,6 +17,8 @@ struct pid_t {
 };
 
 extern pid_t pids[PIDS_NUM];
+extern bool pid_enable;
+extern volatile uint16_t pid_ticks;
 
 void pid_init(void);
 

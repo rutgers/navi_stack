@@ -13,6 +13,8 @@
 
 
 pid_t pids[PIDS_NUM] = { 0 };
+bool pid_enable = false;
+volatile uint16_t pid_ticks = 0;
 
 void pid_init(void)
 {
@@ -50,10 +52,11 @@ static int16_t pid_tick(pid_t *pid, int16_t value)
 	return (int16_t)CONSTRAIN(pwm_raw, -PWM_MAX, PWM_MAX);
 }
 
-ISR(TIMER2_COMPA_vect, ISR_NOBLOCK)
+ISR(TIMER2_COMPA_vect)
 {
 	int16_t ticks[PIDS_NUM], pwms[PIDS_NUM];
 
+#if 0
 	// Accumulate the encoder ticks in a buffer for debugging. We need to be
 	// especially careful here because interrupts are still enabled and 16-bit
 	// operations are not atomic.
@@ -70,8 +73,10 @@ ISR(TIMER2_COMPA_vect, ISR_NOBLOCK)
 			pwms[i] = pid_tick(&pids[i], ticks[i]);
 		}
 	}
-	motor_set(pwms[0], pwms[1]);
+	//motor_set(pwms[0], pwms[1]);
+#endif
 
 	// Reset the timer.
+	pid_ticks++;
 	TCNT2 = 0;
 }

@@ -23,9 +23,9 @@ class Calibrator:
         self.table_right = list()
 
     def set_pwm(self, pwm):
-        (ticks_left, ticks_right) = self.srv_pwm(pwm, pwm)
-        omega_left  = self.scale_omega(ticks_left)
-        omega_right = self.scale_omega(ticks_right)
+        response = self.srv_pwm(pwm, pwm)
+        omega_left  = self.scale_omega(response.ticks_left)
+        omega_right = self.scale_omega(response.ticks_right)
         return (omega_left, omega_right)
 
     def scale_omega(self, ticks):
@@ -41,19 +41,17 @@ class Calibrator:
             # Setting the same speed twice is intentional because it clears the
             # current count of encoder ticks. This delay gives the motor time
             # to reach its steady-state velocity.
+            print('PWM = {0}'.format(pwm), file=sys.stderr)
             self.set_pwm(pwm)
-            rospy.sleep(dur_delay)
+            rospy.sleep(self.dur_delay)
             self.set_pwm(pwm)
 
             # Calculate the average number of ticks per PID loop over the
             # sample duration.
-            rospy.sleep(dur_sample)
-            (ticks_left, ticks_right) = self.set_pwm(pwm_next)
-            omega_left  = self.scale_omega(ticks_left)
-            omega_right = self.scale_omega(ticks_right)
-
+            rospy.sleep(self.dur_sample)
+            omega_left, omega_right= self.set_pwm(pwm_next)
             table.append((pwm, omega_left, omega_right))
-            pwm_curr = pwm
+            pwm = pwm_next
 
         return table
 
@@ -82,7 +80,7 @@ def main():
     # input PWM value (i.e. voltage).
     node   = Calibrator(dur_delay, dur_sample)
     table  = node.evaluate(pwms)
-    writer = csv.writer(sys.stdin)
+    writer = csv.writer(sys.stdout)
     writer.writerows(table)
     return 0
 

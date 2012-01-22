@@ -18,57 +18,52 @@ using navi_jackal::ControlConstants;
 using navi_jackal::EncoderTicks;
 using navi_jackal::VelocitySetpoint;
 
+static bool encoders_enable = true;
+
 static void update_constants(ControlConstants const &msg_consts);
 static void update_setpoints(VelocitySetpoint const &msg_setpoints);
-#ifdef JACKAL_CALIBRATION
 static void update_calibration(CalibrationSetpointRequest  const &srv_req,
                                CalibrationSetpointResponse       &srv_resp);
-#endif
+
+static EncoderTicks msg_encoders;
 
 static ros::NodeHandle nh;
-static ros::Subscriber<ControlConstants> sub_constants("constants", &update_constants);
-//static ros::Subscriber<VelocitySetpoint> sub_setpoints("setpoint", &update_setpoints);
-#ifdef JACKAL_CALIBRATION
-static ros::ServiceServer<CalibrationSetpointRequest, CalibrationSetpointResponse> srv_calibrate("calibrate", &update_calibration);
-#else
-static EncoderTicks msg_encoders;
 static ros::Publisher pub_encoders("encoders", &msg_encoders);
-#endif
+//static ros::Subscriber<ControlConstants> sub_constants("constants", &update_constants);
+static ros::Subscriber<VelocitySetpoint> sub_setpoints("setpoint", &update_setpoints);
+static ros::ServiceServer<
+           CalibrationSetpointRequest,
+           CalibrationSetpointResponse> srv_calibrate("calibrate", &update_calibration);
 
 void setup(void)
 {
 	encoder_init();
-	//motor_init();
-	//pid_init();
-	//motor_enable(1);
+	motor_init();
+	pid_init();
+	motor_enable(1);
 
 	nh.initNode();
-	nh.subscribe(sub_constants);
-	//nh.subscribe(sub_setpoints);
-#ifdef JACKAL_CALIBRATION
 	nh.advertiseService(srv_calibrate);
-#else
 	nh.advertise(pub_encoders);
-#endif
+	//nh.subscribe(sub_constants);
+	nh.subscribe(sub_setpoints);
 }
 
 void loop(void)
 {
-#ifndef JACKAL_CALIBRATION
-	// These encoder ticks are stored as 32-bit integers, so the operations
-	// will be non-atomic.
-	ATOMIC_BLOCK (ATOMIC_FORCEON) {
-		msg_encoders.ticks_left  = encoders[0].ticks_long;
-		msg_encoders.ticks_right = encoders[1].ticks_long;
-		encoders[0].ticks_long = 0;
-		encoders[1].ticks_long = 0;
-	}
-	msg_encoders.stamp = nh.now();
-	pub_encoders.publish(&msg_encoders);
+	static uint16_t pid_ticks_last  = 0;
 
+	if (encoders_enable && pid_ticks != pid_ticks_last) {
+		ATOMIC_BLOCK (ATOMIC_FORCEON) {
+			msg_encoders.ticks_left  = encoders[0].ticks_long;
+			msg_encoders.ticks_right = encoders[1].ticks_long;
+			encoders[0].ticks_long = 0;
+			encoders[1].ticks_long = 0;
+		}
+		pub_encoders.publish(&msg_encoders);
+		pid_ticks_last = pid_ticks;
+	}
 	nh.spinOnce();
-	delay(ENCODERS_PERIOD_MS);
-#endif
 }
 
 static void update_constants(ControlConstants const &msg_constants)
@@ -92,14 +87,12 @@ static void update_setpoints(VelocitySetpoint const &msg_setpoints)
 	pids[1].target = msg_setpoints.setpoint_right;
 }
 
-#ifdef JACKAL_CALIBRATION
 static void update_calibration(CalibrationSetpointRequest  const &srv_req,
                                CalibrationSetpointResponse       &srv_resp)
 {
 	// Disable the PID control loops so they don't fight for the PWMs.
-	for (size_t i = 0; i < PIDS_NUM; i++) {
-		pids[i].enable = false;
-	}
+	pid_enable      = false;
+	encoders_enable = false;
 	motor_set(srv_req.pwm_left, srv_req.pwm_right);
 
 	// Count the number of encoder ticks since the last service response. We
@@ -113,4 +106,3 @@ static void update_calibration(CalibrationSetpointRequest  const &srv_req,
 		encoders[1].ticks_long = 0;
 	}
 }
-#endif
