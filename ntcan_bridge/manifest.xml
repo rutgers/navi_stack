@@ -1,0 +1,14 @@
+<package>
+  <description brief="ntcan_bridge">
+
+     ntcan_bridge
+
+  </description>
+  <author>Michael Koval</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/ntcan_bridge</url>
+
+</package>
+
+
