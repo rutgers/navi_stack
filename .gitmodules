@@ -7,3 +7,9 @@
 [submodule "gps_umd"]
 	path = gps_umd
 	url = git://ram.umd.edu/ros/gps_umd.git
+[submodule "jaguar"]
+	path = jaguar
+	url = https://github.com/mkoval/jaguar
+[submodule "FieldforceTCM"]
+	path = FieldforceTCM
+	url = https://github.com/mkoval/FieldforceTCM
