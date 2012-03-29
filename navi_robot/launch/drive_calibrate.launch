@@ -1,5 +1,0 @@
-<launch>
-	<node name="calibrator" pkg="navi_jackal" type="calibrate.py" args="0.5 0.5 1">
-		<rosparam file="$(find navi_robot)/params/navi_jackal.yaml"/>
-	</node>
-</launch>
