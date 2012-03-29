@@ -13,30 +13,17 @@
 
 	<include filename="$(find navi_model)/urdf/common_urdf_xacro.xml" />
 	<include filename="$(find navi_model)/urdf/base_urdf_xacro.xml" />
-	<include filename="$(find navi_model)/urdf/camera_urdf_xacro.xml" />
 	<include filename="$(find navi_model)/urdf/wheel_urdf_xacro.xml" />
 	<include filename="$(find navi_model)/urdf/laser_urdf_xacro.xml"/>
-	
-	<include filename="$(find navi_model)/urdf/wheel_cam_urdf_xacro.xml"/>
 	<include filename="$(find navi_model)/urdf/imu_urdf_xacro.xml"/>
-	  
-	<navi_base name="base"/> 
+
+	<navi_base name="base"/>
 	<wheel prefix="fl" reflect_x="1" reflect_y="-1"/>
 	<wheel prefix="fr" reflect_x="1" reflect_y="1"/>
-	<!--<wheel prefix="br" reflect_x="-1" reflect_y="1"/>
-	<wheel prefix="bl" reflect_x="-1" reflect_y="-1"/> -->
 	<caster/>
-	
+
 	<diffdrive prefix="f"/>
-	<!--<diffdrive prefix="b" /> -->
 
 	<laser/>
 	<imu/>
-
-	<stereo-camera prefix="narrow" topic="vision/narrow" baseline="${baseline_narrow}"/>
-	<stereo-camera prefix="wide"   topic="vision/wide"   baseline="${baseline_wide}"/>
-	
-	<wheel_camera prefix="left"  reflect="1"/>
-	<wheel_camera prefix="right" reflect="-1"/>
-
 </robot>
