@@ -93,7 +93,7 @@
             <mu2 value="100.0" />
             <kp  value="1000000.0" />
             <kd  value="1.0" />
-            <material>Erratic/Grey</material>
+            <material>Gazebo/Grey</material>
         </gazebo>
 
         <transmission type="pr2_mechanism_model/SimpleTransmission" name="${prefix}_wheel_trans">
