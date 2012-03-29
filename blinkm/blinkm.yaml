@@ -1,6 +1,0 @@
-port: /dev/blinkm
-name: blinkm
-
-subscribe:
- status_light:
-  type: blinkm/StatusLight

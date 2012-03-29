@@ -1,9 +1,0 @@
-port: /dev/estop
-name: estop
-publish:
- motor_power:
-  type: std_msgs/Bool
-  latched: true
-subscribe:
- error_code:
-  type: std_msgs/Byte
