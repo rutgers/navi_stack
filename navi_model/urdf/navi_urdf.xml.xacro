@@ -12,22 +12,72 @@
     <xacro:property name="robot_length" value="1.350"/>
     <xacro:property name="wheel_radius" value="0.127"/>
     <xacro:property name="wheel_offset" value="0.425"/>
+    <xacro:property name="caster_radius" value="0.125"/>
+    <xacro:property name="caster_offset" value="0.500"/>
+    <xacro:property name="caster_trail"  value="0.050"/>
 
-    <link name="base_link">
-    </link>
-
-    <joint name="base_to_visual_joint" type="fixed">
-        <parent link="base_link"/>
-        <child link="visual_link"/>
-        <origin xyz="${-robot_length/2} ${robot_width/2} 0" rpy="${PI/2} 0 0"/>
-    </joint>
-    <link name="visual_link">
+    <!-- Low Polygon Model -->
+    <link name="base_footprint">
         <visual>
+            <origin xyz="${-robot_length/2} ${robot_width/2} 0" rpy="${PI/2} 0 0"/>
             <geometry>
                 <mesh filename="package://navi_model/meshes/navi2.stl" scale="0.001 0.001 0.001"/>
             </geometry>
             <material name="blue">
                 <color rgba="0 0 1 1"/>
+            </material>
+        </visual>
+    </link>
+
+    <!-- Wheels -->
+    <xacro:macro name="wheel" params="side sign">
+        <joint name="wheel_${side}_joint" type="continuous">
+            <parent link="base_footprint"/>
+            <child link="wheel_${side}_link"/>
+            <origin xyz="0 ${sign*wheel_offset} ${wheel_radius}"/>
+            <axis xyz="0 1 0"/>
+            <anchor xyz="0 0 0"/>
+        </joint>
+        <link name="wheel_${side}_link">
+            <visual>
+                <origin xyz="0 0 0" rpy="${PI/2} 0 0"/>
+                <geometry>
+                    <cylinder radius="${wheel_radius}" length="0.075"/>
+                </geometry>
+                <material name="red">
+                    <color rgba="1 0 0 1"/>
+                </material>
+            </visual>
+        </link>
+    </xacro:macro>
+    <xacro:wheel side="left"  sign="+1"/>
+    <xacro:wheel side="right" sign="-1"/>
+
+    <!-- Caster Wheel -->
+    <joint name="caster_pivot_joint" type="continuous">
+        <parent link="base_footprint"/>
+        <child link="caster_pivot_link"/>
+        <origin xyz="${-caster_offset} 0 ${2*caster_radius}" rpy="0 0 0"/>
+        <axis xyz="0 0 1"/>
+        <anchor xyz="0 0 0"/>
+    </joint>
+    <link name="caster_pivot_link"></link>
+
+    <joint name="caster_joint" type="continuous">
+        <parent link="caster_pivot_link"/>
+        <child link="caster_link"/>
+        <origin xyz="${-caster_trail} 0 ${-caster_radius}" rpy="0 0 0"/>
+        <axis xyz="1 0 0"/>
+        <anchor xyz="0 0 0"/>
+    </joint>
+    <link name="caster_link">
+        <visual>
+            <origin xyz="0 0 0" rpy="${PI/2} 0 0"/>
+            <geometry>
+                <cylinder radius="${caster_radius}" length="0.075"/>
+            </geometry>
+            <material name="red">
+                <color rgba="1 0 0 1"/>
             </material>
         </visual>
     </link>
