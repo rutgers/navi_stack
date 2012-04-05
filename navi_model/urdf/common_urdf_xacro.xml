@@ -1,12 +1,11 @@
 <?xml version="1.0"?>
-<robot xmlns:body="http://playerstage.sourceforge.net/gazebo/xmlschema/#body" 
+<robot xmlns:body="http://playerstage.sourceforge.net/gazebo/xmlschema/#body"
        xmlns:controller="http://playerstage.sourceforge.net/gazebo/xmlschema/#controller"
-       xmlns:geom="http://playerstage.sourceforge.net/gazebo/xmlschema/#geom" 
-       xmlns:interface="http://playerstage.sourceforge.net/gazebo/xmlschema/#interface" 
-       xmlns:joint="http://playerstage.sourceforge.net/gazebo/xmlschema/#slider" 
-       xmlns:sensor="http://playerstage.sourceforge.net/gazebo/xmlschema/#sensor" 
+       xmlns:geom="http://playerstage.sourceforge.net/gazebo/xmlschema/#geom"
+       xmlns:interface="http://playerstage.sourceforge.net/gazebo/xmlschema/#interface"
+       xmlns:joint="http://playerstage.sourceforge.net/gazebo/xmlschema/#slider"
+       xmlns:sensor="http://playerstage.sourceforge.net/gazebo/xmlschema/#sensor"
        xmlns:xacro="http://ros.org/wiki/xacro">
- 
 	<material name="Black">
 		<color rgba="0.0 0.0 0.0 1.0"/>
 	</material>
