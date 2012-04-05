@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<robot xmlns:body="http://playerstage.sourceforge.net/gazebo/xmlschema/#body"
+       xmlns:controller="http://playerstage.sourceforge.net/gazebo/xmlschema/#controller"
+       xmlns:geom="http://playerstage.sourceforge.net/gazebo/xmlschema/#geom"
+       xmlns:interface="http://playerstage.sourceforge.net/gazebo/xmlschema/#interface"
+       xmlns:joint="http://playerstage.sourceforge.net/gazebo/xmlschema/#slider"
+       xmlns:sensor="http://playerstage.sourceforge.net/gazebo/xmlschema/#sensor"
+       xmlns:xacro="http://ros.org/wiki/xacro">
+	<property name="M_PI" value="3.1415926535897931" />
+    <xacro:macro name="imu">
+        <link name="imu_link">
+            <inertial>
+                <mass value="0.0"/>
+                <origin xyz="0 0 0"/>
+                <inertia ixx="0.01" ixy="0.0" ixz="0.0" iyy="0.01" iyz="0.0" izz="0.01"/>
+            </inertial>
+            <visual>
+                <origin xyz="0 0 0" rpy="0 0 0"/>
+                <geometry>
+                <cylinder radius="0.028" length=".039"/>
+                </geometry>
+                <material name="Grey"/>
+            </visual>
+        </link>
+        <joint name="base_imu_joint" type="fixed">
+            <origin xyz="0 0 0" rpy="0 0 ${M_PI/2}"/>
+            <child link="imu_link"/>
+            <parent link="base_link"/>
+        </joint>
+    </xacro:macro>
+</robot>
