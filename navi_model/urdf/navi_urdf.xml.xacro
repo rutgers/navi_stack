@@ -49,6 +49,11 @@
                 </material>
             </visual>
         </link>
+        <transmission type="pr2_mechanism_model/SimpleTransmission" name="wheel_${side}_transmission">
+            <actuator name="wheel_${side}_motor"/>
+            <joint name="wheel_${side}_joint"/>
+            <mechanicalReduction>1.0</mechanicalReduction>
+        </transmission>
     </xacro:macro>
     <xacro:wheel side="left"  sign="+1"/>
     <xacro:wheel side="right" sign="-1"/>
