@@ -1,18 +1,27 @@
 <?xml version="1.0"?>
-<robot xmlns:xacro="http://ros.org/wiki/xacro" name="navi">
-	<xacro:property name="PI" value="3.1415926535897931"/>
-    <xacro:property name="navi_width" value="0.85"/>
-    <xacro:property name="navi_length" value="1.35"/>
+<robot xmlns:body="http://playerstage.sourceforge.net/gazebo/xmlschema/#body"
+       xmlns:controller="http://playerstage.sourceforge.net/gazebo/xmlschema/#controller"
+       xmlns:geom="http://playerstage.sourceforge.net/gazebo/xmlschema/#geom"
+       xmlns:interface="http://playerstage.sourceforge.net/gazebo/xmlschema/#interface"
+       xmlns:joint="http://playerstage.sourceforge.net/gazebo/xmlschema/#slider"
+       xmlns:sensor="http://playerstage.sourceforge.net/gazebo/xmlschema/#sensor"
+       xmlns:xacro="http://ros.org/wiki/xacro"
+       name="navi">
+    <xacro:property name="PI" value="3.1415926535897931"/>
+    <xacro:property name="robot_width" value="0.850"/>
+    <xacro:property name="robot_length" value="1.350"/>
+    <xacro:property name="wheel_radius" value="0.127"/>
+    <xacro:property name="wheel_offset" value="0.425"/>
 
     <link name="base_link">
     </link>
 
-    <joint name="base_to_visual" type="fixed">
+    <joint name="base_to_visual_joint" type="fixed">
         <parent link="base_link"/>
-        <child link="visual"/>
-        <origin xyz="${-navi_length/2} ${navi_width/2} 0" rpy="${PI/2} 0 0"/>
+        <child link="visual_link"/>
+        <origin xyz="${-robot_length/2} ${robot_width/2} 0" rpy="${PI/2} 0 0"/>
     </joint>
-    <link name="visual">
+    <link name="visual_link">
         <visual>
             <geometry>
                 <mesh filename="package://navi_model/meshes/navi2.stl" scale="0.001 0.001 0.001"/>
@@ -22,4 +31,20 @@
             </material>
         </visual>
     </link>
+
+    <gazebo>
+        <controller:diffdrive_plugin name="differential_drive_controller" plugin="libdiffdrive_plugin.so">
+            <alwaysOn>true</alwaysOn>
+            <update>100</update>
+            <updateRate>100.0</updateRate>
+            <torque>1000</torque>
+            <wheelSeparation>${wheel_offset*2}</wheelSeparation>
+            <wheelDiameter>${wheel_radius*2}</wheelDiameter>
+            <robotNamespace>/</robotNamespace>
+            <topicName>/cmd_vel</topicName>
+            <leftJoint>wheel_left_joint</leftJoint>
+            <rightJoint>wheel_right_joint</rightJoint>
+            <interface:position name="position_iface_0"/>
+        </controller:diffdrive_plugin>
+    </gazebo>
 </robot>
