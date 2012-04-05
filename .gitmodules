@@ -7,3 +7,6 @@
 [submodule "robot_kf"]
 	path = robot_kf
 	url = git@github.com:mkoval/robot_kf.git
+[submodule "fieldforce_tcm"]
+	path = fieldforce_tcm
+	url = git@github.com:mkoval/FieldforceTCM.git
