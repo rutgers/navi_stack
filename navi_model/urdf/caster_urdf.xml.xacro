@@ -1,0 +1,68 @@
+<?xml version="1.0"?>
+<robot xmlns:body="http://playerstage.sourceforge.net/gazebo/xmlschema/#body"
+       xmlns:controller="http://playerstage.sourceforge.net/gazebo/xmlschema/#controller"
+       xmlns:geom="http://playerstage.sourceforge.net/gazebo/xmlschema/#geom"
+       xmlns:interface="http://playerstage.sourceforge.net/gazebo/xmlschema/#interface"
+       xmlns:joint="http://playerstage.sourceforge.net/gazebo/xmlschema/#slider"
+       xmlns:sensor="http://playerstage.sourceforge.net/gazebo/xmlschema/#sensor"
+       xmlns:xacro="http://ros.org/wiki/xacro">
+    <xacro:macro name="caster">
+        <joint name="caster_pivot_joint" type="continuous">
+            <parent link="base_footprint"/>
+            <child link="caster_pivot_link"/>
+            <origin xyz="${-caster_offset} 0 ${2*caster_radius}" rpy="0 0 0"/>
+            <axis xyz="0 0 1"/>
+            <anchor xyz="0 0 0"/>
+        </joint>
+        <link name="caster_pivot_link">
+            <inertial>
+                <mass value="0.001"/>
+                <inertia ixx="0.001" ixy="0.000" ixz="0.000"
+                                     iyy="0.001" iyz="0.000"
+                                                 izz="0.001"/>
+            </inertial>
+        </link>
+        <gazebo reference="caster_pivot_link">
+            <material>Gazebo/Red</material>
+        </gazebo>
+
+        <joint name="caster_joint" type="continuous">
+            <parent link="caster_pivot_link"/>
+            <child link="caster_link"/>
+            <origin xyz="${-caster_trail} 0 ${-caster_radius}" rpy="0 0 0"/>
+            <axis xyz="0 1 0"/>
+            <anchor xyz="0 0 0"/>
+        </joint>
+        <link name="caster_link">
+            <inertial>
+                <mass value="${caster_weight}"/>
+                <inertia ixx="01" ixy="0.000" ixz="0.000"
+                                     iyy="0.1" iyz="0.000"
+                                                 izz="0.1"/>
+            </inertial>
+            <collision>
+                <origin xyz="0 0 0" rpy="${PI/2} 0 0"/>
+                <geometry>
+                    <cylinder radius="${caster_radius}" length="${caster_width}"/>
+                </geometry>
+            </collision>
+            <visual>
+                <origin xyz="0 0 0" rpy="${PI/2} 0 0"/>
+                <geometry>
+                    <cylinder radius="${caster_radius}" length="${caster_width}"/>
+                </geometry>
+                <material name="red"/>
+            </visual>
+        </link>
+        <gazebo reference="caster_link">
+            <material>Gazebo/Red</material>
+        </gazebo>
+
+        <gazebo reference="caster_link">
+            <mu1 value="100.0"/>
+            <mu2 value="100.0"/>
+            <kp value="1000000.0"/>
+            <kd value="1.0"/>
+        </gazebo>
+    </xacro:macro>
+</robot>
