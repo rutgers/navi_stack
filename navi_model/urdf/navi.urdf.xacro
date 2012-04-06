@@ -24,11 +24,11 @@
     <xacro:property name="gps_noise" value="0.005"/>
     <xacro:property name="encoders_noise" value="0.100"/>
 
-    <include filename="$(find navi_model)/urdf/materials.xml.xacro"/>
-    <include filename="$(find navi_model)/urdf/navi_robot_urdf.xml.xacro"/>
-    <include filename="$(find navi_model)/urdf/wheel_urdf.xml.xacro"/>
-    <include filename="$(find navi_model)/urdf/caster_urdf.xml.xacro"/>
-    <include filename="$(find navi_model)/urdf/sensors_urdf.xml.xacro"/>
+    <include filename="$(find navi_model)/urdf/materials.urdf.xacro"/>
+    <include filename="$(find navi_model)/urdf/navi_robot.urdf.xacro"/>
+    <include filename="$(find navi_model)/urdf/wheels.urdf.xacro"/>
+    <include filename="$(find navi_model)/urdf/caster.urdf.xacro"/>
+    <include filename="$(find navi_model)/urdf/sensors.urdf.xacro"/>
 
     <xacro:wheel side="left"  sign="+1"/>
     <xacro:wheel side="right" sign="-1"/>
