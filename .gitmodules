@@ -1,6 +1,3 @@
-[submodule "gps_umd"]
-	path = gps_umd
-	url = git://ram.umd.edu/ros/gps_umd.git
 [submodule "jaguar"]
 	path = jaguar
 	url = git@github.com:mkoval/jaguar.git
