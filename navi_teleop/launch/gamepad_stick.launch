@@ -1,13 +1,10 @@
 <launch>
-
-<node pkg="joy" type="joy_node" name="joy_node">
-	<param name="dev" value="/dev/input/js0" type="str" />
-</node>
-<node pkg="navi_teleop" type="gamepad_stick" name="teleop_gamepad">
-	<remap from="cmd_vel" to="drive/cmd_vel"/>
-	<param name="scale_angular" value="4"/> 
-	<param name="scale_linear" value="3.3"/> <!-- m/s -->
-</node>
-
-
+    <node pkg="joy" type="joy_node" name="joy_node">
+        <param name="dev" value="/dev/input/js0" type="str" />
+    </node>
+    <node pkg="navi_teleop" type="gamepad_stick" name="teleop_gamepad">
+        <param name="scale_angular" value="5.5"/>
+        <param name="scale_linear" value="3.3"/> <!-- m/s -->
+        <remap from="cmd_vel" to="drive/cmd_vel"/>
+    </node>
 </launch>

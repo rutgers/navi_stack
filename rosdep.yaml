@@ -1,3 +1,0 @@
-django:
-  ubuntu:
-   10.10: python-django
