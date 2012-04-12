@@ -1,0 +1,6 @@
+<launch>
+	<node pkg="hokuyo_node" type="hokuyo_node" name="base_laser">
+		<remap from="scan" to="laser"/>
+		<param name="frame_id" value="/base_laser_link"/>
+	</node>
+</launch>

@@ -1,0 +1,12 @@
+<launch>
+    <group ns="vision">
+        <node pkg="prosilica_camera" type="prosilica_node" name="camera_left">
+            <remap from="camera" to="left"/>
+            <param name="ip_address" value="192.168.1.3"/>
+        </node>
+        <node pkg="prosilica_camera" type="prosilica_node" name="camera_right">
+            <remap from="camera" to="right"/>
+            <param name="ip_address" value="192.168.1.4"/>
+        </node>
+    </group>
+</launch>

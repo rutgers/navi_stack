@@ -1,0 +1,15 @@
+<package>
+	<description brief="stereo_plane">
+		Estimates the ground plane using stereo data.
+	</description>
+	<author>Michael Koval</author>
+	<license>BSD</license>
+	<review status="unreviewed" notes=""/>
+	<depend package="roscpp"/>
+	<depend package="geometry_msgs"/>
+	<depend package="sensor_msgs"/>
+	<depend package="pcl"/>
+	<depend package="pcl_ros"/>
+	<depend package="tf"/>
+	<depend package="visualization_msgs"/>
+</package>

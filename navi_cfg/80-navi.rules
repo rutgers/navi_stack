@@ -1,0 +1,3 @@
+KERNEL=="ttyUSB[0-9]*", ATTRS{manufacturer}=="Prolific Technology Inc.", ATTRS{product}=="USB-Serial Controller", MODE="0777", SYMLINK+="jaguar"
+KERNEL=="ttyUSB[0-9]*", ATTRS{manufacturer}=="Prolific Technology Inc.", ATTRS{product}=="USB-Serial Controller D", MODE="0777", SYMLINK+="gps_novatel"
+KERNEL=="ttyACM[0-9]*", ATTRS{product}=="URG-Series USB Driver", SYMLINK+="hokuyo" 

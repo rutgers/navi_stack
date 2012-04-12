@@ -1,0 +1,10 @@
+width:  320
+height: 240
+
+cameras: 2
+device0: '/dev/video_wheel_left'
+device1: '/dev/video_wheel_right'
+calib0: 'package://navi_cfg/calibration/mono_wheel_left.yaml'
+calib1: 'package://navi_cfg/calibration/mono_wheel_right.yaml'
+frame0: '/cal_wheel_left_camera_link'
+frame1: '/cal_wheel_right_camera_link'

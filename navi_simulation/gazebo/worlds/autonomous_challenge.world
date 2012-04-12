@@ -1,0 +1,538 @@
+<?xml version="1.0"?>
+
+<gazebo:world 
+  xmlns:xi="http://www.w3.org/2001/XInclude"
+  xmlns:gazebo="http://playerstage.sourceforge.net/gazebo/xmlschema/#gz" 
+  xmlns:model="http://playerstage.sourceforge.net/gazebo/xmlschema/#model" 
+  xmlns:sensor="http://playerstage.sourceforge.net/gazebo/xmlschema/#sensor" 
+  xmlns:window="http://playerstage.sourceforge.net/gazebo/xmlschema/#window" 
+  xmlns:param="http://playerstage.sourceforge.net/gazebo/xmlschema/#param" 
+  xmlns:body="http://playerstage.sourceforge.net/gazebo/xmlschema/#body" 
+  xmlns:geo="http://willowgarage.com/xmlschema/#geo" 
+  xmlns:geom="http://playerstage.sourceforge.net/gazebo/xmlschema/#geom" 
+  xmlns:joint="http://playerstage.sourceforge.net/gazebo/xmlschema/#joint" 
+  xmlns:interface="http://playerstage.sourceforge.net/gazebo/xmlschema/#interface" 
+  xmlns:ui="http://playerstage.sourceforge.net/gazebo/xmlschema/#ui"
+  xmlns:rendering="http://playerstage.sourceforge.net/gazebo/xmlschema/#rendering" 
+  xmlns:renderable="http://playerstage.sourceforge.net/gazebo/xmlschema/#renderable" 
+  xmlns:controller="http://playerstage.sourceforge.net/gazebo/xmlschema/#controller"
+  xmlns:physics="http://playerstage.sourceforge.net/gazebo/xmlschema/#physics" >
+ 
+ <!---
+ Way Point locations in pixel coordinates
+	720 1680
+	4280 1680
+	840  3920
+	4200  3984
+	
+	1464 2376 
+	3264 3244
+	1904 3696
+	2848 3624
+	
+   barrels
+   480  1720
+   688 1880
+   624 1912
+   560 2096
+   
+	
+	
+	
+	
+ -->
+  <include embedded="true">
+    <xi:include href="sim_settings.xml" />
+  </include>
+
+  <!-- ground plane -->
+  <model:physical name="gplane">
+    <xyz>0 0 0</xyz>	
+    <rpy>0 0 0</rpy>
+    <static>true</static>
+
+    <body:plane name="plane">
+      <geom:plane name="plane">
+        <laserRetro>2000.0</laserRetro>
+        <mu1>50.0</mu1>
+        <mu2>50.0</mu2>
+        <kp>1000000000.0</kp>
+        <kd>1.0</kd>
+        <normal>0 0 1</normal>
+        <size>100.0 100.0</size>
+        <segments>1 1</segments>
+        <uvTile>1 1</uvTile>
+        <material>Navi/nav_field</material>
+      </geom:plane>
+    </body:plane>
+  </model:physical>
+  
+	
+	<model:physical name="barrel0">
+		<xyz>-35 14 0</xyz>
+		<include embedded="true">
+			<xi:include href="../objects/barrel_construction.model" />
+		</include>
+	</model:physical>
+
+
+	<model:physical name="barrel1">
+		<xyz>-36 13 0</xyz>
+		<include embedded="true">
+			<xi:include href="../objects/barrel_construction.model" />
+		</include>
+	</model:physical>
+
+
+	<model:physical name="barrel2">
+		<xyz>-38 6 0</xyz>
+		<include embedded="true">
+			<xi:include href="../objects/barrel_construction.model" />
+		</include>
+	</model:physical>
+
+
+	<model:physical name="barrel3">
+		<xyz>-37 8 0</xyz>
+		<include embedded="true">
+			<xi:include href="../objects/barrel_construction.model" />
+		</include>
+	</model:physical>
+
+
+	<model:physical name="barrel4">
+		<xyz>-29 2 0</xyz>
+		<include embedded="true">
+			<xi:include href="../objects/barrel_construction.model" />
+		</include>
+	</model:physical>
+
+
+	<model:physical name="barrel5">
+		<xyz>-27 2 0</xyz>
+		<include embedded="true">
+			<xi:include href="../objects/barrel_construction.model" />
+		</include>
+	</model:physical>
+
+
+	<model:physical name="barrel6">
+		<xyz>-21 16 0</xyz>
+		<include embedded="true">
+			<xi:include href="../objects/barrel_construction.model" />
+		</include>
+	</model:physical>
+
+
+	<model:physical name="barrel7">
+		<xyz>-15 19 0</xyz>
+		<include embedded="true">
+			<xi:include href="../objects/barrel_construction.model" />
+		</include>
+	</model:physical>
+
+
+	<model:physical name="barrel8">
+		<xyz>-12 16 0</xyz>
+		<include embedded="true">
+			<xi:include href="../objects/barrel_construction.model" />
+		</include>
+	</model:physical>
+
+
+	<model:physical name="barrel9">
+		<xyz>11 19 0</xyz>
+		<include embedded="true">
+			<xi:include href="../objects/barrel_construction.model" />
+		</include>
+	</model:physical>
+
+
+	<model:physical name="barrel10">
+		<xyz>-3 8 0</xyz>
+		<include embedded="true">
+			<xi:include href="../objects/barrel_construction.model" />
+		</include>
+	</model:physical>
+
+
+	<model:physical name="barrel11">
+		<xyz>-2 6 0</xyz>
+		<include embedded="true">
+			<xi:include href="../objects/barrel_construction.model" />
+		</include>
+	</model:physical>
+
+
+	<model:physical name="barrel12">
+		<xyz>0 5 0</xyz>
+		<include embedded="true">
+			<xi:include href="../objects/barrel_construction.model" />
+		</include>
+	</model:physical>
+
+
+	<model:physical name="barrel13">
+		<xyz>3 1 0</xyz>
+		<include embedded="true">
+			<xi:include href="../objects/barrel_construction.model" />
+		</include>
+	</model:physical>
+
+
+	<model:physical name="barrel14">
+		<xyz>2 0 0</xyz>
+		<include embedded="true">
+			<xi:include href="../objects/barrel_construction.model" />
+		</include>
+	</model:physical>
+
+
+	<model:physical name="barrel15">
+		<xyz>0 -18 0</xyz>
+		<include embedded="true">
+			<xi:include href="../objects/barrel_construction.model" />
+		</include>
+	</model:physical>
+
+
+	<model:physical name="barrel16">
+		<xyz>0 -21 0</xyz>
+		<include embedded="true">
+			<xi:include href="../objects/barrel_construction.model" />
+		</include>
+	</model:physical>
+
+
+	<model:physical name="barrel17">
+		<xyz>0 -24 0</xyz>
+		<include embedded="true">
+			<xi:include href="../objects/barrel_construction.model" />
+		</include>
+	</model:physical>
+
+
+	<model:physical name="barrel18">
+		<xyz>-29 -13 0</xyz>
+		<include embedded="true">
+			<xi:include href="../objects/barrel_construction.model" />
+		</include>
+	</model:physical>
+
+
+	<model:physical name="barrel19">
+		<xyz>-26 -11 0</xyz>
+		<include embedded="true">
+			<xi:include href="../objects/barrel_construction.model" />
+		</include>
+	</model:physical>
+
+
+	<model:physical name="barrel20">
+		<xyz>-24 -9 0</xyz>
+		<include embedded="true">
+			<xi:include href="../objects/barrel_construction.model" />
+		</include>
+	</model:physical>
+
+
+	<model:physical name="barrel21">
+		<xyz>-23 -11 0</xyz>
+		<include embedded="true">
+			<xi:include href="../objects/barrel_construction.model" />
+		</include>
+	</model:physical>
+
+
+	<model:physical name="barrel22">
+		<xyz>-23 -13 0</xyz>
+		<include embedded="true">
+			<xi:include href="../objects/barrel_construction.model" />
+		</include>
+	</model:physical>
+
+
+	<model:physical name="barrel23">
+		<xyz>31 7 0</xyz>
+		<include embedded="true">
+			<xi:include href="../objects/barrel_construction.model" />
+		</include>
+	</model:physical>
+
+
+	<model:physical name="barrel24">
+		<xyz>32 14 0</xyz>
+		<include embedded="true">
+			<xi:include href="../objects/barrel_construction.model" />
+		</include>
+	</model:physical>
+
+
+	<model:physical name="barrel25">
+		<xyz>38 9 0</xyz>
+		<include embedded="true">
+			<xi:include href="../objects/barrel_construction.model" />
+		</include>
+	</model:physical>
+
+
+	<model:physical name="barrel26">
+		<xyz>38 15 0</xyz>
+		<include embedded="true">
+			<xi:include href="../objects/barrel_construction.model" />
+		</include>
+	</model:physical>
+
+
+	<model:physical name="barrel27">
+		<xyz>15 0 0</xyz>
+		<include embedded="true">
+			<xi:include href="../objects/barrel_construction.model" />
+		</include>
+	</model:physical>
+
+
+	<model:physical name="barrel28">
+		<xyz>20 5 0</xyz>
+		<include embedded="true">
+			<xi:include href="../objects/barrel_construction.model" />
+		</include>
+	</model:physical>
+
+
+	<model:physical name="barrel29">
+		<xyz>12 4 0</xyz>
+		<include embedded="true">
+			<xi:include href="../objects/barrel_construction.model" />
+		</include>
+	</model:physical>
+
+
+	<model:physical name="barrel30">
+		<xyz>21 -8 0</xyz>
+		<include embedded="true">
+			<xi:include href="../objects/barrel_construction.model" />
+		</include>
+	</model:physical>
+
+
+	<model:physical name="barrel31">
+		<xyz>28 -3 0</xyz>
+		<include embedded="true">
+			<xi:include href="../objects/barrel_construction.model" />
+		</include>
+	</model:physical>
+
+
+	<model:physical name="barrel32">
+		<xyz>23 -17 0</xyz>
+		<include embedded="true">
+			<xi:include href="../objects/barrel_construction.model" />
+		</include>
+	</model:physical>
+
+
+	<model:physical name="barrel33">
+		<xyz>28 -12 0</xyz>
+		<include embedded="true">
+			<xi:include href="../objects/barrel_construction.model" />
+		</include>
+	</model:physical>
+
+
+	<model:physical name="barrel34">
+		<xyz>30 -19 0</xyz>
+		<include embedded="true">
+			<xi:include href="../objects/barrel_construction.model" />
+		</include>
+	</model:physical>
+
+
+	<model:physical name="barrel35">
+		<xyz>37 -26 0</xyz>
+		<include embedded="true">
+			<xi:include href="../objects/barrel_construction.model" />
+		</include>
+	</model:physical>
+
+
+	<model:physical name="barrel36">
+		<xyz>20 -30 0</xyz>
+		<include embedded="true">
+			<xi:include href="../objects/barrel_construction.model" />
+		</include>
+	</model:physical>
+
+
+	<model:physical name="barrel37">
+		<xyz>9 -24 0</xyz>
+		<include embedded="true">
+			<xi:include href="../objects/barrel_construction.model" />
+		</include>
+	</model:physical>
+
+
+	<model:physical name="barrel38">
+		<xyz>-3 -7 0</xyz>
+		<include embedded="true">
+			<xi:include href="../objects/barrel_construction.model" />
+		</include>
+	</model:physical>
+
+
+	<model:physical name="barrel39">
+		<xyz>-37 -21 0</xyz>
+		<include embedded="true">
+			<xi:include href="../objects/barrel_construction.model" />
+		</include>
+	</model:physical>
+
+
+	<model:physical name="barrel40">
+		<xyz>-34 -28 0</xyz>
+		<include embedded="true">
+			<xi:include href="../objects/barrel_construction.model" />
+		</include>
+	</model:physical>
+
+
+	<model:physical name="barrel41">
+		<xyz>-10 -23 0</xyz>
+		<include embedded="true">
+			<xi:include href="../objects/barrel_construction.model" />
+		</include>
+	</model:physical>
+
+
+	<model:physical name="barrel42">
+		<xyz>-20 -29 0</xyz>
+		<include embedded="true">
+			<xi:include href="../objects/barrel_construction.model" />
+		</include>
+	</model:physical>
+
+
+
+<!--
+  <model:physical name="walls">
+    <include embedded="false">
+      <xi:include href="tests/willow-walls.model" />
+    </include>
+  </model:physical>
+-->
+<!--
+  <model:physical name="willow_map">
+   <xyz>-25.65 25.65 1.0</xyz>	
+   <rpy>180 0 0</rpy>
+   <static>true</static>
+   <body:map name="willow_map_body">
+     <geom:map name="willow_map_geom">
+       <image>willowMap.png</image>
+       <threshold>200</threshold>
+       <granularity>1</granularity>
+       <negative>false</negative>
+       <scale>0.1</scale>
+       <offset>0 0 0</offset>
+       <material>Gazebo/Rocky</material>
+     </geom:map>
+   </body:map>
+  </model:physical>
+-->
+
+  <!-- White Point light -->
+  <model:renderable name="light_0">
+    <xyz>0.0 0.0 8</xyz>
+    <enableGravity>false</enableGravity>
+    <light>
+      <type>point</type>
+      <diffuseColor>0.5 0.5 0.5</diffuseColor>
+      <specularColor>.1 .1 .1</specularColor>
+      <attenuation>0.2 0.1 0</attenuation>
+      <range>100</range>
+    </light>
+  </model:renderable>
+
+  <!-- White Point light -->
+  <model:renderable name="light_1">
+    <xyz>50.0 50.0 8</xyz>
+    <enableGravity>false</enableGravity>
+    <light>
+      <type>point</type>
+      <diffuseColor>0.5 0.5 0.5</diffuseColor>
+      <specularColor>.1 .1 .1</specularColor>
+      <attenuation>0.2 0.1 0</attenuation>
+      <range>100</range>
+    </light>
+  </model:renderable>
+
+  <!-- White Point light -->
+  <model:renderable name="light_2">
+    <xyz>-50.0 -50.0 8</xyz>
+    <enableGravity>false</enableGravity>
+    <light>
+      <type>point</type>
+      <diffuseColor>0.5 0.5 0.5</diffuseColor>
+      <specularColor>.1 .1 .1</specularColor>
+      <attenuation>0.2 0.1 0</attenuation>
+      <range>100</range>
+    </light>
+  </model:renderable>
+
+
+  <!-- White Point light -->
+  <model:renderable name="light_3">
+    <xyz>-50.0 50.0 8</xyz>
+    <enableGravity>false</enableGravity>
+    <light>
+      <type>point</type>
+      <diffuseColor>0.5 0.5 0.5</diffuseColor>
+      <specularColor>.1 .1 .1</specularColor>
+      <attenuation>0.2 0.1 0</attenuation>
+      <range>100</range>
+    </light>
+  </model:renderable>
+  
+    <!-- White Point light -->
+  <model:renderable name="light_4">
+    <xyz>-50.0 50.0 8</xyz>
+    <enableGravity>false</enableGravity>
+    <light>
+      <type>point</type>
+      <diffuseColor>0.5 0.5 0.5</diffuseColor>
+      <specularColor>.1 .1 .1</specularColor>
+      <attenuation>0.2 0.1 0</attenuation>
+      <range>100</range>
+    </light>
+  </model:renderable>
+
+    <!-- White Point light -->
+  <model:renderable name="light_5">
+    <xyz>-50.0 0 8</xyz>
+    <enableGravity>false</enableGravity>
+    <light>
+      <type>directional</type>
+	  <direction>1 0 0 </direction>
+      <diffuseColor>0.5 0.5 0.5</diffuseColor>
+      <specularColor>.1 .1 .1</specularColor>
+      <attenuation>0.2 0.1 0</attenuation>
+      <range>100</range>
+    </light>
+    </model:renderable>
+    
+        <!-- White Point light -->
+  <model:renderable name="light_6">
+    <xyz>50.0 0 8</xyz>
+    <enableGravity>false</enableGravity>
+    <light>
+      <type>directional</type>
+      <direction> -1 0 0 </direction>
+      <diffuseColor>0.5 0.5 0.5</diffuseColor>
+      <specularColor>.1 .1 .1</specularColor>
+      <attenuation>0.2 0.1 0</attenuation>
+      <range>100</range>
+    </light>
+  </model:renderable>
+
+</gazebo:world>
+
+

@@ -1,6 +1,9 @@
-[submodule "stereo_webcam"]
-	path = stereo_webcam
-	url = git@github.com:mkoval/stereo_webcam.git
-[submodule "hj_node"]
-	path = hj_node
-	url = https://github.com/jmesmon/hj_node.git
+[submodule "jaguar"]
+	path = jaguar
+	url = git@github.com:mkoval/jaguar.git
+[submodule "robot_kf"]
+	path = robot_kf
+	url = git@github.com:mkoval/robot_kf.git
+[submodule "fieldforce_tcm"]
+	path = fieldforce_tcm
+	url = git@github.com:mkoval/FieldforceTCM.git

@@ -1,0 +1,54 @@
+<?xml version="1.0"?>
+<robot xmlns:body="http://playerstage.sourceforge.net/gazebo/xmlschema/#body"
+       xmlns:controller="http://playerstage.sourceforge.net/gazebo/xmlschema/#controller"
+       xmlns:geom="http://playerstage.sourceforge.net/gazebo/xmlschema/#geom"
+       xmlns:interface="http://playerstage.sourceforge.net/gazebo/xmlschema/#interface"
+       xmlns:joint="http://playerstage.sourceforge.net/gazebo/xmlschema/#slider"
+       xmlns:sensor="http://playerstage.sourceforge.net/gazebo/xmlschema/#sensor"
+       xmlns:xacro="http://ros.org/wiki/xacro">
+    <xacro:macro name="driver">
+        <gazebo>
+            <controller:diffdrive_plugin name="differential_drive_controller" plugin="libdiffdrive_plugin.so">
+                <alwaysOn>true</alwaysOn>
+                <update>100</update>
+                <updateRate>100.0</updateRate>
+                <torque>1000</torque>
+                <wheelSeparation>${wheel_offset*2}</wheelSeparation>
+                <wheelDiameter>${wheel_radius*2}</wheelDiameter>
+                <robotNamespace></robotNamespace>
+                <topicName>drive/cmd_vel</topicName>
+                <leftJoint>wheel_left_joint</leftJoint>
+                <rightJoint>wheel_right_joint</rightJoint>
+                <interface:position name="drive_iface"/>
+            </controller:diffdrive_plugin>
+            <controller:gazebo_ros_p3d name="odom_controller" plugin="libgazebo_ros_p3d.so">
+                <alwaysOn>true</alwaysOn>
+                <updateRate>50.0</updateRate>
+                <bodyName>base_footprint</bodyName>
+                <topicName>drive/odom</topicName>
+                <gaussianNoise>${encoders_noise}</gaussianNoise>
+                <frameName>/map</frameName>
+                <xyzOffsets>0 0 0</xyzOffsets>
+                <rpyOffsets>0 0 0</rpyOffsets>
+                <interface:position name="odom_iface"/>
+            </controller:gazebo_ros_p3d>
+        </gazebo>
+    </xacro:macro>
+
+    <xacro:macro name="gps">
+        <gazebo>
+            <canonicalBody>base_footprint</canonicalBody>
+            <controller:gazebo_ros_p3d name="gps_controller" plugin="libgazebo_ros_p3d.so">
+                <alwaysOn>true</alwaysOn>
+                <updateRate>0.5</updateRate>
+                <bodyName>base_footprint</bodyName>
+                <topicName>gps</topicName>
+                <gaussianNoise>${gps_noise}</gaussianNoise>
+                <frameName>/map</frameName>
+                <xyzOffsets>0 0 0</xyzOffsets>
+                <rpyOffsets>0 0 0</rpyOffsets>
+                <interface:position name="gps_iface"/>
+            </controller:gazebo_ros_p3d>
+        </gazebo>
+    </xacro:macro>
+</robot>

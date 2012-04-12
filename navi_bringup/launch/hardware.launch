@@ -1,4 +1,6 @@
 <launch>
-	<include file="$(find navi_bringup)/launch/basic.launch"/>
-	<include file="$(find stereo_webcam)/launch/navi_hardware.launch"/>
+    <include file="$(find navi_bringup)/launch/general.launch"/>
+    <include file="$(find navi_bringup)/launch/camera.launch"/>
+    <include file="$(find navi_bringup)/launch/laser.launch"/>
+    <include file="$(find navi_bringup)/launch/gps.launch"/>
 </launch>

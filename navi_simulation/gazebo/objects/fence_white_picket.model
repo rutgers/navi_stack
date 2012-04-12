@@ -1,0 +1,36 @@
+<?xml version="1.0" ?>
+<!-- This failes and has a huge block over the fence-->
+<model:physical name="fence_white_picket"
+xmlns:gazebo="http://playerstage.sourceforge.net/gazebo/xmlschema/#gz" 
+xmlns:model="http://playerstage.sourceforge.net/gazebo/xmlschema/#model" 
+xmlns:sensor="http://playerstage.sourceforge.net/gazebo/xmlschema/#sensor" 
+xmlns:body="http://playerstage.sourceforge.net/gazebo/xmlschema/#body" 
+xmlns:geom="http://playerstage.sourceforge.net/gazebo/xmlschema/#geom" 
+xmlns:joint="http://playerstage.sourceforge.net/gazebo/xmlschema/#joint" 
+xmlns:controller="http://playerstage.sourceforge.net/gazebo/xmlschema/#controller" 
+xmlns:interface="http://playerstage.sourceforge.net/gazebo/xmlschema/#interface" 
+xmlns:rendering="http://playerstage.sourceforge.net/gazebo/xmlschema/#rendering" 
+xmlns:physics="http://playerstage.sourceforge.net/gazebo/xmlschema/#physics">
+    <xyz>0 0 0</xyz>
+    <rpy>0 0 0</rpy>
+    <static>true</static>
+    <body:box name="fence_body">
+        <xyz>0 0 0</xyz>
+        <rpy>0 0 0</rpy>
+        <geom:box name="fency_geom">
+            <xyz>0 0 0</xyz>
+            <rpy>0 0 0</rpy>
+            <!-- <size>3.6576 0.1016 0.889</size> -->
+            <size>.1 0.1016 0.1</size> 
+            <visual>
+                <xyz>0 0 0</xyz>
+                <rpy>0 0 0</rpy>
+                <size>.1 0.1016 0.1</size> 
+
+                <scale>0.0254 0.0254  0.0254 </scale>
+                <mesh>fence_white_picket.dae</mesh>
+                <material> Gazebo/White</material>
+            </visual>
+        </geom:box>
+    </body:box>
+</model:physical>

@@ -109,7 +109,7 @@ main(int argc, char** argv)
 
   TBK_Node tbk;
 
-  boost::thread t = boost::thread::thread(boost::bind(&TBK_Node::keyboardLoop, &tbk));
+  boost::thread t(boost::bind(&TBK_Node::keyboardLoop, &tbk));
   
   ros::spin();
 

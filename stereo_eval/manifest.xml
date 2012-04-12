@@ -1,0 +1,15 @@
+<package>
+  <description brief="evaluate accuracy of a stereo vision system">
+  	Evaluate accuracy of a stereo vision system using a calibration pattern.
+  </description>
+  <author>Michael Koval</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <depend package="opencv2"/>
+  <depend package="cv_bridge"/>
+  <depend package="image_geometry"/>
+  <depend package="message_filters"/>
+  <depend package="geometry_msgs"/>
+  <depend package="sensor_msgs"/>
+  <depend package="stereo_msgs"/>
+</package>

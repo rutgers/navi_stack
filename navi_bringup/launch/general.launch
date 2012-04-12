@@ -1,0 +1,7 @@
+<launch>
+    <include file="$(find navi_model)/launch/model_upload.launch"/>
+    <node pkg="joint_state_publisher" type="joint_state_publisher" name="joint_publisher">
+        <param name="rate" value="80"/>
+    </node>
+    <node pkg="robot_state_publisher" type="state_publisher" name="state_publisher"/>
+</launch>

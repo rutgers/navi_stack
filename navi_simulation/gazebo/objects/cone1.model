@@ -1,0 +1,32 @@
+<?xml version="1.0" ?>
+<model:physical name="cone1"
+xmlns:gazebo="http://playerstage.sourceforge.net/gazebo/xmlschema/#gz" 
+xmlns:model="http://playerstage.sourceforge.net/gazebo/xmlschema/#model" 
+xmlns:sensor="http://playerstage.sourceforge.net/gazebo/xmlschema/#sensor" 
+xmlns:body="http://playerstage.sourceforge.net/gazebo/xmlschema/#body" 
+xmlns:geom="http://playerstage.sourceforge.net/gazebo/xmlschema/#geom" 
+xmlns:joint="http://playerstage.sourceforge.net/gazebo/xmlschema/#joint" 
+xmlns:controller="http://playerstage.sourceforge.net/gazebo/xmlschema/#controller" 
+xmlns:interface="http://playerstage.sourceforge.net/gazebo/xmlschema/#interface" 
+xmlns:rendering="http://playerstage.sourceforge.net/gazebo/xmlschema/#rendering" 
+xmlns:physics="http://playerstage.sourceforge.net/gazebo/xmlschema/#physics">
+    <xyz>0 0 0</xyz>
+    <rpy>0 0 0</rpy>
+    <static>true</static>
+    <body:box name="cone">
+        <xyz>0 0 0</xyz>
+        <rpy>0 0 0</rpy>
+        <geom:box name="cone_geom">
+            <xyz>0 0 0.15</xyz>
+            <rpy>0 0 0</rpy>
+            <size>0.3 0.3 0.3</size>
+            <visual>
+                <xyz>0 0 0</xyz>
+                <rpy>0 0 0</rpy>
+                <scale>0.0254 0.0254  0.0254 </scale>
+                <mesh>cone1.dae</mesh>
+            </visual>
+        </geom:box>
+        
+    </body:box>
+</model:physical>
