@@ -1,11 +1,6 @@
 <launch>
-	<include file="$(find navi_bringup)/launch/general.launch"/>
-	<!-- <include file="$(find navi_bringup)/launch/gps.launch"/>-->
-<!--	<node pkg="navi_bringup" name="gps_odom" type="utm_gps.py" output="screen"/> -->
-	<include file="$(find navi_bringup)/launch/camera.launch"/>
-	<include file="$(find navi_driver)/launch/drive.launch"/>
-	<include file="$(find imu_9drazor)/imu.launch"/>
-	<include file="$(find navi_bringup)/launch/laser.launch"/>
-	<node pkg="avr_bridge" name="blinkm" type="bridge_node.py" args="$(find blinkm)/blinkm.yaml"/>
-
+    <include file="$(find navi_bringup)/launch/general.launch"/>
+    <include file="$(find navi_bringup)/launch/camera.launch"/>
+    <include file="$(find navi_bringup)/launch/laser.launch"/>
+    <include file="$(find navi_bringup)/launch/gps.launch"/>
 </launch>

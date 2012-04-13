@@ -3,23 +3,4 @@
 	<param name="/gazebo" value="true"/>
 	<param name="/use_sim_time" value="true"/>
 	<node pkg="gazebo" type="gazebo" name="gazebo" args="$(find navi_simulation)/gazebo/worlds/$(arg world).world" respawn="false" output="screen"/>
-
-	<!-- Publish the /vision/{left,middle,right} topics to mimic the hardware driver -->
-	<group ns="vision">
-		<node pkg="image_transport" type="republish" name="repub_image_left" args="raw">
-			<remap from="in"  to="narrow/left/image"/>
-			<remap from="out" to="left/image"/>
-		</node>
-		<node pkg="image_transport" type="republish" name="repub_image_middle" args="raw">
-			<remap from="in"  to="narrow/right/image"/>
-			<remap from="out" to="middle/image"/>
-		</node>
-		<node pkg="image_transport" type="republish" name="repub_image_right" args="raw">
-			<remap from="in"  to="wide/right/image"/>
-			<remap from="out" to="right/image"/>
-		</node>
-		<node pkg="topic_tools" type="relay" name="repub_info_left"   args="narrow/left/camera_info   left/camera_info"/>
-		<node pkg="topic_tools" type="relay" name="repub_info_middle" args="narrow/middle/camera_info middle/camera_info"/>
-		<node pkg="topic_tools" type="relay" name="repub_info_right"  args="narrow/right/camera_info  right/camera_info"/>
-	</group>
 </launch>

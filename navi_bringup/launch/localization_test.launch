@@ -1,7 +1,0 @@
-<launch>
-	<include file="$(find navi_bringup)/launch/hardware.launch"/>
-<!--	<include file="$(find navi_teleop)/launch/gamepad_stick.launch"/>
-       --> <include file="$(find navi_web)/web.launch"/>
-       <include file="$(find navi_bringup)/launch/general.launch"/>
-
-</launch>

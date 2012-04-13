@@ -1,30 +1,12 @@
 <launch>
-	<group ns="vision">
-		<node pkg="stereo_webcam" type="stereo_node" name="camera_front">
-			<rosparam command="load" file="$(find navi_cfg)/params/camera_general.yaml"/>
-			<rosparam command="load" file="$(find navi_cfg)/params/camera_stereo.yaml"/>
-			<remap from="camera0" to="stereo/left"/>
-			<remap from="camera1" to="stereo/right"/>
-			<remap from="stereo/left/image"  to="stereo/left/image_fast"/>
-			<remap from="stereo/right/image" to="stereo/right/image_fast"/>
-		</node>
-		<node pkg="stereo_webcam" type="stereo_node" name="camera_wheel">
-			<rosparam command="load" file="$(find navi_cfg)/params/camera_general.yaml"/>
-			<rosparam command="load" file="$(find navi_cfg)/params/camera_wheel.yaml"/>
-			<remap from="camera0" to="wheel/left"/>
-			<remap from="camera1" to="wheel/right"/>
-			<remap from="wheel/left/image"  to="wheel/left/image_fast"/>
-			<remap from="wheel/right/image" to="wheel/right/image_fast"/>
-		</node>
-
-		<!-- Throttle all of the cameras down to 10 Hz. -->
-		<node pkg="navi_mux" type="sync_throttle_node" name="throttle_stereo" ns="stereo">
-			<param name="x" value="1"/>
-			<param name="y" value="3"/>
-		</node>
-		<node pkg="navi_mux" type="sync_throttle_node" name="throttle_wheel" ns="wheel">
-			<param name="x" value="2"/>
-			<param name="y" value="3"/>
-		</node>
-	</group>
+    <group ns="vision">
+        <node pkg="prosilica_camera" type="prosilica_node" name="camera_left">
+            <remap from="camera" to="left"/>
+            <param name="ip_address" value="192.168.1.3"/>
+        </node>
+        <node pkg="prosilica_camera" type="prosilica_node" name="camera_right">
+            <remap from="camera" to="right"/>
+            <param name="ip_address" value="192.168.1.4"/>
+        </node>
+    </group>
 </launch>
