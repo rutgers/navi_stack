@@ -1,10 +1,7 @@
-#! /usr/bin/env python
-
+#!/usr/bin/env python
 import roslib; roslib.load_manifest('novatel_gps')
+import rospy, serial
 from nav_msgs.msg import Odometry
-
-import serial
-import rospy
 
 def parseBESTUTMA(raw):
     # Split the NMEA header from the actual message.
@@ -52,8 +49,7 @@ def generateOdomMsg(northing, easting, sigma_northing, sigma_easting):
             stamp = rospy.Time.now(),
             frame_id = '/base_link'
         ),
-        pose = PoseWithCovariance(
-            pose = Pose(
+        pose = PoseWithCovariance( pose = Pose(
                 position = Point(
                     x = easting,  # TODO: Compute a difference.
                     y = northing, # TODO: Compute a difference.
@@ -82,20 +78,29 @@ def generateOdomMsg(northing, easting, sigma_northing, sigma_easting):
     )
 
 if __name__ == '__main__':
-	rospy.init_node('gps_utm')
-	port_name= '/dev/gps_novatel'
-	
-	print "Opening up ", port_name
-	
-	port = serial.Serial(port_name, 115200, timeout=0.75)
-		
-	pub = rospy.Publisher('/gps/odom', Odometry)
-	
-	while not rospy.is_shutdown():
-		try:
-			line = port.readline()
-			odom = parseBESTUTMA(line)
-			if (odom != None):
-				pub.publish(odom)
-		except:
-			pass
+    rospy.init_node('novatel_gps_node')
+    pub = rospy.Publisher('/gps/odom', Odometry)
+
+    port = serial.Serial(
+        port = '/dev/gps_novatel',
+        baudrate = 115200,
+        timeout = None
+    )
+
+    # Configure the GPS to use the best corrections available and to directly
+    # publish UTM measurements.
+    port.flushInput()
+    #port.write('UNLOGALL COM1\n')
+    #port.write('ASSIGNLBAND OMNISTAR 1557845 1200\n')
+    port.write('LOG BESTUTMA ONTIME 1\n')
+
+    while not rospy.is_shutdown():
+        try:
+            line = port.readline()
+            print "'", line, "'\n"
+            #odom = parseBESTUTMA(line)
+            #if (odom != None):
+            #    pub.publish(odom)
+        except:
+            pass
+
