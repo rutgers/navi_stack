@@ -10,11 +10,6 @@
 #include <avr/delay.h>
 
 #include "motorcontrol.h"
-
-
-
-
-
 #include "robot.h"
 
 //Define global message objects to use in
@@ -22,12 +17,10 @@
 ros::Publisher pub_current;
 ros::Publisher pub_enc;
 
-
 navi_driver::Encoder encoder_msg;
 navi_driver::Current current_msg;
 navi_driver::MotorCmd cmd_msg;
 static char update=0;
-
 
 void toggle()
 { //toggle an led to debug the program
@@ -45,14 +38,11 @@ void motor_cmd_cb(const ros::Msg* msg){
 	toggle();
 	setLeftMotorSpeed(cmd_msg.left);
 	setRightMotorSpeed(cmd_msg.right);
-
 }
-
 
 // Since we are hooking into a standard
 // arduino sketch, we must define our program in
 // terms of the arduino setup and loop functions.
-
 void setup()
 {
     Serial.begin(57600);
@@ -63,9 +53,7 @@ void setup()
     pub_current = node.advertise("current");
     pub_enc = node.advertise("encoder");
     node.subscribe("cmd",motor_cmd_cb, &cmd_msg);
-
 }
-
 
 unsigned long encoder_update_timer =0;
 unsigned long current_update_timer =0;
