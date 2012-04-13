@@ -1,11 +1,9 @@
 <launch>
-	<node ns="gps" pkg="navi_bringup" type="gpsd.sh" name="gpsd"/>
 	<node ns="gps" pkg="gpsd_client" type="gpsd_client" name="gpsd_client">
-		<param name="port" value="4000"/>
+		<param name="port" value="2947"/>
 		<param name="use_gps_time" value="false"/> 
  	</node>
 	<node ns="gps" pkg="gps_common" type="utm_odometry_node" name="utm_odom_node">
 		<param name="frame_id" value="/base_footprint"/>
 	</node>
-	
 </launch>
