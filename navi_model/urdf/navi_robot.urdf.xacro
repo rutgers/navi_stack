@@ -6,7 +6,10 @@
        xmlns:joint="http://playerstage.sourceforge.net/gazebo/xmlschema/#slider"
        xmlns:sensor="http://playerstage.sourceforge.net/gazebo/xmlschema/#sensor"
        xmlns:xacro="http://ros.org/wiki/xacro">
-    <link name="base_footprint">
+    <xacro:property name="offset_width"  value="0.600"/>
+    <xacro:property name="offset_height" value="0.127"/>
+    <xacro:property name="offset_length" value="0.600"/>
+    <link name="base_link">
         <inertial>
             <mass value="${robot_weight}"/>
             <inertia ixx="1.000" ixy="0.000" ixz="0.000"
@@ -21,14 +24,14 @@
             </geometry>
         </collision>
         <visual>
-            <origin xyz="${-robot_length/2} ${robot_width/2} 0" rpy="${PI/2} 0 0"/>
+            <origin xyz="-${offset_length} ${offset_width/2} -${offset_height}" rpy="${PI/2} 0 0"/>
             <geometry>
-                <mesh filename="package://navi_model/meshes/navi2.stl" scale="0.001 0.001 0.001"/>
+                <mesh filename="package://navi_model/meshes/frame.stl" scale="0.001 0.001 0.001"/>
             </geometry>
             <material name="blue"/>
         </visual>
     </link>
-    <gazebo reference="base_footprint">
+    <gazebo reference="base_link">
         <material>Gazebo/Blue</material>
     </gazebo>
 </robot>

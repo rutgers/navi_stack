@@ -26,6 +26,7 @@
 
     <include filename="$(find navi_model)/urdf/materials.urdf.xacro"/>
     <include filename="$(find navi_model)/urdf/navi_robot.urdf.xacro"/>
+    <!--
     <include filename="$(find navi_model)/urdf/wheels.urdf.xacro"/>
     <include filename="$(find navi_model)/urdf/caster.urdf.xacro"/>
     <include filename="$(find navi_model)/urdf/sensors.urdf.xacro"/>
@@ -35,4 +36,5 @@
     <xacro:caster/>
     <xacro:driver/>
     <xacro:gps/>
+    -->
 </robot>
