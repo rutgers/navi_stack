@@ -21,7 +21,7 @@
             <xacro:weightless/>
         </link>
 
-        <gazebo reference="base_laser_link">
+        <gazebo reference="laser_link">
             <sensor:ray name="laser">
                 <rayCount>640</rayCount>
                 <rangeCount>640</rangeCount>
@@ -38,9 +38,9 @@
                     <gaussianNoise>0.005</gaussianNoise>
                     <alwaysOn>true</alwaysOn>
                     <updateRate>20</updateRate>
-                    <topicName>base_laser/scan</topicName>
-                    <frameName>base_laser_link</frameName>
-                    <interface:laser name="gazebo_ros_laser_iface"/>
+                    <topicName>/laser</topicName>
+                    <frameName>/laser_link</frameName>
+                    <interface:laser name="laser_iface"/>
                 </controller:gazebo_ros_laser>
             </sensor:ray>
         </gazebo>
