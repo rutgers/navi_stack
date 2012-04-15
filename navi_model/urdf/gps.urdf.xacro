@@ -8,6 +8,8 @@
        xmlns:xacro="http://ros.org/wiki/xacro">
     <xacro:property name="gps_x" value="-0.18941"/>
     <xacro:property name="gps_z" value="0.76387"/>
+    <xacro:property name="gps_rate" value="2.000"/>
+    <xacro:property name="gps_sigma" value="0.015"/>
 
     <xacro:macro name="gps">
         <joint name="gps_joint" type="fixed">
@@ -22,18 +24,16 @@
         </link>
 
         <gazebo>
-            <canonicalBody>gps_link</canonicalBody>
             <controller:gazebo_ros_p3d name="gps_controller" plugin="libgazebo_ros_p3d.so">
                 <alwaysOn>true</alwaysOn>
-                <updateRate>0.5</updateRate>
-                <bodyName>gps_link</bodyName>
-                <topicName>gps</topicName>
-                <gaussianNoise>${gps_noise}</gaussianNoise>
+                <updateRate>${gps_rate}</updateRate>
+                <bodyName>base_link</bodyName>
+                <topicName>/gps</topicName>
+                <gaussianNoise>${gps_sigma}</gaussianNoise>
                 <frameName>/map</frameName>
-                <xyzOffsets>0 0 0</xyzOffsets>
-                <rpyOffsets>0 0 0</rpyOffsets>
                 <interface:position name="gps_iface"/>
             </controller:gazebo_ros_p3d>
+            <canonicalBody>base_link</canonicalBody>
         </gazebo>
     </xacro:macro>
 </robot>
