@@ -28,7 +28,7 @@
                 <alwaysOn>true</alwaysOn>
                 <updateRate>${gps_rate}</updateRate>
                 <bodyName>base_link</bodyName>
-                <topicName>/gps</topicName>
+                <topicName>ground_truth</topicName>
                 <gaussianNoise>${gps_sigma}</gaussianNoise>
                 <frameName>/map</frameName>
                 <interface:position name="gps_iface"/>

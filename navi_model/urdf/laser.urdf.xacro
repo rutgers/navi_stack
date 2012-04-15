@@ -38,7 +38,7 @@
                     <gaussianNoise>0.005</gaussianNoise>
                     <alwaysOn>true</alwaysOn>
                     <updateRate>20</updateRate>
-                    <topicName>/laser</topicName>
+                    <topicName>laser</topicName>
                     <frameName>/laser_link</frameName>
                     <interface:laser name="laser_iface"/>
                 </controller:gazebo_ros_laser>
