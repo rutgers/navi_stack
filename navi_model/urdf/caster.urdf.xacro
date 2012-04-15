@@ -9,7 +9,7 @@
     <xacro:property name="caster_offset_length" value="0.53388"/>
     <xacro:property name="caster_offset_height" value="0.10833"/>
     <xacro:property name="caster_trail_height" value="0.12000"/>
-    <xacro:property name="caster_trail_length" value="0.1"/>
+    <xacro:property name="caster_trail_length" value="0.05"/>
     <xacro:property name="caster_radius" value="0.102"/>
     <xacro:property name="caster_width"  value="0.075"/>
     <xacro:property name="caster_weight" value="1.225"/>
@@ -38,7 +38,7 @@
                 </geometry>
             </collision>
             <inertial>
-                <mass value="0.1"/>
+                <mass value="0.05"/>
                 <inertia ixx="0.01241" ixy="0.0"     ixz="0.00000"
                                        iyy="0.01522" iyz="0.00000"
                                                      izz="0.01176"/>
@@ -56,7 +56,7 @@
         </joint>
         <link name="caster_link">
             <inertial>
-                <mass value="0.1"/>
+                <mass value="0.05"/>
                 <inertia ixx="0.01241" ixy="0.0"     ixz="0.00000"
                                        iyy="0.01522" iyz="0.00000"
                                                      izz="0.01176"/>
