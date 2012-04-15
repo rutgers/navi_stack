@@ -38,10 +38,10 @@
                 </geometry>
             </collision>
             <inertial>
-                <mass value="0.01"/>
-                <inertia ixx="0.01" ixy="0.000"  ixz="0.000"
-                                     iyy="0.01" iyz="0.000"
-                                                  izz="0.01"/>
+                <mass value="0.1"/>
+                <inertia ixx="0.01241" ixy="0.0"     ixz="0.00000"
+                                       iyy="0.01522" iyz="0.00000"
+                                                     izz="0.01176"/>
             </inertial>
         </link>
         <gazebo reference="caster_pivot_link">
@@ -56,10 +56,10 @@
         </joint>
         <link name="caster_link">
             <inertial>
-                <mass value="${caster_weight}"/>
-                <inertia ixx="0.100" ixy="0.000" ixz="0.000"
-                                     iyy="0.100" iyz="0.000"
-                                                 izz="0.100"/>
+                <mass value="0.1"/>
+                <inertia ixx="0.01241" ixy="0.0"     ixz="0.00000"
+                                       iyy="0.01522" iyz="0.00000"
+                                                     izz="0.01176"/>
             </inertial>
             <collision>
                 <origin xyz="0 0 0" rpy="${PI/2} 0 0"/>
