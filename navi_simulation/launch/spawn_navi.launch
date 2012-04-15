@@ -1,8 +1,4 @@
 <launch>
-	<node name="spawn_navi" type="spawn_model" pkg="gazebo" args="-param robot_description -urdf -model navi -z 0.15"/>
-	<node name="fake_localization" type="fake_localization" pkg="fake_localization">
-		<remap from="base_pose_ground_truth" to="/drive/odom"/>
-		<param name="odom_frame_id" value="odom"/>
-		<param name="base_frame_id" value="base_link"/>
-	</node>
-<node pkg="tf" type="static_transform_publisher" name="odom_static_broadcaster" args="0 0 0 0 0 0 odom base_footprint 30" /></launch>
+    <node name="spawn_navi" type="spawn_model" pkg="gazebo"
+          args="-param robot_description -urdf -model navi -z 0.15"/>
+</launch>

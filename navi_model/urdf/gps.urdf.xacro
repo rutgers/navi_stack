@@ -22,18 +22,5 @@
         <link name="gps_link">
             <xacro:weightless/>
         </link>
-
-        <gazebo>
-            <controller:gazebo_ros_p3d name="gps_controller" plugin="libgazebo_ros_p3d.so">
-                <alwaysOn>true</alwaysOn>
-                <updateRate>${gps_rate}</updateRate>
-                <bodyName>base_link</bodyName>
-                <topicName>ground_truth</topicName>
-                <gaussianNoise>${gps_sigma}</gaussianNoise>
-                <frameName>/map</frameName>
-                <interface:position name="gps_iface"/>
-            </controller:gazebo_ros_p3d>
-            <canonicalBody>base_link</canonicalBody>
-        </gazebo>
     </xacro:macro>
 </robot>
