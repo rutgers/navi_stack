@@ -17,7 +17,9 @@
             <axis xyz="0 0 0"/>
             <anchor xyz="0 0 0"/>
         </joint>
-        <link name="gps_link"/>
+        <link name="gps_link">
+            <xacro:weightless/>
+        </link>
 
         <gazebo>
             <canonicalBody>gps_link</canonicalBody>

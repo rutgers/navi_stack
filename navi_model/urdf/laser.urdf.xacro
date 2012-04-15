@@ -17,7 +17,9 @@
             <axis xyz="0 0 0"/>
             <anchor xyz="0 0 0"/>
         </joint>
-        <link name="laser_link"/>
+        <link name="laser_link">
+            <xacro:weightless/>
+        </link>
 
         <gazebo reference="base_laser_link">
             <sensor:ray name="laser">

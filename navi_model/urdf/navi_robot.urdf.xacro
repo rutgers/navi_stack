@@ -43,5 +43,7 @@
         <axis xyz="0 0 0"/>
         <anchor xyz="0 0 0"/>
     </joint>
-    <link name="base_footprint"/>
+    <link name="base_footprint">
+        <xacro:weightless/>
+    </link>
 </robot>

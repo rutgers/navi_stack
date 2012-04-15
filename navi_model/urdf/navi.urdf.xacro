@@ -8,6 +8,18 @@
        xmlns:xacro="http://ros.org/wiki/xacro"
        name="navi">
     <xacro:property name="PI" value="3.1415926535897931"/>
+    <xacro:property name="EPS" value="0.000001"/>
+
+    <xacro:macro name="weightless">
+        <inertial>
+            <mass value="${EPS}"/>
+            <inertia ixx="${EPS}" ixy="0.000"  ixz="0.000"
+                                  iyy="${EPS}" iyz="0.000"
+                                               izz="${EPS}"/>
+        </inertial>
+    </xacro:macro>
+
+
     <xacro:property name="robot_width"  value="0.850"/>
     <xacro:property name="robot_length" value="1.350"/>
     <xacro:property name="robot_height" value="1.000"/>

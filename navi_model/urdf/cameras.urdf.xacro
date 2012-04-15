@@ -5,8 +5,7 @@
        xmlns:interface="http://playerstage.sourceforge.net/gazebo/xmlschema/#interface"
        xmlns:joint="http://playerstage.sourceforge.net/gazebo/xmlschema/#slider"
        xmlns:sensor="http://playerstage.sourceforge.net/gazebo/xmlschema/#sensor"
-       xmlns:xacro="http://ros.org/wiki/xacro"
-       name="navi">
+       xmlns:xacro="http://ros.org/wiki/xacro">
     <xacro:property name="camera_x" value="-0.09170"/>
     <xacro:property name="camera_y" value="0.24592"/>
     <xacro:property name="camera_z" value="0.75734"/>
@@ -26,7 +25,9 @@
             <axis xyz="0 0 0"/>
             <anchor xyz="0 0 0"/>
         </joint>
-        <link name="camera_${side}_link"/>
+        <link name="camera_${side}_link">
+            <xacro:weightless/>
+        </link>
 
         <joint name="camera_${side}_gazebo_joint" type="fixed">
             <parent link="camera_${side}_link"/>
@@ -36,8 +37,11 @@
             <axis xyz="0 0 0"/>
             <anchor xyz="0 0 0"/>
         </joint>
-        <link name="camera_${side}_gazebo_link"/>
+        <link name="camera_${side}_gazebo_link">
+            <xacro:weightless/>
+        </link>
 
+        <!--
         <gazebo>
             <sensor:camera name="camera_${side}_sensor">
                 <imageSize>${camera_resx} ${camera_resy}</imageSize>
@@ -64,5 +68,6 @@
                 </controller:gazebo_ros_camera>
             </sensor:camera>
         </gazebo>
+        -->
     </xacro:macro>
 </robot>
