@@ -1,5 +1,5 @@
 <launch>
-	<node name="spawn_navi" type="spawn_model" pkg="gazebo" args="-param robot_description -urdf -model navi -x 0 0 "/>
+	<node name="spawn_navi" type="spawn_model" pkg="gazebo" args="-param robot_description -urdf -model navi -z 0.5"/>
 	<node name="fake_localization" type="fake_localization" pkg="fake_localization">
 		<remap from="base_pose_ground_truth" to="/drive/odom"/>
 		<param name="odom_frame_id" value="odom"/>
