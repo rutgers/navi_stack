@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<robot xmlns:body="http://playerstage.sourceforge.net/gazebo/xmlschema/#body"
+       xmlns:controller="http://playerstage.sourceforge.net/gazebo/xmlschema/#controller"
+       xmlns:geom="http://playerstage.sourceforge.net/gazebo/xmlschema/#geom"
+       xmlns:interface="http://playerstage.sourceforge.net/gazebo/xmlschema/#interface"
+       xmlns:joint="http://playerstage.sourceforge.net/gazebo/xmlschema/#slider"
+       xmlns:sensor="http://playerstage.sourceforge.net/gazebo/xmlschema/#sensor"
+       xmlns:xacro="http://ros.org/wiki/xacro"
+       name="navi">
+    <xacro:property name="camera_x" value="-0.09170"/>
+    <xacro:property name="camera_y" value="0.24592"/>
+    <xacro:property name="camera_z" value="0.75734"/>
+
+    <xacro:macro name="camera" params="side sign">
+        <joint name="camera_${side}_joint" type="fixed">
+            <parent link="base_link"/>
+            <child link="camera_${side}_link"/>
+            <origin xyz="${camera_x} ${sign*camera_y} ${camera_z}" rpy="${PI/2} ${PI} ${PI/2}"/>
+            <!-- TODO: This rotation is wrong. -->
+            <axis xyz="0 0 0"/>
+            <anchor xyz="0 0 0"/>
+        </joint>
+        <link name="camera_${side}_link"/>
+    </xacro:macro>
+</robot>
