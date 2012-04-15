@@ -11,7 +11,7 @@
     <xacro:property name="camera_z" value="0.75734"/>
     <xacro:property name="camera_roll" value="0.17715"/>
     <xacro:property name="camera_yaw"  value="0.17453"/>
-    <xacro:property name="camera_fps" value="20"/>
+    <xacro:property name="camera_fps" value="10"/>
     <xacro:property name="camera_resx" value="640"/>
     <xacro:property name="camera_resy" value="480"/>
     <xacro:property name="camera_hfov" value="1.39626"/> <!-- 80 degrees -->
@@ -32,7 +32,7 @@
         <joint name="camera_${side}_gazebo_joint" type="fixed">
             <parent link="camera_${side}_link"/>
             <child link="camera_${side}_gazebo_link"/>
-            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <origin xyz="1 1 1" rpy="0 0 0"/>
             <!-- TODO: This rotation is wrong. -->
             <axis xyz="0 0 0"/>
             <anchor xyz="0 0 0"/>
@@ -41,7 +41,7 @@
             <xacro:weightless/>
         </link>
 
-        <gazebo>
+        <gazebo reference="camera_${side}_gazebo_link">
             <sensor:camera name="camera_${side}_sensor">
                 <imageSize>${camera_resx} ${camera_resy}</imageSize>
                 <imageFormat>R8G8B8</imageFormat>
@@ -58,11 +58,6 @@
                     <CxPrime>${(camera_resx + 1)/2}</CxPrime>
                     <Cx>${(camera_resx+1)/2}</Cx>
                     <Cy>${(camera_resy+1)/2}</Cy>
-                    <distortion_k1>0.00000001</distortion_k1>
-                    <distortion_k2>0.00000001</distortion_k2>
-                    <distortion_k3>0.00000001</distortion_k3>
-                    <distortion_t1>0.00000001</distortion_t1>
-                    <distortion_t2>0.00000001</distortion_t2>
                     <interface:camera name="camera_${side}_iface" />
                 </controller:gazebo_ros_camera>
             </sensor:camera>
