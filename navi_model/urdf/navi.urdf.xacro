@@ -25,6 +25,8 @@
     <include filename="$(find navi_model)/urdf/wheels.urdf.xacro"/>
     <include filename="$(find navi_model)/urdf/caster.urdf.xacro"/>
     <include filename="$(find navi_model)/urdf/sensors.urdf.xacro"/>
+    <include filename="$(find navi_model)/urdf/laser.urdf.xacro"/>
+    <include filename="$(find navi_model)/urdf/gps.urdf.xacro"/>
 
     <xacro:wheel side="left"  sign="+1"/>
     <xacro:wheel side="right" sign="-1"/>
