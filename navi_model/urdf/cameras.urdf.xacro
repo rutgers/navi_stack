@@ -10,12 +10,15 @@
     <xacro:property name="camera_x" value="-0.09170"/>
     <xacro:property name="camera_y" value="0.24592"/>
     <xacro:property name="camera_z" value="0.75734"/>
+    <xacro:property name="camera_roll" value="0.17715"/>
+    <xacro:property name="camera_yaw"  value="0.17453"/>
 
     <xacro:macro name="camera" params="side sign">
         <joint name="camera_${side}_joint" type="fixed">
             <parent link="base_link"/>
             <child link="camera_${side}_link"/>
-            <origin xyz="${camera_x} ${sign*camera_y} ${camera_z}" rpy="${PI/2} ${PI} ${PI/2}"/>
+            <origin xyz="${camera_x} ${sign*camera_y} ${camera_z}"
+                    rpy="${PI/2 - camera_roll} ${PI} ${PI/2 + sign*camera_yaw}"/>
             <!-- TODO: This rotation is wrong. -->
             <axis xyz="0 0 0"/>
             <anchor xyz="0 0 0"/>
