@@ -12,7 +12,6 @@
     <xacro:property name="robot_length" value="1.350"/>
     <xacro:property name="robot_height" value="1.000"/>
     <xacro:property name="robot_weight" value="20"/>
-    <xacro:property name="robot_radius" value="0.70354"/>
     <xacro:property name="caster_radius" value="0.102"/>
     <xacro:property name="caster_width"  value="0.075"/>
     <xacro:property name="caster_offset" value="0.500"/>
@@ -24,16 +23,16 @@
     <include filename="$(find navi_model)/urdf/materials.urdf.xacro"/>
     <include filename="$(find navi_model)/urdf/navi_robot.urdf.xacro"/>
     <include filename="$(find navi_model)/urdf/wheels.urdf.xacro"/>
-    <!--
     <include filename="$(find navi_model)/urdf/caster.urdf.xacro"/>
+    <!--
     <include filename="$(find navi_model)/urdf/sensors.urdf.xacro"/>
     -->
 
     <xacro:wheel side="left"  sign="+1"/>
     <xacro:wheel side="right" sign="-1"/>
-    <!--
     <xacro:caster/>
     <xacro:driver/>
+    <!--
     <xacro:gps/>
     -->
 </robot>
