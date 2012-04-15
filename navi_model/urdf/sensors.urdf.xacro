@@ -6,6 +6,74 @@
        xmlns:joint="http://playerstage.sourceforge.net/gazebo/xmlschema/#slider"
        xmlns:sensor="http://playerstage.sourceforge.net/gazebo/xmlschema/#sensor"
        xmlns:xacro="http://ros.org/wiki/xacro">
+    <xacro:property name="gps_x" value="-0.18941"/>
+    <xacro:property name="gps_z" value="0.76387"/>
+    <xacro:property name="laser_x" value="0.02927"/>
+    <xacro:property name="laser_z" value="0.46714"/>
+
+    <!-- GPS -->
+    <xacro:macro name="gps">
+        <joint name="gps_joint" type="fixed">
+            <parent link="base_link"/>
+            <child link="gps_link"/>
+            <origin xyz="${gps_x} 0 ${gps_z}" rpy="0 0 0"/>
+            <axis xyz="0 0 0"/>
+            <anchor xyz="0 0 0"/>
+        </joint>
+        <link name="gps_link"/>
+
+        <gazebo>
+            <canonicalBody>gps_link</canonicalBody>
+            <controller:gazebo_ros_p3d name="gps_controller" plugin="libgazebo_ros_p3d.so">
+                <alwaysOn>true</alwaysOn>
+                <updateRate>0.5</updateRate>
+                <bodyName>gps_link</bodyName>
+                <topicName>gps</topicName>
+                <gaussianNoise>${gps_noise}</gaussianNoise>
+                <frameName>/map</frameName>
+                <xyzOffsets>0 0 0</xyzOffsets>
+                <rpyOffsets>0 0 0</rpyOffsets>
+                <interface:position name="gps_iface"/>
+            </controller:gazebo_ros_p3d>
+        </gazebo>
+    </xacro:macro>
+
+    <!-- Laser -->
+    <xacro:macro name="laser">
+        <joint name="laser_joint" type="fixed">
+            <parent link="base_link"/>
+            <child link="laser_link"/>
+            <origin xyz="${laser_x} 0 ${laser_z}" rpy="0 0 0"/>
+            <axis xyz="0 0 0"/>
+            <anchor xyz="0 0 0"/>
+        </joint>
+        <link name="laser_link"/>
+
+        <gazebo reference="base_laser_link">
+            <sensor:ray name="laser">
+                <rayCount>640</rayCount>
+                <rangeCount>640</rangeCount>
+                <laserCount>1</laserCount>
+                <origin>0.0 0.0 0.0</origin>
+                <displayRays>false</displayRays>
+                <minAngle>-120</minAngle>
+                <maxAngle>120</maxAngle>
+                <minRange>0.08</minRange>
+                <maxRange>15.0</maxRange>
+                <resRange>0.01</resRange>
+                <updateRate>20</updateRate>
+                <controller:gazebo_ros_laser name="gazebo_ros_laser_controller" plugin="libgazebo_ros_laser.so">
+                    <gaussianNoise>0.005</gaussianNoise>
+                    <alwaysOn>true</alwaysOn>
+                    <updateRate>20</updateRate>
+                    <topicName>base_laser/scan</topicName>
+                    <frameName>base_laser_link</frameName>
+                    <interface:laser name="gazebo_ros_laser_iface"/>
+                </controller:gazebo_ros_laser>
+            </sensor:ray>
+        </gazebo>
+    </xacro:macro>
+
     <xacro:macro name="driver">
         <gazebo>
             <controller:diffdrive_plugin name="differential_drive_controller" plugin="libdiffdrive_plugin.so">
@@ -31,23 +99,6 @@
                 <xyzOffsets>0 0 0</xyzOffsets>
                 <rpyOffsets>0 0 0</rpyOffsets>
                 <interface:position name="odom_iface"/>
-            </controller:gazebo_ros_p3d>
-        </gazebo>
-    </xacro:macro>
-
-    <xacro:macro name="gps">
-        <gazebo>
-            <canonicalBody>base_footprint</canonicalBody>
-            <controller:gazebo_ros_p3d name="gps_controller" plugin="libgazebo_ros_p3d.so">
-                <alwaysOn>true</alwaysOn>
-                <updateRate>0.5</updateRate>
-                <bodyName>base_footprint</bodyName>
-                <topicName>gps</topicName>
-                <gaussianNoise>${gps_noise}</gaussianNoise>
-                <frameName>/map</frameName>
-                <xyzOffsets>0 0 0</xyzOffsets>
-                <rpyOffsets>0 0 0</rpyOffsets>
-                <interface:position name="gps_iface"/>
             </controller:gazebo_ros_p3d>
         </gazebo>
     </xacro:macro>
