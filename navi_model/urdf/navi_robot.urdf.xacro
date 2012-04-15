@@ -9,14 +9,15 @@
     <xacro:property name="robot_width"  value="0.850"/>
     <xacro:property name="robot_length" value="1.350"/>
     <xacro:property name="robot_height" value="0.100"/>
-    <xacro:property name="robot_weight" value="20"/>
+    <xacro:property name="robot_weight" value="90.718"/>
 
     <link name="base_link">
         <inertial>
+            <origin xyz="-0.4 0.0 0.3" rpy="0 0 0"/>
             <mass value="${robot_weight}"/>
-            <inertia ixx="1.000" ixy="0.000" ixz="0.000"
-                                 iyy="1.000" iyz="0.000"
-                                             izz="1.000"/>
+            <inertia ixx="1.000" ixy="0.000"  ixz="0.000"
+                                 iyy="28.500" iyz="0.000"
+                                              izz="34.800"/>
         </inertial>
         <!-- TODO: This bounding box isn't very accurate. -->
         <collision>
