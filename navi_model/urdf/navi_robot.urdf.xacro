@@ -10,8 +10,6 @@
     <xacro:property name="robot_length" value="1.350"/>
     <xacro:property name="robot_height" value="0.100"/>
     <xacro:property name="robot_weight" value="20"/>
-    <xacro:property name="offset_width"  value="0.600"/>
-    <xacro:property name="offset_length" value="0.600"/>
 
     <link name="base_link">
         <inertial>
