@@ -41,7 +41,6 @@
             <xacro:weightless/>
         </link>
 
-        <!--
         <gazebo>
             <sensor:camera name="camera_${side}_sensor">
                 <imageSize>${camera_resx} ${camera_resy}</imageSize>
@@ -68,6 +67,5 @@
                 </controller:gazebo_ros_camera>
             </sensor:camera>
         </gazebo>
-        -->
     </xacro:macro>
 </robot>
