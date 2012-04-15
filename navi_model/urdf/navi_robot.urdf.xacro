@@ -7,7 +7,7 @@
        xmlns:sensor="http://playerstage.sourceforge.net/gazebo/xmlschema/#sensor"
        xmlns:xacro="http://ros.org/wiki/xacro">
     <xacro:property name="offset_width"  value="0.600"/>
-    <xacro:property name="offset_height" value="0.127"/>
+    <xacro:property name="offset_height" value="0.07"/>
     <xacro:property name="offset_length" value="0.600"/>
     <link name="base_link">
         <inertial>
