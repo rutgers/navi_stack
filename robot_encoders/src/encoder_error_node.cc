@@ -67,7 +67,8 @@ void updateOdom(nav_msgs::Odometry const &msg_in)
     msg_out.child_frame_id = msg_in.child_frame_id;
     msg_out.pose.pose.position.x = noisy_pos[0];
     msg_out.pose.pose.position.y = noisy_pos[1];
-    msg_out.pose.pose.orientation = tf::createQuaternionFromYaw(noisy_angle);
+    tf::quaternionTFToMsg(tf::createQuaternionFromYaw(noisy_angle),
+                          msg_out.pose.pose.orientation);
     msg_out.twist.covariance[0] = -1;
 
     double const var_x = sigma_linear * sigma_linear * cos(last_angle);
