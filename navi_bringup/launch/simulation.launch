@@ -17,4 +17,11 @@
         <param name="wheel_radius" value="0.127"/>
         <param name="ticks_per_rev" value="800"/>
     </node>
+
+    <node pkg="robot_encoders" type="gps_error_node" name="gps_error">
+        <param name="frame_id" value="/map"/>
+        <param name="child_frame_id" value="/odom"/>
+        <param name="sigma_x" value="0.15"/>
+        <param name="sigma_y" value="0.15"/>
+    </node>
 </launch>

@@ -39,9 +39,10 @@ void updateGPS(nav_msgs::Odometry const &msg_in)
         ROS_WARN_THROTTLE(10, "changing child_frame_id from '%s' to '%s'",
             msg_in.child_frame_id.c_str(), child_frame_id.c_str());
     }
-
+    msg_out.header.frame_id = frame_id;
+    msg_out.child_frame_id = child_frame_id;
     msg_out.pose.pose.position.x = msg_in.pose.pose.position.x + (*noise_x)();
-    msg_out.pose.pose.position.y = msg_in.pose.pose.position.x + (*noise_y)();
+    msg_out.pose.pose.position.y = msg_in.pose.pose.position.y + (*noise_y)();
 
     double const varx = pow(sigma_x, 2);
     double const vary = pow(sigma_y, 2);
