@@ -25,8 +25,14 @@ static double sigma_x, sigma_y;
 static RNGType rng;
 static boost::shared_ptr<normal_generator> noise_x, noise_y;
 
+static ros::Time last_publish;
+static ros::Duration rate_period;
+
 void updateGPS(nav_msgs::Odometry const &msg_in)
 {
+    // Throttle the publishing rate.
+    if (msg_in.header.stamp - last_publish < rate_period) return;
+
     // Republish a noisy odometry message.
     nav_msgs::Odometry msg_out;
     msg_out.header.stamp = msg_in.header.stamp;
@@ -54,18 +60,29 @@ void updateGPS(nav_msgs::Odometry const &msg_in)
                0.0,  0.0,  0.0, 0.0, big, 0.0,
                0.0,  0.0,  0.0, 0.0, 0.0, big;
     msg_out.twist.covariance[0] = -1;
+
     pub_gps.publish(msg_out);
+    last_publish = msg_in.header.stamp;
 }
 
 int main(int argc, char **argv)
 {
     ros::init(argc, argv, "gps_error_node");
 
-    ros::NodeHandle nh;
-    ros::param::get("~frame_id", frame_id);
-    ros::param::get("~child_frame_id", child_frame_id);
-    ros::param::get("~sigma_x", sigma_x);
-    ros::param::get("~sigma_y", sigma_y);
+    ros::NodeHandle nh, nh_node("~");
+    double rate_hz;
+    nh_node.param<std::string>("frame_id", frame_id, "/map");
+    nh_node.param<std::string>("child_frame_id", child_frame_id, "/odom");
+    nh_node.param<double>("sigma_x", sigma_x, 1e-6);
+    nh_node.param<double>("sigma_y", sigma_y, 1e-6);
+    nh_node.param<double>("rate", rate_hz, 20.0);
+
+    ROS_WARN("sigma_x = %f m", sigma_x);
+    ROS_WARN("sigma_y = %f m", sigma_y);
+    ROS_WARN("rate = %f Hz", rate_hz);
+
+    rate_period  = ros::Duration(1 / rate_hz);
+    last_publish = ros::Time(0);
 
     // Gaussian random number generators to add noise.
     normal_dist const dist_x(0.0, sigma_x);

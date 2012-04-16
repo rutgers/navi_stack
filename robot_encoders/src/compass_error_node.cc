@@ -64,10 +64,10 @@ int main(int argc, char **argv)
     ros::init(argc, argv, "compass_error_node");
 
     double rate_hz;
-    ros::NodeHandle nh;
-    nh.param<std::string>("frame_id", frame_id, "/map");
-    nh.param<double>("sigma", sigma, 1e-6);
-    nh.param<double>("rate", rate_hz, 20.0);
+    ros::NodeHandle nh, nh_node("~");
+    nh_node.param<std::string>("frame_id", frame_id, "/map");
+    nh_node.param<double>("sigma", sigma, 1e-6);
+    nh_node.param<double>("rate", rate_hz, 20.0);
 
     rate_period  = ros::Duration(1 / rate_hz);
     last_publish = ros::Time(0);
