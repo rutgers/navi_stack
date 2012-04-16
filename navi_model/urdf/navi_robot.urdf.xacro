@@ -67,7 +67,7 @@
             <alwaysOn>true</alwaysOn>
             <updateRate>60</updateRate>
             <bodyName>base_link</bodyName>
-            <topicName>drive/odom</topicName>
+            <topicName>ground_truth</topicName>
             <gaussianNoise>0.0</gaussianNoise>
             <frameName>map</frameName>
             <interface:position name="gps_iface"/>

@@ -130,7 +130,7 @@ int main(int argc, char **argv)
     ros::param::get("~ticks_per_rev", ticks_per_rev);
 
     pub_tf = boost::make_shared<tf::TransformBroadcaster>();
-    sub_odom = nh.subscribe("odom_true", 1, &updateOdom);
+    sub_odom = nh.subscribe("ground_truth", 1, &updateOdom);
     pub_odom = nh.advertise<nav_msgs::Odometry>("odom", 10);
 
     ros::spin();
