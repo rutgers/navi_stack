@@ -37,8 +37,10 @@ void updateOdom(nav_msgs::Odometry const &msg_in)
 
     // Convert the changes into polar coordinates.
     Eigen::Vector3d const delta_pos = curr_pos - last_pos;
-    double const delta_linear = delta_pos.norm();
-    double const delta_angle  = curr_angle - last_angle;
+    Eigen::Vector3d const u = (Eigen::Vector3d() <<
+        cos(curr_angle), sin(curr_angle), 0.0).finished();
+    double const delta_linear = delta_pos.transpose() * u;
+    double const delta_angle  = angles::normalize_angle(curr_angle - last_angle);
 
     // Convert from polar coordinates to encoder ticks.
     double const ticks_left  = delta_linear - 0.5 * robot_radius * delta_angle;
@@ -58,13 +60,8 @@ void updateOdom(nav_msgs::Odometry const &msg_in)
     double const noisy_delta_linear = 0.5 * (noisy_ticks_left + noisy_ticks_right);
     double const noisy_delta_angle  = (noisy_ticks_right - noisy_ticks_left) / robot_radius;
 
-    std::cout << delta_linear << " ~~> " << noisy_delta_linear << std::endl;
-    std::cout << delta_angle  << " ~~> " << noisy_delta_angle << std::endl;
-    std::cout << "---" << std::endl;
-
     // Convert back from polar coordinates to cartaesian coordinates.
     double const noisy_angle = angles::normalize_angle(last_noisy_angle + noisy_delta_angle);
-    std::cout << noisy_angle << std::endl;
     Eigen::Vector3d const noisy_pos = (Eigen::Vector3d()
         << last_noisy_pos[0] + noisy_delta_linear * cos(noisy_angle)
         ,  last_noisy_pos[1] + noisy_delta_linear * sin(noisy_angle)
