@@ -22,10 +22,10 @@ static Eigen::Vector3d last_pos, last_noisy_pos;
 static double last_angle, last_noisy_angle;
 
 static int ticks_per_rev;
-static double robot_radius;
-static double wheel_radius;
 static double alpha;
+static double robot_radius, wheel_radius;
 static double const min_variance = 1e-6;
+static std::string frame_id, child_frame_id;
 static RNGType rng;
 
 double add_discretization_error(double distance, int ticks_per_rev)
@@ -87,8 +87,16 @@ void updateOdom(nav_msgs::Odometry const &msg_in)
     nav_msgs::Odometry msg_out;
     msg_out.header = msg_in.header;
 
-    // TODO: Check if child_frame_id is set before overrwrite it.
-    msg_out.child_frame_id = "/base_footprint";
+    if (msg_in.header.frame_id != "" && msg_in.header.frame_id != frame_id) {
+        ROS_WARN_THROTTLE(10, "changing frame_id from '%s' to '%s'",
+            msg_in.header.frame_id.c_str(), frame_id.c_str());
+    }
+    if (msg_in.child_frame_id != "" && msg_in.child_frame_id != child_frame_id) {
+        ROS_WARN_THROTTLE(10, "changing child_frame_id from '%s' to '%s'",
+            msg_in.child_frame_id.c_str(), child_frame_id.c_str());
+    }
+    msg_out.header.frame_id = frame_id;
+    msg_out.child_frame_id  = child_frame_id;
 
     msg_out.pose.pose.position.x = noisy_pos[0];
     msg_out.pose.pose.position.y = noisy_pos[1];
@@ -96,7 +104,7 @@ void updateOdom(nav_msgs::Odometry const &msg_in)
                           msg_out.pose.pose.orientation);
     msg_out.twist.covariance[0] = -1;
 
-    // TODO: Propagate the variances through the transformation.
+    // Propagate the variances through the transformation.
     double const var = 0.5 * (pow(sigma_left, 2) + pow(sigma_right, 2));
     double const big = 99999;
     Eigen::Map<Eigen::Matrix<double, 6, 6> > cov_raw(&msg_out.pose.covariance[0]);
@@ -122,12 +130,13 @@ int main(int argc, char **argv)
     last_pos << 0.0, 0.0, 0.0;
     last_angle =  0.0;
 
-
     ros::NodeHandle nh;
     ros::param::get("~alpha", alpha);
     ros::param::get("~robot_radius", robot_radius);
     ros::param::get("~wheel_radius", wheel_radius);
     ros::param::get("~ticks_per_rev", ticks_per_rev);
+    ros::param::get("~frame_id", frame_id);
+    ros::param::get("~child_frame_id", child_frame_id);
 
     pub_tf = boost::make_shared<tf::TransformBroadcaster>();
     sub_odom = nh.subscribe("ground_truth", 1, &updateOdom);
