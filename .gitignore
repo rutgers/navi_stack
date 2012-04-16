@@ -1,4 +1,6 @@
-build/
+/build/
+*~
+.*.swp
 .DS_Store
 *.pyc
 *.cproject
