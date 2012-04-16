@@ -38,11 +38,11 @@ void updateOdom(nav_msgs::Odometry const &msg_in)
     // Convert the changes into polar coordinates.
     Eigen::Vector3d const delta_pos = curr_pos - last_pos;
     double const delta_linear = delta_pos.norm();
-    double const delta_angle  = atan2(delta_pos[1], delta_pos[0]);
+    double const delta_angle  = curr_angle - last_angle;
 
     // Convert from polar coordinates to encoder ticks.
-    double const ticks_left  = delta_linear + 0.5 * robot_radius * delta_angle;
-    double const ticks_right = delta_linear - 0.5 * robot_radius * delta_angle;
+    double const ticks_left  = delta_linear - 0.5 * robot_radius * delta_angle;
+    double const ticks_right = delta_linear + 0.5 * robot_radius * delta_angle;
 
     // Add noise to the encoder ticks.
     double const sigma_left  = std::max(alpha * ticks_left,  min_variance);
@@ -56,12 +56,15 @@ void updateOdom(nav_msgs::Odometry const &msg_in)
 
     // Convert back from encoder ticks to polar coordinates.
     double const noisy_delta_linear = 0.5 * (noisy_ticks_left + noisy_ticks_right);
-    double const noisy_delta_angle  = (noisy_ticks_left - noisy_ticks_right) / robot_radius;
+    double const noisy_delta_angle  = (noisy_ticks_right - noisy_ticks_left) / robot_radius;
 
-    std::cout << delta_angle << ", " << noisy_delta_angle << std::endl;
+    std::cout << delta_linear << " ~~> " << noisy_delta_linear << std::endl;
+    std::cout << delta_angle  << " ~~> " << noisy_delta_angle << std::endl;
+    std::cout << "---" << std::endl;
 
     // Convert back from polar coordinates to cartaesian coordinates.
     double const noisy_angle = angles::normalize_angle(last_noisy_angle + noisy_delta_angle);
+    std::cout << noisy_angle << std::endl;
     Eigen::Vector3d const noisy_pos = (Eigen::Vector3d()
         << last_noisy_pos[0] + noisy_delta_linear * cos(noisy_angle)
         ,  last_noisy_pos[1] + noisy_delta_linear * sin(noisy_angle)
@@ -115,7 +118,7 @@ int main(int argc, char **argv)
     last_pos << 0.0, 0.0, 0.0;
     last_angle =  0.0;
 
-    alpha = 0.05;
+    alpha = 0.1;
     robot_radius = 0.3;
     pub_tf = boost::make_shared<tf::TransformBroadcaster>();
 
