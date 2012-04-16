@@ -15,14 +15,15 @@ typedef boost::normal_distribution<> normal_dist;
 typedef boost::mt19937 RNGType;
 
 static ros::Subscriber sub_odom;
-static tf::TransformBroadcaster pub_tf;
+static boost::shared_ptr<tf::TransformBroadcaster> pub_tf;
 static ros::Publisher pub_odom;
 
-static Eigen::Vector3d last_pos;
-static double last_angle;
+static Eigen::Vector3d last_pos, last_noisy_pos;
+static double last_angle, last_noisy_angle;
 
-static double alpha_linear;
-static double alpha_angular;
+static double robot_radius;
+static double alpha;
+static double const min_variance = 1e-6;
 static RNGType rng;
 
 void updateOdom(nav_msgs::Odometry const &msg_in)
@@ -36,45 +37,60 @@ void updateOdom(nav_msgs::Odometry const &msg_in)
 
     // Convert the changes into polar coordinates.
     Eigen::Vector3d const delta_pos = curr_pos - last_pos;
-    double const delta_angle = angles::normalize_angle(curr_angle - last_angle);
+    double const delta_linear = delta_pos.norm();
+    double const delta_angle  = atan2(delta_pos[1], delta_pos[0]);
 
-    // Add Gaussian noise to the polar coordinates. Noise on the linear and
-    // angular components are drawn from independent Gaussian distributions
-    // with standard deviation proportional to velocity.
-    // TODO: Account for the time difference between the two messages.
-    double const sigma_linear = alpha_linear * delta_pos.norm();
-    double const sigma_angular = alpha_angular * fabs(delta_angle);
-    normal_dist const dist_linear(delta_pos.norm(), sigma_linear);
-    normal_dist const dist_angular(delta_angle, sigma_angular);
-    boost::variate_generator<RNGType, normal_dist> gen_linear(rng, dist_linear);
-    boost::variate_generator<RNGType, normal_dist> gen_angular(rng, dist_angular);
-    double const noisy_delta_linear = gen_linear();
-    double const noisy_delta_angle  = gen_angular();
+    // Convert from polar coordinates to encoder ticks.
+    double const ticks_left  = delta_linear + 0.5 * robot_radius * delta_angle;
+    double const ticks_right = delta_linear - 0.5 * robot_radius * delta_angle;
 
-    // Transform back from polar to cartaesian coordinates. Also update our
-    // internal state for the next message.
+    // Add noise to the encoder ticks.
+    double const sigma_left  = std::max(alpha * ticks_left,  min_variance);
+    double const sigma_right = std::max(alpha * ticks_right, min_variance);
+    normal_dist const dist_left(0.0, sigma_left);
+    normal_dist const dist_right(0.0, sigma_right);
+    boost::variate_generator<RNGType, normal_dist> noise_left(rng, dist_left);
+    boost::variate_generator<RNGType, normal_dist> noise_right(rng, dist_right);
+    double const noisy_ticks_left  = ticks_left + noise_left();
+    double const noisy_ticks_right = ticks_right + noise_right();
+
+    // Convert back from encoder ticks to polar coordinates.
+    double const noisy_delta_linear = 0.5 * (noisy_ticks_left + noisy_ticks_right);
+    double const noisy_delta_angle  = (noisy_ticks_left - noisy_ticks_right) / robot_radius;
+
+    std::cout << delta_angle << ", " << noisy_delta_angle << std::endl;
+
+    // Convert back from polar coordinates to cartaesian coordinates.
+    double const noisy_angle = angles::normalize_angle(last_noisy_angle + noisy_delta_angle);
     Eigen::Vector3d const noisy_pos = (Eigen::Vector3d()
-        << last_pos[0] + noisy_delta_linear * cos(last_angle)
-        ,  last_pos[1] + noisy_delta_linear * sin(last_angle)
+        << last_noisy_pos[0] + noisy_delta_linear * cos(noisy_angle)
+        ,  last_noisy_pos[1] + noisy_delta_linear * sin(noisy_angle)
         ,  0.0).finished();
-    double const noisy_angle = angles::normalize_angle(curr_angle + noisy_delta_angle);
-    last_pos = noisy_pos;
-    last_angle = noisy_angle;
 
     // Generate an odometry message from the noisy measurements.
     nav_msgs::Odometry msg_out;
     msg_out.header = msg_in.header;
-    msg_out.child_frame_id = msg_in.child_frame_id;
+
+    // TODO: Check if child_frame_id is set before overrwrite it.
+    msg_out.child_frame_id = "/base_footprint";
+
     msg_out.pose.pose.position.x = noisy_pos[0];
     msg_out.pose.pose.position.y = noisy_pos[1];
     tf::quaternionTFToMsg(tf::createQuaternionFromYaw(noisy_angle),
                           msg_out.pose.pose.orientation);
     msg_out.twist.covariance[0] = -1;
 
+    // TODO: Propagate the variances through the transformation.
+#if 0
     double const var_x = sigma_linear * sigma_linear * cos(last_angle);
     double const var_y = sigma_linear * sigma_linear * sin(last_angle);
     double const var_angle = sigma_angular * sigma_angular;
-    double const big = std::numeric_limits<double>::infinity();
+#else
+    double const var_x = 0.0;
+    double const var_y = 0.0;
+    double const var_angle = 0.0;
+#endif
+    double const big = 99999;
     Eigen::Map<Eigen::Matrix<double, 6, 6> > cov_raw(&msg_out.pose.covariance[0]);
     cov_raw << var_x,   0.0, 0.0, 0.0, 0.0, 0.0,
                  0.0, var_y, 0.0, 0.0, 0.0, 0.0,
@@ -85,14 +101,23 @@ void updateOdom(nav_msgs::Odometry const &msg_in)
 
     // TODO: Also publish a TF transform.
     pub_odom.publish(msg_out);
+
+    last_pos = curr_pos;
+    last_angle = curr_angle;
+    last_noisy_pos = noisy_pos;
+    last_noisy_angle = noisy_angle;
 }
 
 int main(int argc, char **argv)
 {
-    ros::init(argc, argv, "robot_kf_node");
+    ros::init(argc, argv, "encoder_error_node");
 
     last_pos << 0.0, 0.0, 0.0;
     last_angle =  0.0;
+
+    alpha = 0.05;
+    robot_radius = 0.3;
+    pub_tf = boost::make_shared<tf::TransformBroadcaster>();
 
     ros::NodeHandle nh;
     sub_odom = nh.subscribe("odom_true", 1, &updateOdom);
