@@ -4,6 +4,7 @@
 #include <Eigen/Geometry>
 
 #include <ros/ros.h>
+#include <angles/angles.h>
 #include <tf/transform_datatypes.h>
 #include <tf/transform_broadcaster.h>
 
@@ -25,12 +26,18 @@ static double sigma;
 static RNGType rng;
 static boost::shared_ptr<normal_generator> noise;
 
+static ros::Time last_publish;
+static ros::Duration rate_period;
+
 void updateCompass(nav_msgs::Odometry const &msg_in)
 {
+    // Throttle the publishing rate.
+    if (msg_in.header.stamp - last_publish < rate_period) return;
+
     // Add noise
     double const var = pow(sigma, 2);
     double const angle = tf::getYaw(msg_in.pose.pose.orientation);
-    double const noisy_angle = angle + (*noise)();
+    double const noisy_angle = angles::normalize_angle(angle + (*noise)());
 
     // ...
     sensor_msgs::Imu msg_out;
@@ -49,15 +56,21 @@ void updateCompass(nav_msgs::Odometry const &msg_in)
                0.0, 0.0, var;
 
     pub_compass.publish(msg_out);
+    last_publish = msg_in.header.stamp;
 }
 
 int main(int argc, char **argv)
 {
     ros::init(argc, argv, "compass_error_node");
 
+    double rate_hz;
     ros::NodeHandle nh;
-    ros::param::get("~frame_id", frame_id);
-    ros::param::get("~sigma", sigma);
+    nh.param<std::string>("frame_id", frame_id, "/map");
+    nh.param<double>("sigma", sigma, 1e-6);
+    nh.param<double>("rate", rate_hz, 20.0);
+
+    rate_period  = ros::Duration(1 / rate_hz);
+    last_publish = ros::Time(0);
 
     // Gaussian random number generators to add noise.
     normal_dist const dist_noise(0.0, sigma);

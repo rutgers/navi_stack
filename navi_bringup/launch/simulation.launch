@@ -28,5 +28,6 @@
     <node pkg="robot_encoders" type="compass_error_node" name="compass_error">
         <param name="frame_id" value="/map"/>
         <param name="sigma" value="0.01745"/>
+        <param name="rate" value="20"/>
     </node>
 </launch>
