@@ -21,7 +21,12 @@
     <node pkg="robot_encoders" type="gps_error_node" name="gps_error">
         <param name="frame_id" value="/map"/>
         <param name="child_frame_id" value="/odom"/>
-        <param name="sigma_x" value="0.15"/>
-        <param name="sigma_y" value="0.15"/>
+        <param name="sigma_x" value="0.05"/>
+        <param name="sigma_y" value="0.05"/>
+    </node>
+
+    <node pkg="robot_encoders" type="compass_error_node" name="compass_error">
+        <param name="frame_id" value="/map"/>
+        <param name="sigma" value="0.01745"/>
     </node>
 </launch>
