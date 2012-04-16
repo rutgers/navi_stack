@@ -30,8 +30,8 @@ static RNGType rng;
 
 double add_discretization_error(double distance, int ticks_per_rev)
 {
-    // TODO: Figure out why this discretization error doesn't work.
 #if 0
+    // TODO: Figure out why this discretization error doesn't work.  #if 0
     double const revs = distance / 2 * M_PI * wheel_radius;
     int const ticks = round(revs * ticks_per_rev);
     double const measured_revs = static_cast<double>(ticks) / ticks_per_rev;
@@ -114,9 +114,17 @@ void updateOdom(nav_msgs::Odometry const &msg_in)
                0.0, 0.0, 0.0, big, 0.0, 0.0,
                0.0, 0.0, 0.0, 0.0, big, 0.0,
                0.0, 0.0, 0.0, 0.0, 0.0, var;
-
-    // TODO: Also publish a TF transform.
     pub_odom.publish(msg_out);
+
+    // Also publish a TF transform.
+    tf::Transform transform;
+    transform.setOrigin(tf::Vector3(noisy_pos[0], noisy_pos[1], 0.0));
+    transform.setRotation(tf::createQuaternionFromYaw(noisy_angle));
+    pub_tf->sendTransform(tf::StampedTransform(
+        transform,
+        msg_in.header.stamp,
+        child_frame_id, frame_id
+    ));
 
     last_pos = curr_pos;
     last_angle = curr_angle;

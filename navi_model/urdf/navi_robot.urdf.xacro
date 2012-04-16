@@ -69,7 +69,7 @@
             <bodyName>base_link</bodyName>
             <topicName>ground_truth</topicName>
             <gaussianNoise>0.0</gaussianNoise>
-            <frameName>map</frameName>
+            <frameName>/map</frameName>
             <interface:position name="gps_iface"/>
         </controller:gazebo_ros_p3d>
         <canonicalBody>base_footprint</canonicalBody>
