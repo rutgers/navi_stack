@@ -11,6 +11,8 @@
 #include <geometry_msgs/QuaternionStamped.h>
 #include <nav_msgs/Odometry.h>
 
+// TODO: Correctly handle starting somewhere other than the origin.
+
 typedef boost::normal_distribution<> normal_dist;
 typedef boost::mt19937 RNGType;
 
@@ -21,10 +23,12 @@ static ros::Publisher pub_odom;
 static Eigen::Vector3d last_pos, last_noisy_pos;
 static double last_angle, last_noisy_angle;
 
+static double const big = 99999;
+static double const min_variance = 1e-6;
+
 static int ticks_per_rev;
 static double alpha;
 static double robot_radius, wheel_radius;
-static double const min_variance = 1e-6;
 static std::string frame_id, child_frame_id;
 static RNGType rng;
 
@@ -106,7 +110,6 @@ void updateOdom(nav_msgs::Odometry const &msg_in)
 
     // Propagate the variances through the transformation.
     double const var = 0.5 * (pow(sigma_left, 2) + pow(sigma_right, 2));
-    double const big = 99999;
     Eigen::Map<Eigen::Matrix<double, 6, 6> > cov_raw(&msg_out.pose.covariance[0]);
     cov_raw << var, 0.0, 0.0, 0.0, 0.0, 0.0,
                0.0, var, 0.0, 0.0, 0.0, 0.0,
