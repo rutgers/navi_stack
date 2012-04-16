@@ -17,7 +17,6 @@ typedef boost::normal_distribution<> normal_dist;
 typedef boost::mt19937 RNGType;
 
 static ros::Subscriber sub_odom;
-static boost::shared_ptr<tf::TransformBroadcaster> pub_tf;
 static ros::Publisher pub_odom;
 
 static Eigen::Vector3d last_pos, last_noisy_pos;
@@ -119,16 +118,6 @@ void updateOdom(nav_msgs::Odometry const &msg_in)
                0.0, 0.0, 0.0, 0.0, 0.0, var;
     pub_odom.publish(msg_out);
 
-    // Also publish a TF transform.
-    tf::Transform transform;
-    transform.setOrigin(tf::Vector3(noisy_pos[0], noisy_pos[1], 0.0));
-    transform.setRotation(tf::createQuaternionFromYaw(noisy_angle));
-    pub_tf->sendTransform(tf::StampedTransform(
-        transform,
-        msg_in.header.stamp,
-        child_frame_id, frame_id
-    ));
-
     last_pos = curr_pos;
     last_angle = curr_angle;
     last_noisy_pos = noisy_pos;
@@ -149,7 +138,6 @@ int main(int argc, char **argv)
     ros::param::get("~frame_id", frame_id);
     ros::param::get("~child_frame_id", child_frame_id);
 
-    pub_tf = boost::make_shared<tf::TransformBroadcaster>();
     sub_odom = nh.subscribe("ground_truth", 1, &updateOdom);
     pub_odom = nh.advertise<nav_msgs::Odometry>("odom", 10);
 

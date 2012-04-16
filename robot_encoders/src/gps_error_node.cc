@@ -55,8 +55,6 @@ void updateGPS(nav_msgs::Odometry const &msg_in)
                0.0,  0.0,  0.0, 0.0, 0.0, big;
     msg_out.twist.covariance[0] = -1;
     pub_gps.publish(msg_out);
-
-    // TODO: Also publish a TF transformation.
 }
 
 int main(int argc, char **argv)
