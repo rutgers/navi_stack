@@ -1,0 +1,66 @@
+<?xml version="1.0"?>
+<robot xmlns:body="http://playerstage.sourceforge.net/gazebo/xmlschema/#body"
+       xmlns:controller="http://playerstage.sourceforge.net/gazebo/xmlschema/#controller"
+       xmlns:geom="http://playerstage.sourceforge.net/gazebo/xmlschema/#geom"
+       xmlns:interface="http://playerstage.sourceforge.net/gazebo/xmlschema/#interface"
+       xmlns:joint="http://playerstage.sourceforge.net/gazebo/xmlschema/#slider"
+       xmlns:sensor="http://playerstage.sourceforge.net/gazebo/xmlschema/#sensor"
+       xmlns:xacro="http://ros.org/wiki/xacro">
+    <xacro:property name="camera_x" value="-0.09170"/>
+    <xacro:property name="camera_y" value="0.24592"/>
+    <xacro:property name="camera_z" value="0.75734"/>
+    <xacro:property name="camera_roll" value="0.17715"/>
+    <xacro:property name="camera_yaw"  value="0.17453"/>
+    <xacro:property name="camera_fps" value="10"/>
+    <xacro:property name="camera_resx" value="640"/>
+    <xacro:property name="camera_resy" value="480"/>
+    <xacro:property name="camera_hfov" value="1.39626"/> <!-- 80 degrees -->
+
+    <xacro:macro name="camera" params="side sign">
+        <joint name="camera_${side}_joint" type="fixed">
+            <parent link="base_link"/>
+            <child link="camera_${side}_link"/>
+            <origin xyz="${camera_x} ${sign*camera_y} ${camera_z}"
+                    rpy="${PI/2 - camera_roll} ${PI} ${PI/2 + sign*camera_yaw}"/>
+            <axis xyz="0 0 0"/>
+            <anchor xyz="0 0 0"/>
+        </joint>
+        <link name="camera_${side}_link">
+            <xacro:weightless/>
+        </link>
+
+        <joint name="camera_${side}_gazebo_joint" type="fixed">
+            <parent link="camera_${side}_link"/>
+            <child link="camera_${side}_gazebo_link"/>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <!-- TODO: This rotation is wrong. -->
+            <axis xyz="0 0 0"/>
+            <anchor xyz="0 0 0"/>
+        </joint>
+        <link name="camera_${side}_gazebo_link">
+            <xacro:weightless/>
+        </link>
+
+        <gazebo reference="camera_${side}_gazebo_link">
+            <sensor:camera name="camera_${side}_sensor">
+                <imageSize>${camera_resx} ${camera_resy}</imageSize>
+                <imageFormat>R8G8B8</imageFormat>
+                <hfov>${camera_hfov}</hfov>
+                <nearClip>0.1</nearClip>
+                <farClip>100</farClip>
+                <updateRate>${camera_fps}</updateRate>
+                <controller:gazebo_ros_camera name="camera_${side}_controller" plugin="libgazebo_ros_camera.so">
+                    <alwaysOn>true</alwaysOn>
+                    <updateRate>${camera_fps}</updateRate>
+                    <imageTopicName>camera/${side}/image_raw</imageTopicName>
+                    <cameraInfoTopicName>camera/${side}/camera_info</cameraInfoTopicName>
+                    <frameName>/camera_${side}_link</frameName>
+                    <CxPrime>${(camera_resx + 1)/2}</CxPrime>
+                    <Cx>${(camera_resx+1)/2}</Cx>
+                    <Cy>${(camera_resy+1)/2}</Cy>
+                    <interface:camera name="camera_${side}_iface" />
+                </controller:gazebo_ros_camera>
+            </sensor:camera>
+        </gazebo>
+    </xacro:macro>
+</robot>

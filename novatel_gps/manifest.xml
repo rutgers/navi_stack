@@ -1,14 +1,13 @@
 <package>
-  <description brief="novatel_gps">
-
-     novatel_gps
-
-  </description>
-  <author>Michael Koval</author>
-  <license>BSD</license>
-  <review status="unreviewed" notes=""/>
-  <url>http://ros.org/wiki/novatel_gps</url>
-
+    <description brief="">
+    </description>
+    <author>Michael Koval</author>
+    <license>BSD</license>
+    <review status="unreviewed" notes=""/>
+    <url>http://ros.org/wiki/novatel_gps</url>
+    <rosdep name="pyserial"/>
+    <depend package="rospy"/>
+    <depend package="nav_msgs"/>
 </package>
 
 
