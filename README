@@ -1,0 +1,10 @@
+# Submodules (watch out)
+
+cloning:
+
+    git clone git@github.com:jmesmon/navi_stack.git --recursive
+
+pulling:
+
+    git pull --recurse-submodules
+
