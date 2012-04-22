@@ -92,13 +92,13 @@ if __name__ == '__main__':
     port.flushInput()
     #port.write('UNLOGALL COM1\n')
     #port.write('ASSIGNLBAND OMNISTAR 1557845 1200\n')
-    port.write('LOG BESTUTMA ONTIME 1\n')
+    #port.write('LOG BESTUTMA ONTIME 1\n')
 
     while not rospy.is_shutdown():
         try:
             line = port.readline()
-            print "'", line, "'\n"
-            #odom = parseBESTUTMA(line)
+            data = parseBESTUTMA(line)
+            print data
             #if (odom != None):
             #    pub.publish(odom)
         except:
