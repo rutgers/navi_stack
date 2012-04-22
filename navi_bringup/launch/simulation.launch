@@ -1,8 +1,34 @@
 <launch>
-	<arg name="world" default="circle_field"/>
-	<include file="$(find navi_bringup)/launch/general.launch"/>
-	<include file="$(find navi_simulation)/launch/spawn_navi.launch"/>
-	<include file="$(find navi_simulation)/launch/simulation.launch">
-		<arg name="world" value="$(arg world)"/>
-	</include>
+    <arg name="world" default="$(find gazebo_worlds)/worlds/empty.world"/>
+    <include file="$(find navi_bringup)/launch/general.launch"/>
+    <include file="$(find navi_simulation)/launch/spawn_navi.launch"/>
+
+    <param name="/gazebo" value="true"/>
+    <param name="/use_sim_time" value="true"/>
+    <node pkg="gazebo" type="gazebo" name="gazebo"
+          args="$(arg world)" respawn="false" output="screen"/>
+
+    <node pkg="robot_encoders" type="encoder_error_node" name="encoder_error">
+        <remap from="odom" to="drive/odom"/>
+        <param name="frame_id" value="/map"/>
+        <param name="child_frame_id" value="/odom"/>
+        <param name="alpha" value="0.1"/>
+        <param name="robot_radius" value="0.300"/>
+        <param name="wheel_radius" value="0.127"/>
+        <param name="ticks_per_rev" value="800"/>
+    </node>
+
+    <node pkg="robot_encoders" type="gps_error_node" name="gps_error">
+        <param name="frame_id" value="/map"/>
+        <param name="child_frame_id" value="/odom"/>
+        <param name="sigma_x" value="0.005"/>
+        <param name="sigma_y" value="0.005"/>
+        <param name="rate" value="0.5"/>
+    </node>
+
+    <node pkg="robot_encoders" type="compass_error_node" name="compass_error">
+        <param name="frame_id" value="/map"/>
+        <param name="sigma" value="0.01745"/>
+        <param name="rate" value="20.0"/>
+    </node>
 </launch>

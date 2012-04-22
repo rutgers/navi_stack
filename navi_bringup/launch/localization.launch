@@ -1,0 +1,7 @@
+<launch>
+    <node pkg="robot_kf" type="robot_kf_node" name="robot_kf">
+        <remap from="odom" to="drive/odom"/>
+        <param name="frame_id" value="/map"/>
+        <param name="child_frame_id" value="/odom"/>
+    </node>
+</launch>

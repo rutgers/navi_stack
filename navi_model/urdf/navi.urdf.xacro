@@ -8,19 +8,18 @@
        xmlns:xacro="http://ros.org/wiki/xacro"
        name="navi">
     <xacro:property name="PI" value="3.1415926535897931"/>
-    <xacro:property name="robot_width"  value="0.850"/>
-    <xacro:property name="robot_length" value="1.350"/>
-    <xacro:property name="robot_height" value="1.000"/>
-    <xacro:property name="robot_weight" value="20"/>
-    <xacro:property name="wheel_radius" value="0.127"/>
-    <xacro:property name="wheel_width"  value="0.100"/>
-    <xacro:property name="wheel_offset" value="0.425"/>
-    <xacro:property name="wheel_weight" value="1.687"/>
-    <xacro:property name="caster_radius" value="0.102"/>
-    <xacro:property name="caster_width"  value="0.075"/>
-    <xacro:property name="caster_offset" value="0.500"/>
-    <xacro:property name="caster_trail"  value="0.050"/>
-    <xacro:property name="caster_weight" value="1.225"/>
+    <xacro:property name="EPS" value="0.000001"/>
+
+    <xacro:macro name="weightless">
+        <inertial>
+            <mass value="${EPS}"/>
+            <inertia ixx="${EPS}" ixy="0.000"  ixz="0.000"
+                                  iyy="${EPS}" iyz="0.000"
+                                               izz="${EPS}"/>
+        </inertial>
+    </xacro:macro>
+
+
     <xacro:property name="gps_noise" value="0.005"/>
     <xacro:property name="encoders_noise" value="0.100"/>
 
@@ -28,11 +27,17 @@
     <include filename="$(find navi_model)/urdf/navi_robot.urdf.xacro"/>
     <include filename="$(find navi_model)/urdf/wheels.urdf.xacro"/>
     <include filename="$(find navi_model)/urdf/caster.urdf.xacro"/>
-    <include filename="$(find navi_model)/urdf/sensors.urdf.xacro"/>
+    <include filename="$(find navi_model)/urdf/cameras.urdf.xacro"/>
+    <include filename="$(find navi_model)/urdf/laser.urdf.xacro"/>
+    <include filename="$(find navi_model)/urdf/gps.urdf.xacro"/>
 
     <xacro:wheel side="left"  sign="+1"/>
     <xacro:wheel side="right" sign="-1"/>
     <xacro:caster/>
+
     <xacro:driver/>
+    <xacro:laser/>
     <xacro:gps/>
+    <xacro:camera side="left"  sign="+1"/>
+    <xacro:camera side="right" sign="-1"/>
 </robot>
