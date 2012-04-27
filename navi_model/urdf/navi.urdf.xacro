@@ -97,11 +97,25 @@
         </collision>
     </link>
 
-    <joint name="caster_joint" type="fixed">
+    <joint name="caster_pivot_joint" type="fixed">
         <parent link="base_link"/>
-        <child link="caster_link"/>
+        <child link="caster_pivot_link"/>
         <origin xyz="-1 0 ${-robot_clearance-(wheel_radius-caster_radius)}"
                 rpy="${PI/2} 0 0"/>
+    </joint>
+    <link name="caster_pivot_link">
+        <inertial>
+            <mass value="${EPS}"/>
+            <inertia ixx="${EPS}" ixy="0"      ixz="0"
+                                  iyy="${EPS}" iyz="0"
+                                               izz="${EPS}"/>
+        </inertial>
+    </link>
+
+    <joint name="caster_joint" type="continuous">
+        <parent link="caster_pivot_link"/>
+        <child link="caster_link"/>
+        <axis xyz="0 0 1"/>
     </joint>
     <link name="caster_link">
         <inertial>
