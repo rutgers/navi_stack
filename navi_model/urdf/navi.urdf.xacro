@@ -11,31 +11,111 @@
     <xacro:property name="PI" value="3.1415926535897931"/>
     <xacro:property name="robot_weight" value="90.0"/>
     <xacro:property name="wheel_radius" value="0.127"/>
+    <xacro:property name="wheel_thickness" value="0.05"/>
 
-    <xacro:macro name="weightless">
+    <link name="base_link">
         <inertial>
-            <mass value="${EPS}"/>
-            <inertia ixx="${EPS}" ixy="0.000"  ixz="0.000"
-                                  iyy="${EPS}" iyz="0.000"
-                                               izz="${EPS}"/>
+            <origin xyz="0 0 0"/> 
+            <mass value="1.0"/>
+            <inertia ixx="1.0" ixy="0.0"   ixz="0.0"
+                               iyy="100.0" iyz="0.0"
+                                           izz="1.0" />
         </inertial>
-    </xacro:macro>
+        <visual>
+            <origin xyz="0 0 0"/>
+            <geometry>
+                <box size="0.9 0.8 0.3"/>
+            </geometry>
+        </visual>
+        <collision>
+            <origin xyz="0 0 0"/>
+            <geometry>
+                <box size="0.9 0.8 0.3"/>
+            </geometry>
+        </collision>
+    </link>
+    <gazebo reference="base_link">
+        <material>Gazebo/Blue</material>
+    </gazebo>
 
-    <include filename="$(find navi_model)/urdf/materials.urdf.xacro"/>
-    <include filename="$(find navi_model)/urdf/navi_robot.urdf.xacro"/>
-    <include filename="$(find navi_model)/urdf/wheels.urdf.xacro"/>
-    <include filename="$(find navi_model)/urdf/caster.urdf.xacro"/>
-    <include filename="$(find navi_model)/urdf/cameras.urdf.xacro"/>
-    <include filename="$(find navi_model)/urdf/laser.urdf.xacro"/>
-    <include filename="$(find navi_model)/urdf/gps.urdf.xacro"/>
+    <joint name="wheel_left_joint" type="fixed">
+        <parent link="base_link"/>
+        <child link="wheel_left_link"/>
+        <origin xyz="0 1 0" rpy="1.57 0 0"/>
+    </joint>
+    <link name="wheel_left_link">
+        <inertial>
+            <origin xyz="0 0 0"/> 
+            <mass value="1.0"/>
+            <inertia ixx="1.0" ixy="0.0"   ixz="0.0"
+                               iyy="100.0" iyz="0.0"
+                                           izz="1.0"/>
+        </inertial>
+        <visual>
+            <origin xyz="0 0 0"/>
+            <geometry>
+                <cylinder radius="${wheel_radius}" length="${wheel_thickness}"/>
+            </geometry>
+        </visual>
+        <collision>
+            <origin xyz="0 0 0"/>
+            <geometry>
+                <cylinder radius="${wheel_radius}" length="${wheel_thickness}"/>
+            </geometry>
+        </collision>
+    </link>
 
-    <xacro:wheel side="left"  sign="+1"/>
-    <xacro:wheel side="right" sign="-1"/>
-    <xacro:caster/>
+    <joint name="wheel_right_joint" type="fixed">
+        <parent link="base_link"/>
+        <child link="wheel_right_link"/>
+        <origin xyz="0 -1 0" rpy="1.57 0 0"/>
+    </joint>
+    <link name="wheel_right_link">
+        <inertial>
+            <origin xyz="0 0 0"/> 
+            <mass value="1.0"/>
+            <inertia ixx="1.0" ixy="0.0"   ixz="0.0"
+                               iyy="100.0" iyz="0.0"
+                                           izz="1.0" />
+        </inertial>
+        <visual>
+            <origin xyz="0 0 0"/>
+            <geometry>
+                <cylinder radius="${wheel_radius}" length="${wheel_thickness}"/>
+            </geometry>
+        </visual>
+        <collision>
+            <origin xyz="0 0 0"/>
+            <geometry>
+                <cylinder radius="${wheel_radius}" length="${wheel_thickness}"/>
+            </geometry>
+        </collision>
+    </link>
 
-    <xacro:driver/>
-    <xacro:laser/>
-    <xacro:gps/>
-    <xacro:camera side="left"  sign="+1"/>
-    <xacro:camera side="right" sign="-1"/>
+    <joint name="caster_joint" type="fixed">
+        <parent link="base_link"/>
+        <child link="caster_link"/>
+        <origin xyz="-1 0 0" rpy="1.57 0 0"/>
+    </joint>
+    <link name="caster_link">
+        <inertial>
+            <origin xyz="0 0 0"/> 
+            <mass value="1.0"/>
+            <inertia ixx="1.0" ixy="0.0"   ixz="0.0"
+                               iyy="100.0" iyz="0.0"
+                                           izz="1.0" />
+        </inertial>
+        <visual>
+            <origin xyz="0 0 0"/>
+            <geometry>
+                <cylinder radius="${wheel_radius}" length="${wheel_thickness}"/>
+            </geometry>
+        </visual>
+        <collision>
+            <origin xyz="0 0 0"/>
+            <geometry>
+                <cylinder radius="${wheel_radius}" length="${wheel_thickness}"/>
+            </geometry>
+        </collision>
+    </link>
 </robot>
