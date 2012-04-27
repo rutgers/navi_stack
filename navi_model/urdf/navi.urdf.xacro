@@ -9,8 +9,33 @@
        name="navi">
     <xacro:property name="EPS" value="0.000001"/>
     <xacro:property name="PI" value="3.1415926535897931"/>
+    <xacro:property name="robot_weight" value="90.0"/>
+    <xacro:property name="wheel_radius" value="0.127"/>
 
+    <xacro:macro name="weightless">
+        <inertial>
+            <mass value="${EPS}"/>
+            <inertia ixx="${EPS}" ixy="0.000"  ixz="0.000"
+                                  iyy="${EPS}" iyz="0.000"
+                                               izz="${EPS}"/>
+        </inertial>
+    </xacro:macro>
+
+    <include filename="$(find navi_model)/urdf/materials.urdf.xacro"/>
     <include filename="$(find navi_model)/urdf/navi_robot.urdf.xacro"/>
+    <include filename="$(find navi_model)/urdf/wheels.urdf.xacro"/>
+    <include filename="$(find navi_model)/urdf/caster.urdf.xacro"/>
+    <include filename="$(find navi_model)/urdf/cameras.urdf.xacro"/>
+    <include filename="$(find navi_model)/urdf/laser.urdf.xacro"/>
+    <include filename="$(find navi_model)/urdf/gps.urdf.xacro"/>
 
-    <chassis/>
+    <xacro:wheel side="left"  sign="+1"/>
+    <xacro:wheel side="right" sign="-1"/>
+    <xacro:caster/>
+
+    <xacro:driver/>
+    <xacro:laser/>
+    <xacro:gps/>
+    <xacro:camera side="left"  sign="+1"/>
+    <xacro:camera side="right" sign="-1"/>
 </robot>
