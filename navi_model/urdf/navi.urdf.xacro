@@ -11,13 +11,17 @@
     <xacro:property name="PI" value="3.1415926535897931"/>
     <xacro:property name="robot_weight" value="90.0"/>
     <xacro:property name="wheel_radius" value="0.127"/>
-    <xacro:property name="wheel_thickness" value="0.150"/>
-    <xacro:property name="wheel_separation" value="1.000"/>
+    <xacro:property name="wheel_thickness" value="0.0762"/>
+    <xacro:property name="wheel_separation" value="0.70386"/>
     <xacro:property name="wheel_mass" value="3.175"/>
-    <xacro:property name="robot_clearance" value="0.170"/>
-    <xacro:property name="caster_radius" value="0.095"/>
-    <xacro:property name="caster_thickness" value="0.064"/>
+    <xacro:property name="robot_clearance" value="0.3937"/>
+    <xacro:property name="caster_radius" value="0.1143"/>
+    <xacro:property name="caster_thickness" value="0.0508"/>
+    <xacro:property name="caster_separation" value="0.53388"/>
+    <xacro:property name="caster_clearance" value="0.254"/>
     <xacro:property name="caster_mass" value="2.268"/>
+    <xacro:property name="caster_offset_height" value="0.1524"/>
+    <xacro:property name="caster_offset_axis" value="0.0889"/>
 
     <link name="base_link">
         <inertial>
@@ -93,11 +97,9 @@
     <joint name="caster_pivot_joint" type="continuous">
         <parent link="base_link"/>
         <child link="caster_pivot_link"/>
-        <origin xyz="-1 0 ${-robot_clearance-(wheel_radius-caster_radius)}"
+        <origin xyz="${-caster_separation} 0 ${-caster_clearance)}"
                 rpy="${PI/2} 0 0"/>
         <axis xyz="0 1 0"/>
-        <limit effort="100" velocity="100" k_velocity="0" />
-        <joint_properties damping="0.0" friction="0.0" />
     </joint>
     <link name="caster_pivot_link">
         <inertial>
@@ -108,10 +110,11 @@
         </inertial>
     </link>
 
-    <joint name="caster_joint" type="continuous">
+    <!-- TODO: Why can't I make this continuous? -->
+    <joint name="caster_joint" type="fixed">
         <parent link="caster_pivot_link"/>
         <child link="caster_link"/>
-        <origin xyz="0 0 0"/>
+        <origin xyz="${-caster_offset_axis} ${-caster_offset_height} 0"/>
         <axis xyz="0 0 1"/>
     </joint>
     <link name="caster_link">
