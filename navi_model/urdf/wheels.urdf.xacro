@@ -45,7 +45,6 @@
             <joint name="wheel_${side}_joint"/>
             <mechanicalReduction>1.0</mechanicalReduction>
         </transmission>
-        <!--
         <gazebo reference="wheel_${side}_link">
             <material>Gazebo/Red</material>
             <mu1 value="100.0"/>
@@ -53,6 +52,5 @@
             <kp value="1000000.0"/>
             <kd value="1.0"/>
         </gazebo>
-        -->
     </xacro:macro>
 </robot>

@@ -21,7 +21,6 @@
             <xacro:weightless/>
         </link>
 
-        <!--
         <gazebo reference="laser_link">
             <sensor:ray name="laser">
                 <rayCount>640</rayCount>
@@ -45,6 +44,5 @@
                 </controller:gazebo_ros_laser>
             </sensor:ray>
         </gazebo>
-        -->
     </xacro:macro>
 </robot>
