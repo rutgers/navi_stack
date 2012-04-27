@@ -4,8 +4,9 @@
     <author>Michael Koval</author>
     <license>BSD</license>
     <review status="unreviewed" notes=""/>
+    <depend package="common_rosdeps" />
+    <rosdep name="eigen" />
     <depend package="angles"/>
-    <depend package="eigen"/>
     <depend package="roscpp"/>
     <depend package="geometry_msgs"/>
     <depend package="nav_msgs"/>

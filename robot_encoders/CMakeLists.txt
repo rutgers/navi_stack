@@ -17,7 +17,9 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 #rosbuild_genmsg()
 #rosbuild_gensrv()
 
-rosbuild_add_boost_directories()
+find_package(Eigen REQUIRED)
+include_directories(${Eigen_INCLUDE_DIRS})
+
 rosbuild_add_executable(encoder_error_node src/encoder_error_node.cc)
 rosbuild_add_executable(gps_error_node src/gps_error_node.cc)
 rosbuild_add_executable(compass_error_node src/compass_error_node.cc)
