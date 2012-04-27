@@ -27,7 +27,7 @@
     <joint name="wheel_left_joint" type="fixed">
         <parent link="base_link"/>
         <child link="wheel_left_link"/>
-        <origin xyz="0 1 0"/>
+        <origin xyz="0 1 0" rpy="1.57 0 0"/>
     </joint>
     <link name="wheel_left_link">
         <inertial>
@@ -40,13 +40,13 @@
         <visual>
             <origin xyz="0 0 0"/>
             <geometry>
-                <box size="0.2 0.2 0.2"/>
+                <cylinder radius="0.127" length="0.05"/>
             </geometry>
         </visual>
         <collision>
             <origin xyz="0 0 0"/>
             <geometry>
-                <box size="0.2 0.2 0.2"/>
+                <cylinder radius="0.127" length="0.05"/>
             </geometry>
         </collision>
     </link>
@@ -54,7 +54,7 @@
     <joint name="wheel_right_joint" type="fixed">
         <parent link="base_link"/>
         <child link="wheel_right_link"/>
-        <origin xyz="0 -1 0"/>
+        <origin xyz="0 -1 0" rpy="1.57 0 0"/>
     </joint>
     <link name="wheel_right_link">
         <inertial>
@@ -67,13 +67,13 @@
         <visual>
             <origin xyz="0 0 0"/>
             <geometry>
-                <box size="0.2 0.2 0.2"/>
+                <cylinder radius="0.127" length="0.05"/>
             </geometry>
         </visual>
         <collision>
             <origin xyz="0 0 0"/>
             <geometry>
-                <box size="0.2 0.2 0.2"/>
+                <cylinder radius="0.127" length="0.05"/>
             </geometry>
         </collision>
     </link>
@@ -81,7 +81,7 @@
     <joint name="caster_joint" type="fixed">
         <parent link="base_link"/>
         <child link="caster_link"/>
-        <origin xyz="-1 0 0"/>
+        <origin xyz="-1 0 0" rpy="1.57 0 0"/>
     </joint>
     <link name="caster_link">
         <inertial>
@@ -94,13 +94,13 @@
         <visual>
             <origin xyz="0 0 0"/>
             <geometry>
-                <box size="0.2 0.2 0.2"/>
+                <cylinder radius="0.127" length="0.05"/>
             </geometry>
         </visual>
         <collision>
             <origin xyz="0 0 0"/>
             <geometry>
-                <box size="0.2 0.2 0.2"/>
+                <cylinder radius="0.127" length="0.05"/>
             </geometry>
         </collision>
     </link>
