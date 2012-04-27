@@ -7,8 +7,10 @@
        xmlns:sensor="http://playerstage.sourceforge.net/gazebo/xmlschema/#sensor"
        xmlns:xacro="http://ros.org/wiki/xacro"
        name="navi">
-    <xacro:property name="PI" value="3.1415926535897931"/>
     <xacro:property name="EPS" value="0.000001"/>
+    <xacro:property name="PI" value="3.1415926535897931"/>
+    <xacro:property name="robot_weight" value="90.0"/>
+    <xacro:property name="wheel_radius" value="0.127"/>
 
     <xacro:macro name="weightless">
         <inertial>
@@ -18,10 +20,6 @@
                                                izz="${EPS}"/>
         </inertial>
     </xacro:macro>
-
-
-    <xacro:property name="gps_noise" value="0.005"/>
-    <xacro:property name="encoders_noise" value="0.100"/>
 
     <include filename="$(find navi_model)/urdf/materials.urdf.xacro"/>
     <include filename="$(find navi_model)/urdf/navi_robot.urdf.xacro"/>

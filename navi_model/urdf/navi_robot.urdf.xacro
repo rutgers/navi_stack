@@ -49,6 +49,7 @@
         <xacro:weightless/>
     </link>
 
+    <!--
     <gazebo>
         <controller:diffdrive_plugin name="differential_drive_controller" plugin="libdiffdrive_plugin.so">
             <alwaysOn>true</alwaysOn>
@@ -74,4 +75,5 @@
         </controller:gazebo_ros_p3d>
         <canonicalBody>base_footprint</canonicalBody>
     </gazebo>
+    -->
 </robot>
