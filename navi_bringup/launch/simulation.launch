@@ -1,13 +1,18 @@
 <launch>
     <arg name="world" default="$(find gazebo_worlds)/worlds/empty.world"/>
     <include file="$(find navi_bringup)/launch/general.launch"/>
-    <include file="$(find navi_simulation)/launch/spawn_navi.launch"/>
+    <!--<include file="$(find navi_simulation)/launch/spawn_navi.launch"/>-->
 
     <param name="/gazebo" value="true"/>
     <param name="/use_sim_time" value="true"/>
-    <node pkg="gazebo" type="gazebo" name="gazebo"
-          args="$(arg world)" respawn="false" output="screen"/>
 
+    <!-- Simulation -->
+    <node pkg="gazebo" type="gazebo" name="gazebo" args="$(arg world)"
+          respawn="false" output="screen"/>
+    <node pkg="gazebo" type="gui" name="gazebo_gui"
+          respawn="false" output="screen"/>
+
+    <!-- Localization Error -->
     <node pkg="robot_encoders" type="encoder_error_node" name="encoder_error">
         <remap from="odom" to="drive/odom"/>
         <param name="frame_id" value="/map"/>
