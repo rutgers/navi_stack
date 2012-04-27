@@ -13,9 +13,11 @@
     <xacro:property name="wheel_radius" value="0.127"/>
     <xacro:property name="wheel_thickness" value="0.150"/>
     <xacro:property name="wheel_separation" value="1.000"/>
+    <xacro:property name="wheel_mass" value="3.175"/>
     <xacro:property name="robot_clearance" value="0.170"/>
     <xacro:property name="caster_radius" value="0.095"/>
     <xacro:property name="caster_thickness" value="0.064"/>
+    <xacro:property name="caster_mass" value="2.268"/>
 
     <link name="base_link">
         <inertial>
@@ -50,10 +52,10 @@
     <link name="wheel_left_link">
         <inertial>
             <origin xyz="0 0 0"/> 
-            <mass value="1.0"/>
-            <inertia ixx="1.0" ixy="0.0"   ixz="0.0"
-                               iyy="100.0" iyz="0.0"
-                                           izz="1.0"/>
+            <mass value="${wheel_mass}"/>
+            <inertia ixx="${wheel_mass*(3*wheel_radius*wheel_radius + wheel_thickness*wheel_thickness)}" ixy="0.0" ixz="0.0"
+                     iyy="${wheel_mass*(3*wheel_radius*wheel_radius + wheel_thickness*wheel_thickness)}" iyz="0.0"
+                     izz="${wheel_mass*wheel_radius*wheel_radius/2}"/>
         </inertial>
         <visual>
             <origin xyz="0 0 0"/>
@@ -78,10 +80,10 @@
     <link name="wheel_right_link">
         <inertial>
             <origin xyz="0 0 0"/> 
-            <mass value="1.0"/>
-            <inertia ixx="1.0" ixy="0.0"   ixz="0.0"
-                               iyy="100.0" iyz="0.0"
-                                           izz="1.0" />
+            <mass value="${wheel_mass}"/>
+            <inertia ixx="${wheel_mass*(3*wheel_radius*wheel_radius + wheel_thickness*wheel_thickness)}" ixy="0.0" ixz="0.0"
+                     iyy="${wheel_mass*(3*wheel_radius*wheel_radius + wheel_thickness*wheel_thickness)}" iyz="0.0"
+                     izz="${wheel_mass*wheel_radius*wheel_radius/2}"/>
         </inertial>
         <visual>
             <origin xyz="0 0 0"/>
@@ -97,11 +99,14 @@
         </collision>
     </link>
 
-    <joint name="caster_pivot_joint" type="fixed">
+    <joint name="caster_pivot_joint" type="continuous">
         <parent link="base_link"/>
         <child link="caster_pivot_link"/>
         <origin xyz="-1 0 ${-robot_clearance-(wheel_radius-caster_radius)}"
                 rpy="${PI/2} 0 0"/>
+        <axis xyz="0 1 0"/>
+        <limit effort="100" velocity="100" k_velocity="0" />
+        <joint_properties damping="0.0" friction="0.0" />
     </joint>
     <link name="caster_pivot_link">
         <inertial>
@@ -115,15 +120,16 @@
     <joint name="caster_joint" type="continuous">
         <parent link="caster_pivot_link"/>
         <child link="caster_link"/>
+        <origin xyz="0 0 0"/>
         <axis xyz="0 0 1"/>
     </joint>
     <link name="caster_link">
         <inertial>
             <origin xyz="0 0 0"/> 
-            <mass value="1.0"/>
-            <inertia ixx="1.0" ixy="0.0"   ixz="0.0"
-                               iyy="100.0" iyz="0.0"
-                                           izz="1.0" />
+            <mass value="${caster_mass}"/>
+            <inertia ixx="${caster_mass*(3*caster_radius*caster_radius + caster_thickness*caster_thickness)}" ixy="0.0" ixz="0.0"
+                     iyy="${caster_mass*(3*caster_radius*caster_radius + caster_thickness*caster_thickness)}" iyz="0.0"
+                     izz="${caster_mass*caster_radius*caster_radius/2}"/>
         </inertial>
         <visual>
             <origin xyz="0 0 0"/>
