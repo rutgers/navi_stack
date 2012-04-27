@@ -11,7 +11,10 @@
     <xacro:property name="PI" value="3.1415926535897931"/>
     <xacro:property name="robot_weight" value="90.0"/>
     <xacro:property name="wheel_radius" value="0.127"/>
-    <xacro:property name="wheel_thickness" value="0.05"/>
+    <xacro:property name="wheel_thickness" value="0.050"/>
+    <xacro:property name="wheel_separation" value="0.711"/>
+    <xacro:property name="caster_radius" value="0.095"/>
+    <xacro:property name="caster_thickness" value="0.064"/>
 
     <link name="base_link">
         <inertial>
@@ -36,8 +39,7 @@
     </link>
     <gazebo reference="base_link">
         <material>Gazebo/Blue</material>
-    </gazebo>
-
+    </gazebo> 
     <joint name="wheel_left_joint" type="fixed">
         <parent link="base_link"/>
         <child link="wheel_left_link"/>
@@ -108,13 +110,13 @@
         <visual>
             <origin xyz="0 0 0"/>
             <geometry>
-                <cylinder radius="${wheel_radius}" length="${wheel_thickness}"/>
+                <cylinder radius="${caster_radius}" length="${caster_thickness}"/>
             </geometry>
         </visual>
         <collision>
             <origin xyz="0 0 0"/>
             <geometry>
-                <cylinder radius="${wheel_radius}" length="${wheel_thickness}"/>
+                <cylinder radius="${caster_radius}" length="${caster_thickness}"/>
             </geometry>
         </collision>
     </link>
