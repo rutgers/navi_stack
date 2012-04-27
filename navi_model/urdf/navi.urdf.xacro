@@ -11,8 +11,8 @@
     <xacro:property name="PI" value="3.1415926535897931"/>
     <xacro:property name="robot_weight" value="90.0"/>
     <xacro:property name="wheel_radius" value="0.127"/>
-    <xacro:property name="wheel_thickness" value="0.050"/>
-    <xacro:property name="wheel_separation" value="0.711"/>
+    <xacro:property name="wheel_thickness" value="0.150"/>
+    <xacro:property name="wheel_separation" value="1.000"/>
     <xacro:property name="caster_radius" value="0.095"/>
     <xacro:property name="caster_thickness" value="0.064"/>
 
@@ -43,7 +43,7 @@
     <joint name="wheel_left_joint" type="fixed">
         <parent link="base_link"/>
         <child link="wheel_left_link"/>
-        <origin xyz="0 1 0" rpy="1.57 0 0"/>
+        <origin xyz="0 ${wheel_separation/2} 0" rpy="1.57 0 0"/>
     </joint>
     <link name="wheel_left_link">
         <inertial>
@@ -70,7 +70,7 @@
     <joint name="wheel_right_joint" type="fixed">
         <parent link="base_link"/>
         <child link="wheel_right_link"/>
-        <origin xyz="0 -1 0" rpy="1.57 0 0"/>
+        <origin xyz="0 ${-wheel_separation/2} 0" rpy="1.57 0 0"/>
     </joint>
     <link name="wheel_right_link">
         <inertial>
