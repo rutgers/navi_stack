@@ -80,57 +80,60 @@
         </gazebo> 
     </xacro:macro>
 
-    <joint name="caster_pivot_joint" type="continuous">
-        <parent link="base_link"/>
-        <child link="caster_pivot_link"/>
-        <origin xyz="${-caster_separation} 0 ${-caster_clearance)}"
-                rpy="${PI/2} 0 0"/>
-        <axis xyz="0 1 0"/>
-    </joint>
-    <link name="caster_pivot_link">
-        <inertial>
-            <mass value="${caster_mass}"/>
-            <inertia ixx="${EPS}" ixy="0"      ixz="0"
-                                  iyy="${EPS}" iyz="0"
-                                               izz="${EPS}"/>
-        </inertial>
-    </link>
+    <xacro:macro name="caster">
+        <joint name="caster_pivot_joint" type="continuous">
+            <parent link="base_link"/>
+            <child link="caster_pivot_link"/>
+            <origin xyz="${-caster_separation} 0 ${-caster_clearance)}"
+                    rpy="${PI/2} 0 0"/>
+            <axis xyz="0 1 0"/>
+        </joint>
+        <link name="caster_pivot_link">
+            <inertial>
+                <mass value="${caster_mass}"/>
+                <inertia ixx="${EPS}" ixy="0"      ixz="0"
+                                      iyy="${EPS}" iyz="0"
+                                                   izz="${EPS}"/>
+            </inertial>
+        </link>
 
-    <!-- TODO: Why can't I make this continuous? -->
-    <joint name="caster_joint" type="fixed">
-        <parent link="caster_pivot_link"/>
-        <child link="caster_link"/>
-        <origin xyz="${-caster_offset_axis} ${-caster_offset_height} 0"/>
-        <axis xyz="0 0 1"/>
-    </joint>
-    <link name="caster_link">
-        <inertial>
-            <mass value="${caster_mass}"/>
-            <inertia ixx="${caster_mass*(3*caster_radius*caster_radius + caster_thickness*caster_thickness)}" ixy="0.0" ixz="0.0"
-                     iyy="${caster_mass*(3*caster_radius*caster_radius + caster_thickness*caster_thickness)}" iyz="0.0"
-                     izz="${caster_mass*caster_radius*caster_radius/2}"/>
-        </inertial>
-        <visual>
-            <inertia ixx="${wheel_mass*(3*wheel_radius*wheel_radius + wheel_thickness*wheel_thickness)}" ixy="0.0" ixz="0.0"
-                     iyy="${wheel_mass*(3*wheel_radius*wheel_radius + wheel_thickness*wheel_thickness)}" iyz="0.0"
-                     izz="${wheel_mass*wheel_radius*wheel_radius/2}"/>
-            <geometry>
-                <cylinder radius="${caster_radius}" length="${caster_thickness}"/>
-            </geometry>
-        </visual>
-        <collision>
-            <geometry>
-                <cylinder radius="${caster_radius}" length="${caster_thickness}"/>
-            </geometry>
-        </collision>
-    </link>
-    <gazebo reference="caster_link">
-        <material>Gazebo/Red</material>
-    </gazebo> 
+        <!-- TODO: Why can't I make this continuous? -->
+        <joint name="caster_joint" type="fixed">
+            <parent link="caster_pivot_link"/>
+            <child link="caster_link"/>
+            <origin xyz="${-caster_offset_axis} ${-caster_offset_height} 0"/>
+            <axis xyz="0 0 1"/>
+        </joint>
+        <link name="caster_link">
+            <inertial>
+                <mass value="${caster_mass}"/>
+                <inertia ixx="${caster_mass*(3*caster_radius*caster_radius + caster_thickness*caster_thickness)}" ixy="0.0" ixz="0.0"
+                         iyy="${caster_mass*(3*caster_radius*caster_radius + caster_thickness*caster_thickness)}" iyz="0.0"
+                         izz="${caster_mass*caster_radius*caster_radius/2}"/>
+            </inertial>
+            <visual>
+                <inertia ixx="${wheel_mass*(3*wheel_radius*wheel_radius + wheel_thickness*wheel_thickness)}" ixy="0.0" ixz="0.0"
+                         iyy="${wheel_mass*(3*wheel_radius*wheel_radius + wheel_thickness*wheel_thickness)}" iyz="0.0"
+                         izz="${wheel_mass*wheel_radius*wheel_radius/2}"/>
+                <geometry>
+                    <cylinder radius="${caster_radius}" length="${caster_thickness}"/>
+                </geometry>
+            </visual>
+            <collision>
+                <geometry>
+                    <cylinder radius="${caster_radius}" length="${caster_thickness}"/>
+                </geometry>
+            </collision>
+        </link>
+        <gazebo reference="caster_link">
+            <material>Gazebo/Red</material>
+        </gazebo> 
+    </xacro:macro>
 
     <xacro:chassis/>
     <xacro:wheel sign="-1" side="left"/>
     <xacro:wheel sign="+1" side="right"/>
+    <xacro:caster/>
 
     <gazebo>
         <controller:diffdrive_plugin name="differential_drive_controller" plugin="libdiffdrive_plugin.so">
