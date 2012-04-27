@@ -14,6 +14,7 @@
     <xacro:property name="wheel_thickness" value="0.0762"/>
     <xacro:property name="wheel_separation" value="0.70386"/>
     <xacro:property name="wheel_mass" value="3.175"/>
+    <xacro:property name="wheel_torque" value="10"/>
     <xacro:property name="robot_clearance" value="0.3937"/>
     <xacro:property name="caster_radius" value="0.1143"/>
     <xacro:property name="caster_thickness" value="0.0508"/>
@@ -22,6 +23,7 @@
     <xacro:property name="caster_mass" value="2.268"/>
     <xacro:property name="caster_offset_height" value="0.1524"/>
     <xacro:property name="caster_offset_axis" value="0.0889"/>
+    <xacro:property name="mesh_offset" value="-0.60 0.300 -0.50"/> 
 
     <link name="base_link">
         <inertial>
@@ -31,8 +33,9 @@
                                            izz="1.0" />
         </inertial>
         <visual>
+            <origin xyz="${mesh_offset}" rpy="${PI/2} 0 0"/>
             <geometry>
-                <box size="0.9 0.8 0.3"/>
+                <mesh filename="package://navi_model/meshes/frame.stl" scale="0.001 0.001 0.001"/>
             </geometry>
         </visual>
         <collision>
@@ -103,7 +106,7 @@
     </joint>
     <link name="caster_pivot_link">
         <inertial>
-            <mass value="${EPS}"/>
+            <mass value="${caster_mass}"/>
             <inertia ixx="${EPS}" ixy="0"      ixz="0"
                                   iyy="${EPS}" iyz="0"
                                                izz="${EPS}"/>
@@ -144,7 +147,7 @@
             <alwaysOn>true</alwaysOn>
             <update>100</update>
             <updateRate>100.0</updateRate>
-            <torque>1000</torque>
+            <torque>${wheel_torque}</torque>
             <wheelSeparation>${wheel_separation}</wheelSeparation>
             <wheelDiameter>${wheel_radius*2}</wheelDiameter>
             <robotNamespace>/</robotNamespace>
