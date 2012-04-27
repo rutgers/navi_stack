@@ -25,77 +25,60 @@
     <xacro:property name="caster_offset_axis" value="0.0889"/>
     <xacro:property name="mesh_offset" value="-0.60 0.300 -0.50"/> 
 
-    <link name="base_link">
-        <inertial>
-            <mass value="1.0"/>
-            <inertia ixx="1.0" ixy="0.0"   ixz="0.0"
-                               iyy="100.0" iyz="0.0"
-                                           izz="1.0" />
-        </inertial>
-        <visual>
-            <origin xyz="${mesh_offset}" rpy="${PI/2} 0 0"/>
-            <geometry>
-                <mesh filename="package://navi_model/meshes/frame.stl" scale="0.001 0.001 0.001"/>
-            </geometry>
-        </visual>
-        <collision>
-            <geometry>
-                <box size="0.9 0.8 0.3"/>
-            </geometry>
-        </collision>
-    </link>
-    <gazebo reference="base_link">
-        <material>Gazebo/Blue</material>
-    </gazebo> 
-    <joint name="wheel_left_joint" type="continuous">
-        <parent link="base_link"/>
-        <child link="wheel_left_link"/>
-        <origin xyz="0 ${wheel_separation/2} ${-robot_clearance}" rpy="${PI/2} 0 0"/>
-        <axis xyz="0 0 1"/>
-    </joint>
-    <link name="wheel_left_link">
-        <inertial>
-            <mass value="${wheel_mass}"/>
-            <inertia ixx="${wheel_mass*(3*wheel_radius*wheel_radius + wheel_thickness*wheel_thickness)}" ixy="0.0" ixz="0.0"
-                     iyy="${wheel_mass*(3*wheel_radius*wheel_radius + wheel_thickness*wheel_thickness)}" iyz="0.0"
-                     izz="${wheel_mass*wheel_radius*wheel_radius/2}"/>
-        </inertial>
-        <visual>
-            <geometry>
-                <cylinder radius="${wheel_radius}" length="${wheel_thickness}"/>
-            </geometry>
-        </visual>
-        <collision>
-            <geometry>
-                <cylinder radius="${wheel_radius}" length="${wheel_thickness}"/>
-            </geometry>
-        </collision>
-    </link>
+    <xacro:macro name="chassis">
+        <link name="base_link">
+            <inertial>
+                <mass value="1.0"/>
+                <inertia ixx="1.0" ixy="0.0"   ixz="0.0"
+                                   iyy="100.0" iyz="0.0"
+                                               izz="1.0" />
+            </inertial>
+            <visual>
+                <origin xyz="${mesh_offset}" rpy="${PI/2} 0 0"/>
+                <geometry>
+                    <mesh filename="package://navi_model/meshes/frame.stl" scale="0.001 0.001 0.001"/>
+                </geometry>
+            </visual>
+            <collision>
+                <geometry>
+                    <box size="0.9 0.8 0.3"/>
+                </geometry>
+            </collision>
+        </link>
+        <gazebo reference="base_link">
+            <material>Gazebo/Blue</material>
+        </gazebo> 
+    </xacro:macro>
 
-    <joint name="wheel_right_joint" type="continuous">
-        <parent link="base_link"/>
-        <child link="wheel_right_link"/>
-        <origin xyz="0 ${-wheel_separation/2} ${-robot_clearance}" rpy="${PI/2} 0 0"/>
-        <axis xyz="0 0 1"/>
-    </joint>
-    <link name="wheel_right_link">
-        <inertial>
-            <mass value="${wheel_mass}"/>
-            <inertia ixx="${wheel_mass*(3*wheel_radius*wheel_radius + wheel_thickness*wheel_thickness)}" ixy="0.0" ixz="0.0"
-                     iyy="${wheel_mass*(3*wheel_radius*wheel_radius + wheel_thickness*wheel_thickness)}" iyz="0.0"
-                     izz="${wheel_mass*wheel_radius*wheel_radius/2}"/>
-        </inertial>
-        <visual>
-            <geometry>
-                <cylinder radius="${wheel_radius}" length="${wheel_thickness}"/>
-            </geometry>
-        </visual>
-        <collision>
-            <geometry>
-                <cylinder radius="${wheel_radius}" length="${wheel_thickness}"/>
-            </geometry>
-        </collision>
-    </link>
+    <xacro:macro name="wheel" params="side sign">
+        <joint name="wheel_${side}_joint" type="continuous">
+            <parent link="base_link"/>
+            <child link="wheel_${side}_link"/>
+            <origin xyz="0 ${sign*wheel_separation/2} ${-robot_clearance}" rpy="${PI/2} 0 0"/>
+            <axis xyz="0 0 1"/>
+        </joint>
+        <link name="wheel_${side}_link">
+            <inertial>
+                <mass value="${wheel_mass}"/>
+                <inertia ixx="${wheel_mass*(3*wheel_radius*wheel_radius + wheel_thickness*wheel_thickness)}" ixy="0.0" ixz="0.0"
+                         iyy="${wheel_mass*(3*wheel_radius*wheel_radius + wheel_thickness*wheel_thickness)}" iyz="0.0"
+                         izz="${wheel_mass*wheel_radius*wheel_radius/2}"/>
+            </inertial>
+            <visual>
+                <geometry>
+                    <cylinder radius="${wheel_radius}" length="${wheel_thickness}"/>
+                </geometry>
+            </visual>
+            <collision>
+                <geometry>
+                    <cylinder radius="${wheel_radius}" length="${wheel_thickness}"/>
+                </geometry>
+            </collision>
+        </link>
+        <gazebo reference="wheel_${side}_link">
+            <material>Gazebo/Red</material>
+        </gazebo> 
+    </xacro:macro>
 
     <joint name="caster_pivot_joint" type="continuous">
         <parent link="base_link"/>
@@ -141,6 +124,13 @@
             </geometry>
         </collision>
     </link>
+    <gazebo reference="caster_link">
+        <material>Gazebo/Red</material>
+    </gazebo> 
+
+    <xacro:chassis/>
+    <xacro:wheel sign="-1" side="left"/>
+    <xacro:wheel sign="+1" side="right"/>
 
     <gazebo>
         <controller:diffdrive_plugin name="differential_drive_controller" plugin="libdiffdrive_plugin.so">
