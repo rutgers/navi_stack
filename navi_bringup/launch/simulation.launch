@@ -1,7 +1,7 @@
 <launch>
     <arg name="world" default="$(find gazebo_worlds)/worlds/empty.world"/>
     <include file="$(find navi_bringup)/launch/general.launch"/>
-    <!--<include file="$(find navi_simulation)/launch/spawn_navi.launch"/>-->
+    <include file="$(find navi_simulation)/launch/spawn_navi.launch"/>
 
     <param name="/gazebo" value="true"/>
     <param name="/use_sim_time" value="true"/>
