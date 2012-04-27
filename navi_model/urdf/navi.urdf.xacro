@@ -41,10 +41,11 @@
     <gazebo reference="base_link">
         <material>Gazebo/Blue</material>
     </gazebo> 
-    <joint name="wheel_left_joint" type="fixed">
+    <joint name="wheel_left_joint" type="continuous">
         <parent link="base_link"/>
         <child link="wheel_left_link"/>
         <origin xyz="0 ${wheel_separation/2} ${-robot_clearance}" rpy="${PI/2} 0 0"/>
+        <axis xyz="0 0 1"/>
     </joint>
     <link name="wheel_left_link">
         <inertial>
@@ -68,10 +69,11 @@
         </collision>
     </link>
 
-    <joint name="wheel_right_joint" type="fixed">
+    <joint name="wheel_right_joint" type="continuous">
         <parent link="base_link"/>
         <child link="wheel_right_link"/>
         <origin xyz="0 ${-wheel_separation/2} ${-robot_clearance}" rpy="${PI/2} 0 0"/>
+        <axis xyz="0 0 1"/>
     </joint>
     <link name="wheel_right_link">
         <inertial>
@@ -122,4 +124,20 @@
             </geometry>
         </collision>
     </link>
+
+    <gazebo>
+        <controller:diffdrive_plugin name="differential_drive_controller" plugin="libdiffdrive_plugin.so">
+            <alwaysOn>true</alwaysOn>
+            <update>100</update>
+            <updateRate>100.0</updateRate>
+            <torque>1000</torque>
+            <wheelSeparation>${wheel_separation}</wheelSeparation>
+            <wheelDiameter>${wheel_radius*2}</wheelDiameter>
+            <robotNamespace>/</robotNamespace>
+            <topicName>drive/cmd_vel</topicName>
+            <leftJoint>wheel_left_joint</leftJoint>
+            <rightJoint>wheel_right_joint</rightJoint>
+            <interface:position name="drive_iface"/>
+        </controller:diffdrive_plugin>
+    </gazebo>
 </robot>
