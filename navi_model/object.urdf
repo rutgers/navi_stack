@@ -1,8 +1,8 @@
 <robot name="simple_box">
-    <link name="my_box">
+    <link name="base_link">
         <inertial>
             <origin xyz="0 0 0"/> 
-            <mass value="1.0" />
+            <mass value="1.0"/>
             <inertia ixx="1.0" ixy="0.0"   ixz="0.0"
                                iyy="100.0" iyz="0.0"
                                            izz="1.0" />
@@ -20,7 +20,61 @@
             </geometry>
         </collision>
     </link>
-    <gazebo reference="my_box">
+    <gazebo reference="base_link">
         <material>Gazebo/Blue</material>
     </gazebo>
+
+    <joint name="wheel_left_joint" type="fixed">
+        <parent link="base_link"/>
+        <child link="wheel_left_link"/>
+        <origin xyz="0 1 0"/>
+    </joint>
+    <link name="wheel_left_link">
+        <inertial>
+            <origin xyz="0 0 0"/> 
+            <mass value="1.0"/>
+            <inertia ixx="1.0" ixy="0.0"   ixz="0.0"
+                               iyy="100.0" iyz="0.0"
+                                           izz="1.0" />
+        </inertial>
+        <visual>
+            <origin xyz="0 0 0"/>
+            <geometry>
+                <box size="0.2 0.2 0.2"/>
+            </geometry>
+        </visual>
+        <collision>
+            <origin xyz="0 0 0"/>
+            <geometry>
+                <box size="0.2 0.2 0.2"/>
+            </geometry>
+        </collision>
+    </link>
+
+    <joint name="wheel_right_joint" type="fixed">
+        <parent link="base_link"/>
+        <child link="wheel_right_link"/>
+        <origin xyz="0 -1 0"/>
+    </joint>
+    <link name="wheel_right_link">
+        <inertial>
+            <origin xyz="0 0 0"/> 
+            <mass value="1.0"/>
+            <inertia ixx="1.0" ixy="0.0"   ixz="0.0"
+                               iyy="100.0" iyz="0.0"
+                                           izz="1.0" />
+        </inertial>
+        <visual>
+            <origin xyz="0 0 0"/>
+            <geometry>
+                <box size="0.2 0.2 0.2"/>
+            </geometry>
+        </visual>
+        <collision>
+            <origin xyz="0 0 0"/>
+            <geometry>
+                <box size="0.2 0.2 0.2"/>
+            </geometry>
+        </collision>
+    </link>
 </robot>
