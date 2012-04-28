@@ -130,24 +130,43 @@
         </gazebo> 
     </xacro:macro>
 
+    <xacro:macro name="gazebo_drive">
+        <gazebo>
+            <controller:diffdrive_plugin name="differential_drive_controller" plugin="libdiffdrive_plugin.so">
+                <alwaysOn>true</alwaysOn>
+                <update>100</update>
+                <updateRate>100.0</updateRate>
+                <torque>${wheel_torque}</torque>
+                <wheelSeparation>${wheel_separation}</wheelSeparation>
+                <wheelDiameter>${wheel_radius*2}</wheelDiameter>
+                <robotNamespace>/</robotNamespace>
+                <topicName>drive/cmd_vel</topicName>
+                <leftJoint>wheel_left_joint</leftJoint>
+                <rightJoint>wheel_right_joint</rightJoint>
+                <interface:position name="drive_iface"/>
+            </controller:diffdrive_plugin>
+        </gazebo>
+    </xacro:macro>
+
+    <xacro:macro name="gazebo_localization">
+        <gazebo> 
+            <controller:gazebo_ros_p3d name="gps_controller" plugin="libgazebo_ros_p3d.so">
+                <alwaysOn>true</alwaysOn>
+                <updateRate>60</updateRate>
+                <bodyName>base_link</bodyName>
+                <topicName>ground_truth</topicName>
+                <gaussianNoise>0.0</gaussianNoise>
+                <frameName>/map</frameName>
+                <interface:position name="gps_iface"/>
+            </controller:gazebo_ros_p3d>
+            <canonicalBody>base_link</canonicalBody>
+        </gazebo>
+    </xacro:macro>
+
     <xacro:chassis/>
     <xacro:wheel sign="-1" side="left"/>
     <xacro:wheel sign="+1" side="right"/>
     <xacro:caster/>
 
-    <gazebo>
-        <controller:diffdrive_plugin name="differential_drive_controller" plugin="libdiffdrive_plugin.so">
-            <alwaysOn>true</alwaysOn>
-            <update>100</update>
-            <updateRate>100.0</updateRate>
-            <torque>${wheel_torque}</torque>
-            <wheelSeparation>${wheel_separation}</wheelSeparation>
-            <wheelDiameter>${wheel_radius*2}</wheelDiameter>
-            <robotNamespace>/</robotNamespace>
-            <topicName>drive/cmd_vel</topicName>
-            <leftJoint>wheel_left_joint</leftJoint>
-            <rightJoint>wheel_right_joint</rightJoint>
-            <interface:position name="drive_iface"/>
-        </controller:diffdrive_plugin>
-    </gazebo>
+    <xacro:gazebo_drive/>
 </robot>
