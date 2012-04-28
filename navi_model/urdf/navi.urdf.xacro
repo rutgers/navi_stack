@@ -25,7 +25,27 @@
     <xacro:property name="caster_offset_axis" value="0.0889"/>
     <xacro:property name="mesh_offset" value="-0.60 0.300 -0.50"/> 
 
+    <xacro:macro name="weightless">
+        <inertial>
+            <mass value="${EPS}"/>
+            <inertia ixx="${EPS}" ixy="0"      ixz="0"
+                                  iyy="${EPS}" iyz="0"
+                                               izz="${EPS}"/>
+        </inertial>
+    </xacro:macro>
+
+
     <xacro:macro name="chassis">
+        <link name="base_footprint">
+            <origin xyz="0 0 ${-robot_clearance - wheel_radius}"/>
+            <xacro:weightless/>
+        </link>
+
+        <joint name="base_link_joint" type="fixed">
+            <parent link="base_footprint"/>
+            <child link="base_link"/>
+            <origin xyz="0 0 ${robot_clearance + wheel_radius}"/>
+        </joint>
         <link name="base_link">
             <inertial>
                 <mass value="1.0"/>
