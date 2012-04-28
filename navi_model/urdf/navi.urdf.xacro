@@ -169,4 +169,5 @@
     <xacro:caster/>
 
     <xacro:gazebo_drive/>
+    <xacro:gazebo_localization/>
 </robot>
