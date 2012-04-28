@@ -16,7 +16,7 @@
     <node pkg="robot_encoders" type="encoder_error_node" name="encoder_error">
         <remap from="odom" to="drive/odom"/>
         <param name="frame_id" value="/map"/>
-        <param name="child_frame_id" value="/odom"/>
+        <param name="child_frame_id" value="/base_link"/>
         <param name="alpha" value="0.1"/>
         <param name="robot_radius" value="0.300"/>
         <param name="wheel_radius" value="0.127"/>
@@ -25,9 +25,9 @@
 
     <node pkg="robot_encoders" type="gps_error_node" name="gps_error">
         <param name="frame_id" value="/map"/>
-        <param name="child_frame_id" value="/odom"/>
-        <param name="sigma_x" value="0.005"/>
-        <param name="sigma_y" value="0.005"/>
+        <param name="child_frame_id" value="/base_link"/>
+        <param name="sigma_x" value="0.01"/>
+        <param name="sigma_y" value="0.01"/>
         <param name="rate" value="0.5"/>
     </node>
 
