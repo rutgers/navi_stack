@@ -6,7 +6,4 @@
 	url = git@github.com:mkoval/robot_kf.git
 [submodule "fieldforce_tcm"]
 	path = fieldforce_tcm
-	url = git@github.com:jmesmon/FieldforceTCM.git
-[submodule "gps_umd"]
-	path = gps_umd
-	url = git://ram.umd.edu/ros/gps_umd.git
+	url = git@github.com:mkoval/FieldforceTCM.git
