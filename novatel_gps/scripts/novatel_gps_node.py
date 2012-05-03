@@ -88,12 +88,13 @@ if __name__ == '__main__':
         stopbits = 1,
         timeout  = None
     )
-        
-    pub = rospy.Publisher('/gps', Odometry)
 
     while not rospy.is_shutdown():
         try:
             line = port.readline()
-            odom = parseBESTUTMA(line)
-            if (odom != None):
-                pub.publish(odom)
+            data = parseBESTUTMA(line)
+            print data
+            #if (odom != None):
+            #    pub.publish(odom)
+        except:
+            pass
