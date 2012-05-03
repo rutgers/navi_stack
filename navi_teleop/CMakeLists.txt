@@ -28,7 +28,8 @@ rosbuild_add_boost_directories()
 rosbuild_add_executable(teleop_keyboard src/teleop_keyboard.cpp)
 rosbuild_add_executable(gamepad_diffsticks src/gamepad_diffsticks.cpp)
 rosbuild_add_executable(gamepad_stick src/gamepad_stick.cpp)
+rosbuild_link_boost(teleop_keyboard thread)
+rosbuild_link_boost(gamepad_diffsticks thread)
+rosbuild_link_boost(gamepad_stick thread)
 
-
-#rosbuild_link_boost(teleop_wiimote thread)
 #target_link_libraries(example ${PROJECT_NAME})

@@ -7,32 +7,187 @@
        xmlns:sensor="http://playerstage.sourceforge.net/gazebo/xmlschema/#sensor"
        xmlns:xacro="http://ros.org/wiki/xacro"
        name="navi">
+    <xacro:property name="EPS" value="0.000001"/>
     <xacro:property name="PI" value="3.1415926535897931"/>
-    <xacro:property name="robot_width"  value="0.850"/>
-    <xacro:property name="robot_length" value="1.350"/>
-    <xacro:property name="robot_height" value="1.000"/>
-    <xacro:property name="robot_weight" value="20"/>
+    <xacro:property name="robot_weight" value="90.0"/>
     <xacro:property name="wheel_radius" value="0.127"/>
-    <xacro:property name="wheel_width"  value="0.100"/>
-    <xacro:property name="wheel_offset" value="0.425"/>
-    <xacro:property name="wheel_weight" value="1.687"/>
-    <xacro:property name="caster_radius" value="0.102"/>
-    <xacro:property name="caster_width"  value="0.075"/>
-    <xacro:property name="caster_offset" value="0.500"/>
-    <xacro:property name="caster_trail"  value="0.050"/>
-    <xacro:property name="caster_weight" value="1.225"/>
-    <xacro:property name="gps_noise" value="0.005"/>
-    <xacro:property name="encoders_noise" value="0.100"/>
+    <xacro:property name="wheel_thickness" value="0.0762"/>
+    <xacro:property name="wheel_separation" value="0.70386"/>
+    <xacro:property name="wheel_mass" value="3.175"/>
+    <xacro:property name="wheel_torque" value="10"/>
+    <xacro:property name="robot_clearance" value="0.3937"/>
+    <xacro:property name="caster_radius" value="0.1143"/>
+    <xacro:property name="caster_thickness" value="0.0508"/>
+    <xacro:property name="caster_separation" value="0.53388"/>
+    <xacro:property name="caster_clearance" value="0.254"/>
+    <xacro:property name="caster_mass" value="2.268"/>
+    <xacro:property name="caster_offset_height" value="0.1524"/>
+    <xacro:property name="caster_offset_axis" value="0.0889"/>
+    <xacro:property name="mesh_offset" value="-0.60 0.300 -0.50"/> 
 
-    <include filename="$(find navi_model)/urdf/materials.urdf.xacro"/>
-    <include filename="$(find navi_model)/urdf/navi_robot.urdf.xacro"/>
-    <include filename="$(find navi_model)/urdf/wheels.urdf.xacro"/>
-    <include filename="$(find navi_model)/urdf/caster.urdf.xacro"/>
-    <include filename="$(find navi_model)/urdf/sensors.urdf.xacro"/>
+    <xacro:macro name="weightless">
+        <inertial>
+            <mass value="${EPS}"/>
+            <inertia ixx="${EPS}" ixy="0"      ixz="0"
+                                  iyy="${EPS}" iyz="0"
+                                               izz="${EPS}"/>
+        </inertial>
+    </xacro:macro>
 
-    <xacro:wheel side="left"  sign="+1"/>
-    <xacro:wheel side="right" sign="-1"/>
+
+    <xacro:macro name="chassis">
+        <link name="base_footprint">
+            <origin xyz="0 0 ${-robot_clearance - wheel_radius}"/>
+            <xacro:weightless/>
+        </link>
+
+        <joint name="base_link_joint" type="fixed">
+            <parent link="base_footprint"/>
+            <child link="base_link"/>
+            <origin xyz="0 0 ${robot_clearance + wheel_radius}"/>
+        </joint>
+        <link name="base_link">
+            <inertial>
+                <mass value="1.0"/>
+                <inertia ixx="1.0" ixy="0.0"   ixz="0.0"
+                                   iyy="100.0" iyz="0.0"
+                                               izz="1.0" />
+            </inertial>
+            <visual>
+                <origin xyz="${mesh_offset}" rpy="${PI/2} 0 0"/>
+                <geometry>
+                    <mesh filename="package://navi_model/meshes/frame.stl" scale="0.001 0.001 0.001"/>
+                </geometry>
+            </visual>
+            <collision>
+                <geometry>
+                    <box size="0.9 0.8 0.3"/>
+                </geometry>
+            </collision>
+        </link>
+        <gazebo reference="base_link">
+            <material>Gazebo/Blue</material>
+        </gazebo> 
+    </xacro:macro>
+
+    <xacro:macro name="wheel" params="side sign">
+        <joint name="wheel_${side}_joint" type="continuous">
+            <parent link="base_link"/>
+            <child link="wheel_${side}_link"/>
+            <origin xyz="0 ${sign*wheel_separation/2} ${-robot_clearance}" rpy="${PI/2} 0 0"/>
+            <axis xyz="0 0 1"/>
+        </joint>
+        <link name="wheel_${side}_link">
+            <inertial>
+                <mass value="${wheel_mass}"/>
+                <inertia ixx="${wheel_mass*(3*wheel_radius*wheel_radius + wheel_thickness*wheel_thickness)}" ixy="0.0" ixz="0.0"
+                         iyy="${wheel_mass*(3*wheel_radius*wheel_radius + wheel_thickness*wheel_thickness)}" iyz="0.0"
+                         izz="${wheel_mass*wheel_radius*wheel_radius/2}"/>
+            </inertial>
+            <visual>
+                <geometry>
+                    <cylinder radius="${wheel_radius}" length="${wheel_thickness}"/>
+                </geometry>
+            </visual>
+            <collision>
+                <geometry>
+                    <cylinder radius="${wheel_radius}" length="${wheel_thickness}"/>
+                </geometry>
+            </collision>
+        </link>
+        <gazebo reference="wheel_${side}_link">
+            <material>Gazebo/Red</material>
+        </gazebo> 
+    </xacro:macro>
+
+    <xacro:macro name="caster">
+        <joint name="caster_pivot_joint" type="continuous">
+            <parent link="base_link"/>
+            <child link="caster_pivot_link"/>
+            <origin xyz="${-caster_separation} 0 ${-caster_clearance)}"
+                    rpy="${PI/2} 0 0"/>
+            <axis xyz="0 1 0"/>
+        </joint>
+        <link name="caster_pivot_link">
+            <inertial>
+                <mass value="${caster_mass}"/>
+                <inertia ixx="${EPS}" ixy="0"      ixz="0"
+                                      iyy="${EPS}" iyz="0"
+                                                   izz="${EPS}"/>
+            </inertial>
+        </link>
+
+        <!-- TODO: Why can't I make this continuous? -->
+        <joint name="caster_joint" type="fixed">
+            <parent link="caster_pivot_link"/>
+            <child link="caster_link"/>
+            <origin xyz="${-caster_offset_axis} ${-caster_offset_height} 0"/>
+            <axis xyz="0 0 1"/>
+        </joint>
+        <link name="caster_link">
+            <inertial>
+                <mass value="${caster_mass}"/>
+                <inertia ixx="${caster_mass*(3*caster_radius*caster_radius + caster_thickness*caster_thickness)}" ixy="0.0" ixz="0.0"
+                         iyy="${caster_mass*(3*caster_radius*caster_radius + caster_thickness*caster_thickness)}" iyz="0.0"
+                         izz="${caster_mass*caster_radius*caster_radius/2}"/>
+            </inertial>
+            <visual>
+                <inertia ixx="${wheel_mass*(3*wheel_radius*wheel_radius + wheel_thickness*wheel_thickness)}" ixy="0.0" ixz="0.0"
+                         iyy="${wheel_mass*(3*wheel_radius*wheel_radius + wheel_thickness*wheel_thickness)}" iyz="0.0"
+                         izz="${wheel_mass*wheel_radius*wheel_radius/2}"/>
+                <geometry>
+                    <cylinder radius="${caster_radius}" length="${caster_thickness}"/>
+                </geometry>
+            </visual>
+            <collision>
+                <geometry>
+                    <cylinder radius="${caster_radius}" length="${caster_thickness}"/>
+                </geometry>
+            </collision>
+        </link>
+        <gazebo reference="caster_link">
+            <material>Gazebo/Red</material>
+        </gazebo> 
+    </xacro:macro>
+
+    <xacro:macro name="gazebo_drive">
+        <gazebo>
+            <controller:diffdrive_plugin name="differential_drive_controller" plugin="libdiffdrive_plugin.so">
+                <alwaysOn>true</alwaysOn>
+                <update>100</update>
+                <updateRate>100.0</updateRate>
+                <torque>${wheel_torque}</torque>
+                <wheelSeparation>${wheel_separation}</wheelSeparation>
+                <wheelDiameter>${wheel_radius*2}</wheelDiameter>
+                <robotNamespace>/</robotNamespace>
+                <topicName>drive/cmd_vel</topicName>
+                <leftJoint>wheel_left_joint</leftJoint>
+                <rightJoint>wheel_right_joint</rightJoint>
+                <interface:position name="drive_iface"/>
+            </controller:diffdrive_plugin>
+        </gazebo>
+    </xacro:macro>
+
+    <xacro:macro name="gazebo_localization">
+        <gazebo> 
+            <controller:gazebo_ros_p3d name="gps_controller" plugin="libgazebo_ros_p3d.so">
+                <alwaysOn>true</alwaysOn>
+                <updateRate>60</updateRate>
+                <bodyName>base_link</bodyName>
+                <topicName>ground_truth</topicName>
+                <gaussianNoise>0.0</gaussianNoise>
+                <frameName>/map</frameName>
+                <interface:position name="gps_iface"/>
+            </controller:gazebo_ros_p3d>
+            <canonicalBody>base_link</canonicalBody>
+        </gazebo>
+    </xacro:macro>
+
+    <xacro:chassis/>
+    <xacro:wheel sign="-1" side="left"/>
+    <xacro:wheel sign="+1" side="right"/>
     <xacro:caster/>
-    <xacro:driver/>
-    <xacro:gps/>
+
+    <xacro:gazebo_drive/>
+    <xacro:gazebo_localization/>
 </robot>

@@ -6,29 +6,72 @@
        xmlns:joint="http://playerstage.sourceforge.net/gazebo/xmlschema/#slider"
        xmlns:sensor="http://playerstage.sourceforge.net/gazebo/xmlschema/#sensor"
        xmlns:xacro="http://ros.org/wiki/xacro">
-    <link name="base_footprint">
+    <xacro:property name="robot_width"  value="0.850"/>
+    <xacro:property name="robot_length" value="1.350"/>
+    <xacro:property name="robot_height" value="0.100"/>
+    <xacro:property name="robot_weight" value="90.718"/>
+
+    <link name="base_link">
         <inertial>
+            <origin xyz="-0.4 0.0 0.3" rpy="0 0 0"/>
             <mass value="${robot_weight}"/>
-            <inertia ixx="1.000" ixy="0.000" ixz="0.000"
-                                 iyy="1.000" iyz="0.000"
-                                             izz="1.000"/>
+            <inertia ixx="1.000" ixy="0.000"  ixz="0.000"
+                                 iyy="28.500" iyz="0.000"
+                                              izz="34.800"/>
         </inertial>
         <!-- TODO: This bounding box isn't very accurate. -->
         <collision>
-            <origin xyz="0 0 ${robot_height/2+wheel_radius}" rpy="0 0 0"/>
+            <origin xyz="-0.25 0 ${2*wheel_radius}" rpy="0 0 0"/>
             <geometry>
-                <box size="${robot_length/2} ${robot_width} ${robot_height-wheel_radius}"/>
+                <box size="0.83 0.60 0.25"/>
             </geometry>
         </collision>
         <visual>
-            <origin xyz="${-robot_length/2} ${robot_width/2} 0" rpy="${PI/2} 0 0"/>
+            <origin xyz="-0.6 0.3 0.0" rpy="${PI/2} 0 0"/>
             <geometry>
-                <mesh filename="package://navi_model/meshes/navi2.stl" scale="0.001 0.001 0.001"/>
+                <mesh filename="package://navi_model/meshes/frame.stl" scale="0.001 0.001 0.001"/>
             </geometry>
             <material name="blue"/>
         </visual>
     </link>
-    <gazebo reference="base_footprint">
+    <gazebo reference="base_link">
         <material>Gazebo/Blue</material>
+    </gazebo>
+
+    <joint name="base_footprint_joint" type="fixed">
+        <parent link="base_link"/>
+        <child link="base_footprint"/>
+        <origin xyz="0 0 ${-wheel_radius}" rpy="0 0 0"/>
+        <axis xyz="0 0 0"/>
+        <anchor xyz="0 0 0"/>
+    </joint>
+    <link name="base_footprint">
+        <xacro:weightless/>
+    </link>
+
+    <gazebo>
+        <controller:diffdrive_plugin name="differential_drive_controller" plugin="libdiffdrive_plugin.so">
+            <alwaysOn>true</alwaysOn>
+            <update>100</update>
+            <updateRate>100.0</updateRate>
+            <torque>1000</torque>
+            <wheelSeparation>${wheel_offset*2}</wheelSeparation>
+            <wheelDiameter>${wheel_radius*2}</wheelDiameter>
+            <robotNamespace>/</robotNamespace>
+            <topicName>drive/cmd_vel</topicName>
+            <leftJoint>wheel_left_joint</leftJoint>
+            <rightJoint>wheel_right_joint</rightJoint>
+            <interface:position name="drive_iface"/>
+        </controller:diffdrive_plugin>
+        <controller:gazebo_ros_p3d name="gps_controller" plugin="libgazebo_ros_p3d.so">
+            <alwaysOn>true</alwaysOn>
+            <updateRate>60</updateRate>
+            <bodyName>base_link</bodyName>
+            <topicName>ground_truth</topicName>
+            <gaussianNoise>0.0</gaussianNoise>
+            <frameName>/map</frameName>
+            <interface:position name="gps_iface"/>
+        </controller:gazebo_ros_p3d>
+        <canonicalBody>base_footprint</canonicalBody>
     </gazebo>
 </robot>

@@ -6,20 +6,42 @@
        xmlns:joint="http://playerstage.sourceforge.net/gazebo/xmlschema/#slider"
        xmlns:sensor="http://playerstage.sourceforge.net/gazebo/xmlschema/#sensor"
        xmlns:xacro="http://ros.org/wiki/xacro">
+    <xacro:property name="caster_offset_length" value="0.53388"/>
+    <xacro:property name="caster_offset_height" value="0.10833"/>
+    <xacro:property name="caster_trail_height" value="0.12000"/>
+    <xacro:property name="caster_trail_length" value="0.05"/>
+    <xacro:property name="caster_radius" value="0.102"/>
+    <xacro:property name="caster_width"  value="0.075"/>
+    <xacro:property name="caster_weight" value="1.225"/>
+    <xacro:property name="caster_width" value="0.06"/>
+
     <xacro:macro name="caster">
         <joint name="caster_pivot_joint" type="continuous">
-            <parent link="base_footprint"/>
+            <parent link="base_link"/>
             <child link="caster_pivot_link"/>
-            <origin xyz="${-caster_offset} 0 ${2*caster_radius}" rpy="0 0 0"/>
+            <origin xyz="${-caster_offset_length} 0 ${caster_offset_height}" rpy="0 0 0"/>
             <axis xyz="0 0 1"/>
-            <anchor xyz="0 0 0"/>
         </joint>
         <link name="caster_pivot_link">
+            <visual>
+                <origin xyz="${caster_radius} -0.055 ${-caster_radius - caster_trail_height}"
+                        rpy="${PI/2} 0 ${PI}"/>
+                <geometry>
+                    <mesh filename="package://navi_model/meshes/caster.stl" scale="0.001 0.001 0.001"/>
+                </geometry>
+                <material name="red"/>
+            </visual>
+            <collision>
+                <origin xyz="0 0 0" rpy="0 0 0"/>
+                <geometry>
+                    <box size="${EPS} ${EPS} ${EPS}"/>
+                </geometry>
+            </collision>
             <inertial>
-                <mass value="0.001"/>
-                <inertia ixx="0.001" ixy="0.000" ixz="0.000"
-                                     iyy="0.001" iyz="0.000"
-                                                 izz="0.001"/>
+                <mass value="0.05"/>
+                <inertia ixx="0.01241" ixy="0.0"     ixz="0.00000"
+                                       iyy="0.01522" iyz="0.00000"
+                                                     izz="0.01176"/>
             </inertial>
         </link>
         <gazebo reference="caster_pivot_link">
@@ -29,16 +51,15 @@
         <joint name="caster_joint" type="continuous">
             <parent link="caster_pivot_link"/>
             <child link="caster_link"/>
-            <origin xyz="${-caster_trail} 0 ${-caster_radius}" rpy="0 0 0"/>
+            <origin xyz="${-caster_trail_length} 0 ${-caster_trail_height}" rpy="0 0 0"/>
             <axis xyz="0 1 0"/>
-            <anchor xyz="0 0 0"/>
         </joint>
         <link name="caster_link">
             <inertial>
-                <mass value="${caster_weight}"/>
-                <inertia ixx="01" ixy="0.000" ixz="0.000"
-                                     iyy="0.1" iyz="0.000"
-                                                 izz="0.1"/>
+                <mass value="0.05"/>
+                <inertia ixx="0.01241" ixy="0.0"     ixz="0.00000"
+                                       iyy="0.01522" iyz="0.00000"
+                                                     izz="0.01176"/>
             </inertial>
             <collision>
                 <origin xyz="0 0 0" rpy="${PI/2} 0 0"/>

@@ -26,9 +26,9 @@ def parseBESTUTMA(raw):
     
     # Unpack the BESTUTMA message.
     try:
-        sol_status, sol_type = utm_raw[0], utm_raw[1]
-        northing, easting = float(utm_raw[4]), float(utm_raw[5])
-        sigma_northing, sigma_easting = float(utm_raw[9]), float(utm_raw[10])
+        sol_status, sol_type = utm_list[0], utm_list[1]
+        northing, easting = float(utm_list[4]), float(utm_list[5])
+        sigma_northing, sigma_easting = float(utm_list[9]), float(utm_list[10])
     except ValueError:
         rospy.logwarn('BESTUTMA message contains invalid reading')
         return None
@@ -44,6 +44,8 @@ def parseBESTUTMA(raw):
 
 def generateOdomMsg(northing, easting, sigma_northing, sigma_easting):
     big = 99999.0
+    se = sigma_easting
+    sn = sigma_northing
     return Odometry(
         header = Header(
             stamp = rospy.Time.now(),
@@ -51,18 +53,18 @@ def generateOdomMsg(northing, easting, sigma_northing, sigma_easting):
         ),
         pose = PoseWithCovariance( pose = Pose(
                 position = Point(
-                    x = easting,  # TODO: Compute a difference.
-                    y = northing, # TODO: Compute a difference.
+                    x = easting,
+                    y = northing,
                     z = 0.0
                 )
             ),
             covariance = [
-                sigma_easting, 0.0,            0.0, 0.0, 0.0, 0.0,
-                0.0,           sigma_northing, 0.0, 0.0, 0.0, 0.0,
-                0.0,           0.0,            big, 0.0, 0.0, 0.0,
-                0.0,           0.0,            0.0, big, 0.0, 0.0,
-                0.0,           0.0,            0.0, 0.0, big, 0.0,
-                0.0,           0.0,            0.0, 0.0, 0.0, big
+                se, 0,  0,   0,   0,   0,
+                0,  sn, 0,   0,   0,   0,
+                0,  0,  big, 0,   0,   0,
+                0,  0,  0,   big, 0,   0,
+                0,  0,  0,   0,   big, 0,
+                0,  0,  0,   0,   0,   big
             ]
         ),
         twist = TwistWithCovariance(
@@ -72,35 +74,27 @@ def generateOdomMsg(northing, easting, sigma_northing, sigma_easting):
                 0,  0, 0, 0, 0, 0,
                 0,  0, 0, 0, 0, 0,
                 0,  0, 0, 0, 0, 0,
-                0,  0, 0, 0, 0, 0,
+                0,  0, 0, 0, 0, 0
             ]
         )
     )
 
 if __name__ == '__main__':
     rospy.init_node('novatel_gps_node')
-    pub = rospy.Publisher('/gps/odom', Odometry)
-
-    port = serial.Serial(
-        port = '/dev/gps_novatel',
-        baudrate = 115200,
-        timeout = None
+    fp = serial.Serial(
+        port     = rospy.get_param('~port'),
+        baudrate = rospy.get_param('~baud'),
+        parity   = serial.PARITY_NONE,
+        stopbits = 1,
+        timeout  = None
     )
-
-    # Configure the GPS to use the best corrections available and to directly
-    # publish UTM measurements.
-    port.flushInput()
-    #port.write('UNLOGALL COM1\n')
-    #port.write('ASSIGNLBAND OMNISTAR 1557845 1200\n')
-    port.write('LOG BESTUTMA ONTIME 1\n')
 
     while not rospy.is_shutdown():
         try:
             line = port.readline()
-            print "'", line, "'\n"
-            #odom = parseBESTUTMA(line)
+            data = parseBESTUTMA(line)
+            print data
             #if (odom != None):
             #    pub.publish(odom)
         except:
             pass
-
