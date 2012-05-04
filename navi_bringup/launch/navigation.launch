@@ -4,7 +4,7 @@
     <node pkg="move_base" type="move_base" name="move_base" output="screen">
         <remap from="cmd_vel" to="drive/cmd_vel"/>
         <remap from="odom" to="odom_fused"/>
-        <param name="base_local_planner" value="dwa_local_planner/DWAPlannerROS"/>
+        <!--<param name="base_local_planner" value="dwa_local_planner/DWAPlannerROS"/>-->
         <rosparam file="$(find navi_bringup)/config/costmap_common_params.yaml" ns="global_costmap"/>
         <rosparam file="$(find navi_bringup)/config/costmap_common_params.yaml" ns="local_costmap"/>
         <rosparam file="$(find navi_bringup)/config/local_costmap_params.yaml"/>
