@@ -6,27 +6,10 @@
     <!-- The following included files set up definitions of parts of the robot body -->
     <!-- misc common stuff? -->
     <include filename="$(find pr2_description)/urdf/common.xacro" />
-    <!-- PR2 Arm -->
-    <include filename="$(find pr2_description)/urdf/shoulder_v0/shoulder.urdf.xacro" />
-    <include filename="$(find pr2_description)/urdf/upper_arm_v0/upper_arm.urdf.xacro" />
-    <include filename="$(find pr2_description)/urdf/forearm_v0/forearm.urdf.xacro" />
-    <!-- PR2 gripper -->
-    <include filename="$(find pr2_description)/urdf/gripper_v0/gripper.urdf.xacro" />
-    <!-- PR2 head -->
-    <include filename="$(find pr2_description)/urdf/head_v0/head.urdf.xacro" />
-    <!-- PR2 tilting laser mount -->
-    <include filename="$(find pr2_description)/urdf/tilting_laser_v0/tilting_laser.urdf.xacro" />
     <!-- PR2 torso -->
     <include filename="$(find pr2_description)/urdf/torso_v0/torso.urdf.xacro" />
     <!-- PR2 base -->
     <include filename="$(find pr2_description)/urdf/base_v0/base.urdf.xacro" />
-    <!-- Head sensors -->
-    <include filename="$(find pr2_description)/urdf/sensors/head_sensor_package.urdf.xacro" />
-    <include filename="$(find pr2_description)/urdf/sensors/kinect_prosilica_camera.urdf.xacro" />
-    <!-- Camera sensors -->
-    <include filename="$(find pr2_description)/urdf/sensors/wge100_camera.urdf.xacro" />
-    <!-- Texture projector -->
-    <include filename="$(find pr2_description)/urdf/sensors/projector_wg6802418.urdf.xacro" />
     <!-- generic simulator_gazebo plugins for starting mechanism control, ros time, ros battery -->
     <include filename="$(find pr2_description)/gazebo/gazebo.urdf.xacro" />
     <!-- materials for visualization -->
@@ -42,15 +25,4 @@
        the origin block defines where the component is w.r.t its parent (in this case the parent 
        is the world frame). For more, see http://www.ros.org/wiki/xacro -->
     <xacro:pr2_base_v0 name="base"/>
-
-    <xacro:pr2_torso_v0 name="torso_lift" parent="base_link">
-    <origin xyz="-0.05 0 0.739675" rpy="0 0 0" />
-    </xacro:pr2_torso_v0>
-
-    <!-- The xacro preprocesser will replace the parameters below, such as ${cal_head_x}, with
-       numerical values that were specified in common.xacro which was included above -->
-    <xacro:pr2_head_v0 name="head" parent="torso_lift_link">
-    <origin xyz="-0.01707 0.0 0.38145"
-            rpy="0.0 0.0 0.0" />
-    </xacro:pr2_head_v0>
 </robot>
