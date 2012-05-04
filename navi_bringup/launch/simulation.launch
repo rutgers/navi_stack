@@ -7,22 +7,10 @@
     <param name="/use_sim_time" value="true"/>
 
     <!-- Simulation -->
-    <node pkg="gazebo" type="gazebo" name="gazebo" args="$(arg world)"
-          respawn="false" output="screen"/>
-    <node pkg="gazebo" type="gui" name="gazebo_gui"
-          respawn="false" output="screen"/>
+    <node pkg="gazebo" type="gazebo" name="gazebo" args="$(arg world)" respawn="false"/>
+    <node pkg="gazebo" type="gui" name="gazebo_gui" respawn="false"/>
 
     <!-- Localization Error -->
-    <node pkg="robot_encoders" type="encoder_error_node" name="encoder_error">
-        <remap from="odom" to="drive/odom"/>
-        <param name="frame_id" value="/map"/>
-        <param name="child_frame_id" value="/base_link"/>
-        <param name="alpha" value="0.1"/>
-        <param name="robot_radius" value="0.300"/>
-        <param name="wheel_radius" value="0.127"/>
-        <param name="ticks_per_rev" value="800"/>
-    </node>
-
     <node pkg="robot_encoders" type="gps_error_node" name="gps_error">
         <param name="frame_id" value="/map"/>
         <param name="child_frame_id" value="/base_link"/>
