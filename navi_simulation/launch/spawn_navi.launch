@@ -1,4 +1,4 @@
 <launch>
     <node name="spawn_navi" type="spawn_model" pkg="gazebo"
-          args="-param robot_description -urdf -model navi"/>
+          args="-param robot_description -urdf -model navi -z 1"/>
 </launch>
