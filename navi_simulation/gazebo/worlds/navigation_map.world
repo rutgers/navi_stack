@@ -18,10 +18,6 @@
   xmlns:controller="http://playerstage.sourceforge.net/gazebo/xmlschema/#controller"
   xmlns:physics="http://playerstage.sourceforge.net/gazebo/xmlschema/#physics" >
 
-  <include embedded="true">
-    <xi:include href="sim_settings.xml" />
-  </include>
-  
   <!-- ground plane -->
   <model:physical name="gplane">
     <xyz>0 0 0</xyz>	
@@ -43,7 +39,6 @@
     </body:plane>
   </model:physical>
 
-
   <!-- White Point light -->
   <model:renderable name="point_white">
     <xyz>0.0 0.0 8</xyz>
@@ -56,5 +51,4 @@
       <range>100</range>
     </light>
   </model:renderable>
-
 </gazebo:world>

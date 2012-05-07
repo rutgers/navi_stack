@@ -1,5 +1,5 @@
 <launch>
-    <arg name="world" default="$(find gazebo_worlds)/worlds/empty.world"/>
+    <arg name="world" default="$(find navi_simulation)/worlds/grass.world"/>
     <include file="$(find navi_bringup)/launch/general.launch"/>
     <include file="$(find navi_simulation)/launch/spawn_navi.launch"/>
 
