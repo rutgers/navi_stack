@@ -1,6 +1,4 @@
 <launch>
-    <include file="$(find navi_bringup)/launch/localization.launch"/>
-
     <node pkg="move_base" type="move_base" name="move_base" output="screen">
         <remap from="cmd_vel" to="drive/cmd_vel"/>
         <remap from="odom" to="odom_fused"/>

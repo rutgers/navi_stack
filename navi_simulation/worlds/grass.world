@@ -18,7 +18,7 @@
         </physics>
 
         <!-- Ground Plane -->
-        <model name="plane1_model" static="true">
+        <model name="ground_plane" static="true">
             <link name="body">
                 <collision name="geom_1">
                     <geometry>

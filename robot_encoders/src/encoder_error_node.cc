@@ -105,7 +105,7 @@ void updateOdom(nav_msgs::Odometry const &msg_in)
     msg_out.pose.pose.position.y = noisy_pos[1];
     tf::quaternionTFToMsg(tf::createQuaternionFromYaw(noisy_angle),
                           msg_out.pose.pose.orientation);
-    msg_out.twist.covariance[0] = -1;
+    msg_out.twist = msg_in.twist;
 
     // Propagate the variances through the transformation.
     double const var = 0.5 * (pow(sigma_left, 2) + pow(sigma_right, 2));
