@@ -34,10 +34,8 @@
         </inertial>
     </xacro:macro>
 
-
     <xacro:macro name="chassis">
         <link name="base_footprint">
-            <origin xyz="0 0 ${-robot_clearance - wheel_radius}"/>
             <xacro:weightless/>
         </link>
 
