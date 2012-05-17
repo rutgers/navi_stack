@@ -11,14 +11,17 @@
     <node pkg="gazebo" type="gui" name="gazebo_gui" respawn="false"/>
 
     <!-- Bypass the Kalman filter -->
+    <!--
     <node pkg="fake_localization" type="fake_localization" name="fake_localization">
         <remap from="base_pose_ground_truth" to="odom"/>
         <remap from="acml_pose" to="odom_fused"/>
         <remap from="base_frame_id" to="base_footprint"/>
     </node>
+    -->
+    <node pkg="tf" type="static_transform_publisher" name="fake_localization"
+          args="0 0 0 0 0 0 /map /odom 20"/>
 
     <!-- Localization Error -->
-    <!--
     <node pkg="robot_encoders" type="gps_error_node" name="gps_error">
         <param name="frame_id" value="/map"/>
         <param name="child_frame_id" value="/base_link"/>
@@ -26,16 +29,15 @@
         <param name="sigma_y" value="0.01"/>
         <param name="rate" value="0.5"/>
     </node>
-
     <node pkg="robot_encoders" type="compass_error_node" name="compass_error">
-        <param name="frame_id" value="/map"/>
-        <param name="child_frame_id" value="/base_link"/>
+        <param name="frame_id" value="/base_link"/>
         <param name="sigma" value="0.01745"/>
         <param name="rate" value="20.0"/>
     </node>
 
+    <!--
     <node pkg="robot_encoders" type="encoder_error_node" name="encoder_error">
-        <param name="frame_id" value="/map"/>
+        <param name="frame_id" value="/odom"/>
         <param name="child_frame_id" value="/base_link"/>
         <param name="alpha" value="0.2"/>
         <param name="robot_radius" value="0.5"/>
