@@ -1,0 +1,5 @@
+<launch>
+    <include file="$(find jaguar)/launch/diff_drive.launch"/>
+    <include file="$(find navi_bringup)/launch/general.launch"/>
+    <include file="$(find navi_bringup)/launch/localization.launch"/>
+</launch>
