@@ -152,8 +152,7 @@
         <gazebo>
             <controller:diffdrive_plugin name="differential_drive_controller" plugin="libdiffdrive_plugin.so">
                 <alwaysOn>true</alwaysOn>
-                <update>100</update>
-                <updateRate>100.0</updateRate>
+                <updateRate>50.0</updateRate>
                 <torque>${wheel_torque}</torque>
                 <leftJoint>wheel_left_joint</leftJoint>
                 <rightJoint>wheel_right_joint</rightJoint>
@@ -164,8 +163,7 @@
                 <odomFrame>odom</odomFrame>
                 <twistTopicName>drive/cmd_vel</twistTopicName>
                 <odomTopicName>drive/odom</odomTopicName>
-                <alpha>0.5</alpha>
-                <beta>0.5</beta>
+                <alpha>0.05</alpha>
                 <interface:position name="drive_iface"/>
             </controller:diffdrive_plugin>
         </gazebo>
