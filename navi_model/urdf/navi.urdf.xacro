@@ -50,6 +50,7 @@
         </link>
     </xacro:macro>
 
+    <include filename="$(find navi_model)/urdf/materials.urdf.xacro"/>
     <include filename="$(find navi_model)/urdf/cameras.urdf.xacro"/>
     <include filename="$(find navi_model)/urdf/chassis.urdf.xacro"/>
     <include filename="$(find navi_model)/urdf/gazebo.urdf.xacro"/>

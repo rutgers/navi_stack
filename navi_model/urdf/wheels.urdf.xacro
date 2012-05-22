@@ -24,6 +24,7 @@
                 <geometry>
                     <cylinder radius="${wheel_radius}" length="${wheel_thickness}"/>
                 </geometry>
+                <material name="Grey"/>
             </visual>
             <collision>
                 <geometry>
@@ -32,7 +33,7 @@
             </collision>
         </link>
         <gazebo reference="wheel_${side}_link">
-            <material>Gazebo/Red</material>
+            <material>Gazebo/Grey</material>
         </gazebo> 
     </xacro:macro>
 
@@ -72,6 +73,7 @@
                 <geometry>
                     <cylinder radius="${caster_radius}" length="${caster_thickness}"/>
                 </geometry>
+                <material name="Grey"/>
             </visual>
             <collision>
                 <geometry>
@@ -80,7 +82,7 @@
             </collision>
         </link>
         <gazebo reference="caster_link">
-            <material>Gazebo/Red</material>
+            <material>Gazebo/Grey</material>
         </gazebo> 
     </xacro:macro>
 </robot>
