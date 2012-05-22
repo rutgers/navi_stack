@@ -15,7 +15,7 @@
                 <leftJoint>wheel_left_joint</leftJoint>
                 <rightJoint>wheel_right_joint</rightJoint>
                 <wheelSeparation>${wheel_separation}</wheelSeparation>
-                <wheelDiameter>${wheel_radius*2}</wheelDiameter>
+                <wheelDiameter>${2*wheel_radius}</wheelDiameter>
                 <robotNamespace>/</robotNamespace>
                 <baseFrame>base_footprint</baseFrame>
                 <odomFrame>odom</odomFrame>

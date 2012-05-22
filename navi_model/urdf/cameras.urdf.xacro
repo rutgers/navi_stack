@@ -6,11 +6,18 @@
        xmlns:joint="http://playerstage.sourceforge.net/gazebo/xmlschema/#slider"
        xmlns:sensor="http://playerstage.sourceforge.net/gazebo/xmlschema/#sensor"
        xmlns:xacro="http://ros.org/wiki/xacro">
+    <xacro:property name="camera_x" value="-0.09717"/>
+    <xacro:property name="camera_y" value="0.24582"/>
+    <xacro:property name="camera_z" value="0.75734"/>
+    <xacro:property name="camera_roll"  value="0"/>
+    <xacro:property name="camera_pitch" value="0.177150919"/>
+    <xacro:property name="camera_yaw"   value="0.174532925"/>
+
     <xacro:property name="image_width"  value="640"/>
     <xacro:property name="image_height" value="480"/>
-    <xacro:property name="hfov" value="80"/>
-    <xacro:property name="fps" value="10"/>
-    <xacro:property name="focal_length" value="320"/>
+    <xacro:property name="camera_hfov" value="80"/>
+    <xacro:property name="camera_fps" value="10"/>
+    <xacro:property name="camera_focus" value="320"/>
     
     <xacro:macro name="camera" params="side sign">
         <xacro:frame parent="base_link" child="camera_${side}"
@@ -21,13 +28,13 @@
           <sensor:camera name="camera_${side}_sensor">
             <imageSize>${image_width} ${image_height}</imageSize>
             <imageFormat>R8G8B8</imageFormat>
-            <hfov>${hfov}</hfov>
+            <hfov>${camera_hfov}</hfov>
             <nearClip>0.1</nearClip>
             <farClip>100</farClip>
             <updateRate>25.0</updateRate>
             <controller:gazebo_ros_depth_camera name="camera_{$side}_controller" plugin="libgazebo_ros_depth_camera.so">
               <alwaysOn>true</alwaysOn>
-              <updateRate>25.0</updateRate>
+              <updateRate>${camera_fps}</updateRate>
               <cameraName>camera_${side}</cameraName>
               <imageTopicName>/${side}/image_raw</imageTopicName>
               <cameraInfoTopicName>/${side}/camera_info</cameraInfoTopicName>
@@ -38,7 +45,7 @@
               <Cy>${(image_height+1)/2}</Cy>
               <!-- image_width / (2*tan(hfov_radian /2)) -->
               <!-- 320 for wide and 772.55 for narrow stereo camera -->
-              <focalLength>${focal_length}</focalLength>
+              <focalLength>${camera_focus}</focalLength>
               <distortionK1>0.0</distortionK1>
               <distortionK2>0.0</distortionK2>
               <distortionK3>0.0</distortionK3>
