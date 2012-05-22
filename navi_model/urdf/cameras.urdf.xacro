@@ -1,0 +1,54 @@
+<?xml version="1.0"?>
+<robot xmlns:body="http://playerstage.sourceforge.net/gazebo/xmlschema/#body"
+       xmlns:controller="http://playerstage.sourceforge.net/gazebo/xmlschema/#controller"
+       xmlns:geom="http://playerstage.sourceforge.net/gazebo/xmlschema/#geom"
+       xmlns:interface="http://playerstage.sourceforge.net/gazebo/xmlschema/#interface"
+       xmlns:joint="http://playerstage.sourceforge.net/gazebo/xmlschema/#slider"
+       xmlns:sensor="http://playerstage.sourceforge.net/gazebo/xmlschema/#sensor"
+       xmlns:xacro="http://ros.org/wiki/xacro">
+    <xacro:property name="image_width"  value="640"/>
+    <xacro:property name="image_height" value="480"/>
+    <xacro:property name="hfov" value="80"/>
+    <xacro:property name="fps" value="10"/>
+    <xacro:property name="focal_length" value="320"/>
+    
+    <xacro:macro name="camera" params="side sign">
+        <xacro:frame parent="base_link" child="camera_${side}"
+                     xyz="${camera_x} ${sign*camera_y} ${camera_z}"
+                     rpy="${camera_roll} ${camera_pitch} ${sign*camera_yaw}"/>
+
+        <gazebo reference="camera_${side}">
+          <sensor:camera name="camera_${side}_sensor">
+            <imageSize>${image_width} ${image_height}</imageSize>
+            <imageFormat>R8G8B8</imageFormat>
+            <hfov>${hfov}</hfov>
+            <nearClip>0.1</nearClip>
+            <farClip>100</farClip>
+            <updateRate>25.0</updateRate>
+            <controller:gazebo_ros_depth_camera name="camera_{$side}_controller" plugin="libgazebo_ros_depth_camera.so">
+              <alwaysOn>true</alwaysOn>
+              <updateRate>25.0</updateRate>
+              <cameraName>camera_${side}</cameraName>
+              <imageTopicName>/${side}/image_raw</imageTopicName>
+              <cameraInfoTopicName>/${side}/camera_info</cameraInfoTopicName>
+              <frameName>/camera_${side}</frameName>
+              <hackBaseline>0</hackBaseline>
+              <CxPrime>${(image_width+1)/2}</CxPrime>
+              <Cx>${(image_width+1)/2}</Cx>
+              <Cy>${(image_height+1)/2}</Cy>
+              <!-- image_width / (2*tan(hfov_radian /2)) -->
+              <!-- 320 for wide and 772.55 for narrow stereo camera -->
+              <focalLength>${focal_length}</focalLength>
+              <distortionK1>0.0</distortionK1>
+              <distortionK2>0.0</distortionK2>
+              <distortionK3>0.0</distortionK3>
+              <distortionT1>0.0</distortionT1>
+              <distortionT2>0.0</distortionT2>
+              <interface:camera name="camera_${side}_iface" />
+            </controller:gazebo_ros_depth_camera>
+          </sensor:camera>
+          <turnGravityOff>true</turnGravityOff>
+          <material>Gazebo/Blue</material>
+        </gazebo>
+    </xacro:macro>
+</robot>
