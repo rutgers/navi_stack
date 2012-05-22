@@ -1,0 +1,44 @@
+<?xml version="1.0"?>
+<robot xmlns:body="http://playerstage.sourceforge.net/gazebo/xmlschema/#body"
+       xmlns:controller="http://playerstage.sourceforge.net/gazebo/xmlschema/#controller"
+       xmlns:geom="http://playerstage.sourceforge.net/gazebo/xmlschema/#geom"
+       xmlns:interface="http://playerstage.sourceforge.net/gazebo/xmlschema/#interface"
+       xmlns:joint="http://playerstage.sourceforge.net/gazebo/xmlschema/#slider"
+       xmlns:sensor="http://playerstage.sourceforge.net/gazebo/xmlschema/#sensor"
+       xmlns:xacro="http://ros.org/wiki/xacro">
+    <xacro:macro name="gazebo_drive">
+        <gazebo>
+            <controller:diffdrive_plugin name="differential_drive_controller" plugin="libdiffdrive_plugin.so">
+                <alwaysOn>true</alwaysOn>
+                <updateRate>50.0</updateRate>
+                <torque>${wheel_torque}</torque>
+                <leftJoint>wheel_left_joint</leftJoint>
+                <rightJoint>wheel_right_joint</rightJoint>
+                <wheelSeparation>${wheel_separation}</wheelSeparation>
+                <wheelDiameter>${wheel_radius*2}</wheelDiameter>
+                <robotNamespace>/</robotNamespace>
+                <baseFrame>base_footprint</baseFrame>
+                <odomFrame>odom</odomFrame>
+                <twistTopicName>drive/cmd_vel</twistTopicName>
+                <odomTopicName>drive/odom</odomTopicName>
+                <alpha>0.05</alpha>
+                <interface:position name="drive_iface"/>
+            </controller:diffdrive_plugin>
+        </gazebo>
+    </xacro:macro>
+
+    <xacro:macro name="gazebo_localization">
+        <gazebo> 
+            <controller:gazebo_ros_p3d name="gps_controller" plugin="libgazebo_ros_p3d.so">
+                <alwaysOn>true</alwaysOn>
+                <updateRate>60</updateRate>
+                <bodyName>base_footprint</bodyName>
+                <topicName>/ground_truth</topicName>
+                <gaussianNoise>0.0</gaussianNoise>
+                <frameName>/map</frameName>
+                <interface:position name="gps_iface"/>
+            </controller:gazebo_ros_p3d>
+            <canonicalBody>base_footprint</canonicalBody>
+        </gazebo>
+    </xacro:macro>
+</robot>
