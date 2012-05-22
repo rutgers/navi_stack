@@ -40,9 +40,8 @@
         <joint name="caster_pivot_joint" type="continuous">
             <parent link="base_link"/>
             <child link="caster_pivot_link"/>
-            <origin xyz="${-caster_separation} 0 ${-caster_clearance)}"
-                    rpy="${PI/2} 0 0"/>
-            <axis xyz="0 1 0"/>
+            <origin xyz="${caster_pivot_offset}"/>
+            <axis xyz="0 0 1"/>
         </joint>
         <link name="caster_pivot_link">
             <inertial>
@@ -56,7 +55,7 @@
         <joint name="caster_joint" type="fixed">
             <parent link="caster_pivot_link"/>
             <child link="caster_link"/>
-            <origin xyz="${-caster_offset_axis} ${-caster_offset_height} 0"/>
+            <origin xyz="${caster_wheel_offset}" rpy="${PI/2} 0 0"/>
             <axis xyz="0 0 1"/>
         </joint>
         <link name="caster_link">

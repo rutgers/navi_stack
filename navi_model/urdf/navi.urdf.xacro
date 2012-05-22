@@ -15,10 +15,12 @@
     <!-- Wheels -->
     <xacro:property name="wheel_radius" value="0.127"/>
     <xacro:property name="wheel_thickness" value="0.0762"/>
-    <xacro:property name="wheel_separation" value="0.70386"/>
+    <xacro:property name="wheel_separation" value="0.70354"/>
     <xacro:property name="wheel_mass" value="3.175"/>
     <xacro:property name="wheel_torque" value="10"/>
 
+    <xacro:property name="caster_pivot_offset" value="-0.53388 0  0.10833"/>
+    <xacro:property name="caster_wheel_offset" value="-0.07620 0 -0.12103"/>
     <xacro:property name="caster_radius" value="0.1143"/>
     <xacro:property name="caster_thickness" value="0.0508"/>
     <xacro:property name="caster_separation" value="0.53388"/>
@@ -26,7 +28,6 @@
     <xacro:property name="caster_mass" value="2.268"/>
     <xacro:property name="caster_offset_height" value="0.1524"/>
     <xacro:property name="caster_offset_axis" value="0.0889"/>
-    <xacro:property name="mesh_offset" value="0 0 0"/>
 
     <xacro:property name="gps_offset" value="-0.18941 0 0.76387"/>
     <xacro:property name="laser_offset" value="0.02927 0 0.46714"/>
@@ -57,17 +58,13 @@
     <xacro:chassis/>
     <xacro:wheel sign="+1" side="left"/>
     <xacro:wheel sign="-1" side="right"/>
-    <!--
     <xacro:caster/>
-    -->
     <xacro:camera sign="+1" side="left"/>
     <xacro:camera sign="-1" side="right"/>
 
     <xacro:frame parent="base_link" child="gps" xyz="${gps_offset}" rpy="0 0 0"/>
     <xacro:frame parent="base_link" child="laser" xyz="${laser_offset}" rpy="0 0 0"/>
 
-    <!--
     <xacro:gazebo_drive/>
     <xacro:gazebo_localization/>
-    -->
 </robot>
