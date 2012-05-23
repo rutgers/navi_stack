@@ -1,0 +1,37 @@
+<?xml version="1.0"?>
+<robot xmlns:body="http://playerstage.sourceforge.net/gazebo/xmlschema/#body"
+       xmlns:controller="http://playerstage.sourceforge.net/gazebo/xmlschema/#controller"
+       xmlns:geom="http://playerstage.sourceforge.net/gazebo/xmlschema/#geom"
+       xmlns:interface="http://playerstage.sourceforge.net/gazebo/xmlschema/#interface"
+       xmlns:joint="http://playerstage.sourceforge.net/gazebo/xmlschema/#slider"
+       xmlns:sensor="http://playerstage.sourceforge.net/gazebo/xmlschema/#sensor"
+       xmlns:xacro="http://ros.org/wiki/xacro">
+    <xacro:macro name="laser">
+        <xacro:frame parent="base_link" child="laser" xyz="${laser_offset}" rpy="0 0 0"/>
+
+        <gazebo reference="laser">
+            <sensor:ray name="laser_sensor">
+                <resRange>0.1</resRange>
+                <rayCount>640</rayCount>
+                <rangeCount>640</rangeCount>
+                <laserCount>1</laserCount>
+                <origin>0.0 0.0 0.0</origin>
+                <displayRays>true</displayRays>
+                <minAngle>-135</minAngle>
+                <maxAngle>+135</maxAngle>
+                <minRange>0.07</minRange>
+                <maxRange>10.0</maxRange>
+                <updateRate>20.0</updateRate>
+                <controller:gazebo_ros_laser name="laser_controller" plugin="libgazebo_ros_laser.so">
+                    <gaussianNoise>0.005</gaussianNoise>
+                    <alwaysOn>true</alwaysOn>
+                    <updateRate>20.0</updateRate>
+                    <topicName>/laser</topicName>
+                    <frameName>/laser</frameName>
+                    <interface:laser name="laser_iface"/>
+                </controller:gazebo_ros_laser>
+            </sensor:ray>
+            <material>Gazebo/Red</material>
+        </gazebo>
+    </xacro:macro>
+</robot>

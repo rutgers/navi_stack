@@ -52,6 +52,7 @@
 
     <include filename="$(find navi_model)/urdf/materials.urdf.xacro"/>
     <include filename="$(find navi_model)/urdf/cameras.urdf.xacro"/>
+    <include filename="$(find navi_model)/urdf/laser.urdf.xacro"/>
     <include filename="$(find navi_model)/urdf/chassis.urdf.xacro"/>
     <include filename="$(find navi_model)/urdf/gazebo.urdf.xacro"/>
     <include filename="$(find navi_model)/urdf/wheels.urdf.xacro"/>
@@ -60,11 +61,11 @@
     <xacro:wheel sign="+1" side="left"/>
     <xacro:wheel sign="-1" side="right"/>
     <xacro:caster/>
+    <xacro:laser/>
     <xacro:camera sign="+1" side="left"/>
     <xacro:camera sign="-1" side="right"/>
 
     <xacro:frame parent="base_link" child="gps" xyz="${gps_offset}" rpy="0 0 0"/>
-    <xacro:frame parent="base_link" child="laser" xyz="${laser_offset}" rpy="0 0 0"/>
 
     <xacro:gazebo_drive/>
     <xacro:gazebo_localization/>
