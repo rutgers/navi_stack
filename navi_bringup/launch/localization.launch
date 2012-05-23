@@ -1,4 +1,3 @@
 <launch>
-    <node pkg="robot_kf" type="robot_kf_node" name="robot_kf">
-    </node>
+    <node pkg="robot_kf" type="robot_kf_node" name="robot_kf"/>
 </launch>

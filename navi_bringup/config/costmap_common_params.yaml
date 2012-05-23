@@ -8,9 +8,14 @@ robot_radius: 0.8
 inflation_radius: 0.8
 transform_tolerance: 5.0
 
-observation_sources: laser_scan_sensor 
-#stereo_objects
+observation_sources: laser_sensor 
 
-laser_scan_sensor: {sensor_frame: base_laser_link, data_type: LaserScan, topic: base_laser/scan, marking: true, clearing: true}
+laser_sensor: {
+    sensor_frame: /laser,
+    data_type: LaserScan,
+    topic: /laser,
+    marking: true,
+    clearing: true
+}
 
 #point_cloud_sensor: {sensor_frame: frame_name, data_type: PointCloud, topic: topic_name, marking: true, clearing: true}

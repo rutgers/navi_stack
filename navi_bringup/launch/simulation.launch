@@ -17,9 +17,9 @@
         <remap from="acml_pose" to="odom_fused"/>
         <remap from="base_frame_id" to="base_footprint"/>
     </node>
-    -->
     <node pkg="tf" type="static_transform_publisher" name="fake_localization"
           args="0 0 0 0 0 0 /map /odom 20"/>
+    -->
 
     <!-- Localization Error -->
     <node pkg="robot_encoders" type="gps_error_node" name="gps_error">

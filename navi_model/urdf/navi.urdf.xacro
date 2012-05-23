@@ -54,7 +54,7 @@
     <include filename="$(find navi_model)/urdf/cameras.urdf.xacro"/>
     <include filename="$(find navi_model)/urdf/laser.urdf.xacro"/>
     <include filename="$(find navi_model)/urdf/chassis.urdf.xacro"/>
-    <include filename="$(find navi_model)/urdf/gazebo.urdf.xacro"/>
+    <include filename="$(find navi_model)/urdf/gps.urdf.xacro"/>
     <include filename="$(find navi_model)/urdf/wheels.urdf.xacro"/>
 
     <xacro:chassis/>
