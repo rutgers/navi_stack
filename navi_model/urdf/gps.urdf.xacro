@@ -6,28 +6,9 @@
        xmlns:joint="http://playerstage.sourceforge.net/gazebo/xmlschema/#slider"
        xmlns:sensor="http://playerstage.sourceforge.net/gazebo/xmlschema/#sensor"
        xmlns:xacro="http://ros.org/wiki/xacro">
-    <xacro:macro name="gazebo_drive">
-        <gazebo>
-            <controller:diffdrive_plugin name="differential_drive_controller" plugin="libdiffdrive_plugin.so">
-                <alwaysOn>true</alwaysOn>
-                <updateRate>50.0</updateRate>
-                <torque>${wheel_torque}</torque>
-                <leftJoint>wheel_left_joint</leftJoint>
-                <rightJoint>wheel_right_joint</rightJoint>
-                <wheelSeparation>${wheel_separation}</wheelSeparation>
-                <wheelDiameter>${2*wheel_radius}</wheelDiameter>
-                <robotNamespace>/</robotNamespace>
-                <baseFrame>base_footprint</baseFrame>
-                <odomFrame>odom</odomFrame>
-                <twistTopicName>drive/cmd_vel</twistTopicName>
-                <odomTopicName>drive/odom</odomTopicName>
-                <alpha>0.05</alpha>
-                <interface:position name="drive_iface"/>
-            </controller:diffdrive_plugin>
-        </gazebo>
-    </xacro:macro>
+    <xacro:macro name="gps">
+        <xacro:frame parent="base_link" child="gps" xyz="${gps_offset}" rpy="0 0 0"/>
 
-    <xacro:macro name="gazebo_localization">
         <gazebo> 
             <controller:gazebo_ros_p3d name="gps_controller" plugin="libgazebo_ros_p3d.so">
                 <alwaysOn>true</alwaysOn>

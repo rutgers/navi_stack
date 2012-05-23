@@ -61,5 +61,24 @@
         <gazebo reference="base_visual">
             <material>Gazebo/Blue</material>
         </gazebo> 
+
+        <gazebo>
+            <controller:diffdrive_plugin name="differential_drive_controller" plugin="libdiffdrive_plugin.so">
+                <alwaysOn>true</alwaysOn>
+                <updateRate>50.0</updateRate>
+                <torque>${wheel_torque}</torque>
+                <leftJoint>wheel_left_joint</leftJoint>
+                <rightJoint>wheel_right_joint</rightJoint>
+                <wheelSeparation>${wheel_separation}</wheelSeparation>
+                <wheelDiameter>${2*wheel_radius}</wheelDiameter>
+                <robotNamespace>/</robotNamespace>
+                <baseFrame>base_footprint</baseFrame>
+                <odomFrame>odom</odomFrame>
+                <twistTopicName>drive/cmd_vel</twistTopicName>
+                <odomTopicName>drive/odom</odomTopicName>
+                <alpha>0.05</alpha>
+                <interface:position name="drive_iface"/>
+            </controller:diffdrive_plugin>
+        </gazebo>
     </xacro:macro>
 </robot>

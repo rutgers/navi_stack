@@ -61,12 +61,9 @@
     <xacro:wheel sign="+1" side="left"/>
     <xacro:wheel sign="-1" side="right"/>
     <xacro:caster/>
+
     <xacro:laser/>
+    <xacro:gps/>
     <xacro:camera sign="+1" side="left"/>
     <xacro:camera sign="-1" side="right"/>
-
-    <xacro:frame parent="base_link" child="gps" xyz="${gps_offset}" rpy="0 0 0"/>
-
-    <xacro:gazebo_drive/>
-    <xacro:gazebo_localization/>
 </robot>
