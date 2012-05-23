@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 import roslib; roslib.load_manifest('novatel_gps')
 import rospy, serial
+from std_msgs.msg import Header
 from nav_msgs.msg import Odometry
+from geometry_msgs.msg import Point, Pose, PoseWithCovariance, TwistWithCovariance
 
 def parseBESTUTMA(raw):
     # Split the NMEA header from the actual message.
@@ -49,8 +51,9 @@ def generateOdomMsg(northing, easting, sigma_northing, sigma_easting):
     return Odometry(
         header = Header(
             stamp = rospy.Time.now(),
-            frame_id = '/base_link'
+            frame_id = global_frame_id
         ),
+        child_frame_id = frame_id,
         pose = PoseWithCovariance( pose = Pose(
                 position = Point(
                     x = easting,
@@ -90,13 +93,14 @@ if __name__ == '__main__':
         stopbits = 1,
         timeout  = None
     )
+    frame_id = rospy.get_param('~frame_id', '/base_link')
+    global_frame_id = rospy.get_param('~global_frame_id', '/map')
 
     while not rospy.is_shutdown():
-        try:
-            line = port.readline()
-            data = parseBESTUTMA(line)
-            odom = generateOdomMessage(*data)
-            if (odom != None):
-                pub_gps.publish(odom)
-        except:
-            pass
+        line = fp.readline()
+        data = parseBESTUTMA(line)
+        if not data: continue
+
+        odom = generateOdomMsg(*data)
+        if odom:
+            pub_gps.publish(odom)

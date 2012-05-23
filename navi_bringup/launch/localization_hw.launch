@@ -3,5 +3,6 @@
     <include file="$(find navi_bringup)/launch/hardware/drive.launch"/>
     <include file="$(find navi_bringup)/launch/hardware/gps.launch"/>
 
+    <include file="$(find navi_bringup)/launch/general.launch"/>
     <include file="$(find navi_bringup)/launch/localization.launch"/>
 </launch>

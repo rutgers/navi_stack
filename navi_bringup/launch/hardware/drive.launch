@@ -1,5 +1,10 @@
 <launch>
-    <node name="driver" pkg="jaguar" type="drive">
+    <node pkg="jaguar" type="diff_drive" name="driver">
+        <remap from="odom" to="drive/odom"/>
+        <remap from="temperature_left" to="temperature/left"/>
+        <remap from="temperature_right" to="temperature/right"/>
+        <remap from="voltage_left" to="voltage/left"/>
+        <remap from="voltage_right" to="voltage/right"/>
         <!-- CAN bus Configuration -->
         <param name="port" value="/dev/jaguar"/>
         <param name="id_left"  value="2"/>

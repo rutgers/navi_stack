@@ -2,5 +2,7 @@
 	<node pkg="novatel_gps" type="novatel_gps_node.py" name="gps">
         <param name="port" value="/dev/gps_novatel"/>
         <param name="baud" value="115200"/>
+        <param name="global_frame_id" value="/map"/>
+        <param name="frame_id" value="/gps"/>
     </node>
 </launch>
