@@ -16,8 +16,5 @@
   <depend package="tf"/>
   <depend package="rospy"/>
   <depend package="roscpp"/>
-  <depend package="gps_common"/>
-  
+  <!--<depend package="gps_common"/>-->
 </package>
-
-
