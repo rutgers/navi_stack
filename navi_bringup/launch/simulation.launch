@@ -10,26 +10,15 @@
     <node pkg="gazebo" type="gazebo" name="gazebo" args="$(arg world)" respawn="false"/>
     <node pkg="gazebo" type="gui" name="gazebo_gui" respawn="false"/>
 
-    <!-- Bypass the Kalman filter -->
-    <!--
-    <node pkg="fake_localization" type="fake_localization" name="fake_localization">
-        <remap from="base_pose_ground_truth" to="odom"/>
-        <remap from="acml_pose" to="odom_fused"/>
-        <remap from="base_frame_id" to="base_footprint"/>
-    </node>
-    <node pkg="tf" type="static_transform_publisher" name="fake_localization"
-          args="0 0 0 0 0 0 /map /odom 20"/>
-    -->
-
     <!-- Localization Error -->
-    <node pkg="robot_encoders" type="gps_error_node" name="gps_error">
+    <node pkg="navi_simulation" type="gps_error_node" name="gps_error">
         <param name="frame_id" value="/map"/>
         <param name="child_frame_id" value="/base_footprint"/>
         <param name="sigma_x" value="0.01"/>
         <param name="sigma_y" value="0.01"/>
         <param name="rate" value="0.5"/>
     </node>
-    <node pkg="robot_encoders" type="compass_error_node" name="compass_error">
+    <node pkg="navi_simulation" type="compass_error_node" name="compass_error">
         <param name="frame_id" value="/base_footprint"/>
         <param name="sigma" value="0.01745"/>
         <param name="rate" value="20.0"/>
