@@ -27,4 +27,6 @@
   <depend package="navi_simulation"/>
   <depend package="navi_teleop"/>
   <depend package="navi_executive"/>
+
+  <depend package="eband_local_planner"/>
 </package>
