@@ -61,13 +61,20 @@ static void parseGroupList(XmlRpc::XmlRpcValue group_list,
 int main(int argc, char **argv)
 {
     ros::init(argc, argv, "waypoint_loader", ros::init_options::AnonymousName);
-    ros::NodeHandle nh;
+    ros::NodeHandle nh, nh_priv("~");
 
     // Load a list of waypoints from the parameter server.
     XmlRpc::XmlRpcValue waypoint_list;
     std::vector<std::vector<Waypoint> > waypoints;
-    nh.getParam("waypoints", waypoint_list);
+    nh_priv.getParam("waypoints", waypoint_list);
     parseGroupList(waypoint_list, waypoints);
+
+    if (waypoints.size() == 0) {
+        ROS_FATAL("Waypoints parameter is empty.");
+        return 0;
+    }
+    ROS_INFO("Found %d waypoints groups in the parameter.",
+             static_cast<int>(waypoint_list.size()));
 
     // Iteratively add the waypoints to the executive.
     ros::ServiceClient srv = nh.serviceClient<AddWaypoint>("add_waypoint");
