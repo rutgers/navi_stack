@@ -1,6 +1,6 @@
 - git:
     local-name: navi_stack
-    uri: git@github.com:mkoval/navi_stack.git
+    uri: git@github.com:rutgers/navi_stack.git
 - git:
     local-name: fieldforce_tcm
     uri: git@github.com:mkoval/FieldforceTCM.git
