@@ -19,9 +19,6 @@ using navi_executive::AddWaypoint;
 using navi_executive::WaypointGPS;
 using navi_executive::WaypointUTM;
 
-static std::list<std::list<WaypointGPS> > waypoints_;
-static bool idle_ = true;
-
 namespace navi_executive {
 
 Executive::Executive(std::string add_topic, std::string goal_topic)
@@ -39,32 +36,32 @@ Executive::Executive(std::string add_topic, std::string goal_topic)
 bool Executive::addWaypointCallback(AddWaypoint::Request &request,
                                     AddWaypoint::Response &response)
 {
-    std::list<WaypointGPS> const empty;
-    std::list<WaypointGPS> &group = *waypoints_.insert(waypoints_.end(), empty);
+    std::list<WaypointUTM> const empty;
+    std::list<WaypointUTM> &group = *waypoints_.insert(waypoints_.end(), empty);
 
     // Convert the GPS coordinates into UTM.
     for (size_t i = 0; i < group.size(); ++i) {
         WaypointUTM waypoint = convertGPStoUTM(request.waypoints[i]);
-        group.push_back(request.waypoints[i]);
+        group.push_back(waypoint);
     }
 
     // Choose a new goal if we were previously idle.
     if (idle_) {
-        std::list<WaypointGPS>::iterator it = chooseGoal(group);
-        WaypointGPS goal = *it;
+        std::list<WaypointUTM>::iterator it = chooseGoal(group);
+        WaypointUTM goal = *it;
         group.erase(it);
         setGoal(goal);
     }
     return true;
 }
 
-std::list<WaypointGPS>::iterator Executive::chooseGoal(std::list<WaypointGPS> &goals)
+std::list<WaypointUTM>::iterator Executive::chooseGoal(std::list<WaypointUTM> &goals)
 {
     // TODO: Choose a sane ordering for the goals.
     return goals.begin();
 }
 
-void Executive::setGoal(WaypointGPS waypoint)
+void Executive::setGoal(WaypointUTM waypoint)
 {
     MoveBaseGoal goal;
     goal.target_pose.header.frame_id = "/map";

@@ -18,11 +18,12 @@ private:
     ros::NodeHandle nh_;
     actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction> act_goal_;
     ros::ServiceServer srv_add_;
+    std::list<std::list<WaypointUTM> > waypoints_;
 
     bool addWaypointCallback(AddWaypoint::Request  &request,
                              AddWaypoint::Response &response);
-    std::list<WaypointGPS>::iterator chooseGoal(std::list<WaypointGPS> &goals);
-    void setGoal(WaypointGPS waypoint);
+    std::list<WaypointUTM>::iterator chooseGoal(std::list<WaypointUTM> &goals);
+    void setGoal(WaypointUTM waypoint);
 
     WaypointUTM convertGPStoUTM(WaypointGPS gps);
 };
