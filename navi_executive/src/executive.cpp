@@ -6,21 +6,31 @@
 #include <ros/ros.h>
 #include <actionlib/client/simple_action_client.h>
 #include <move_base_msgs/MoveBaseAction.h>
+#include <move_base_msgs/MoveBaseGoal.h>
 #include <nav_msgs/Odometry.h>
 #include <navi_executive/executive.h>
 #include <navi_executive/AddWaypoint.h>
 #include <navi_executive/Waypoint.h>
 
 using move_base_msgs::MoveBaseAction;
+using move_base_msgs::MoveBaseGoal;
 using navi_executive::AddWaypoint;
 using navi_executive::Waypoint;
 
 static std::list<std::list<Waypoint> > waypoints_;
-static bool idle_;
+static bool idle_ = true;
 
 static void setGoal(Waypoint waypoint)
 {
-    // TODO: Set the goal using actionlib.
+    MoveBaseGoal goal;
+    goal.target_pose.header.frame_id = "/map";
+    goal.target_pose.header.stamp = ros::Time::now();
+    goal.target_pose.pose.position.x = 0.0; // ???
+    goal.target_pose.pose.position.y = 0.0; // ???
+    goal.target_pose.pose.orientation.w = 1.0;
+
+    // TODO: Register a callback 
+    act_goal_.sendGoal(goal);
 }
 
 static std::list<Waypoint>::iterator chooseGoal(std::list<Waypoint> &goals)
@@ -32,6 +42,8 @@ static std::list<Waypoint>::iterator chooseGoal(std::list<Waypoint> &goals)
 static bool addWaypointCallback(AddWaypoint::Request &request,
                                 AddWaypoint::Response &response)
 {
+    // TODO: Convert the GPS coordinates into UTM.
+
     // Add a group that contains these waypoints to the end of the queue.
     std::list<Waypoint> const empty;
     std::list<Waypoint> &group = *waypoints_.insert(waypoints_.end(), empty);
