@@ -1,10 +1,10 @@
-//#include <gps_common/conversions.h>
 #include <list>
 #include <string>
 #include <stdint.h>
 #include <boost/lambda/lambda.hpp>
 #include <ros/ros.h>
 #include <actionlib/client/simple_action_client.h>
+#include <gps_common/conversions.h>
 #include <move_base_msgs/MoveBaseAction.h>
 #include <move_base_msgs/MoveBaseGoal.h>
 #include <nav_msgs/Odometry.h>
@@ -39,12 +39,14 @@ Executive::Executive(std::string add_topic, std::string goal_topic)
 bool Executive::addWaypointCallback(AddWaypoint::Request &request,
                                     AddWaypoint::Response &response)
 {
-    // TODO: Convert the GPS coordinates into UTM.
-
-    // Add a group that contains these waypoints to the end of the queue.
     std::list<WaypointGPS> const empty;
     std::list<WaypointGPS> &group = *waypoints_.insert(waypoints_.end(), empty);
-    group.insert(group.begin(), request.waypoints.begin(), request.waypoints.end());
+
+    // Convert the GPS coordinates into UTM.
+    for (size_t i = 0; i < group.size(); ++i) {
+        WaypointUTM waypoint = convertGPStoUTM(request.waypoints[i]);
+        group.push_back(request.waypoints[i]);
+    }
 
     // Choose a new goal if we were previously idle.
     if (idle_) {
@@ -73,6 +75,13 @@ void Executive::setGoal(WaypointGPS waypoint)
 
     // TODO: Register a callback 
     act_goal_.sendGoal(goal);
+}
+
+WaypointUTM Executive::convertGPStoUTM(WaypointGPS gps)
+{
+    WaypointUTM utm;
+    gps_common::LLtoUTM(gps.lat, gps.lon, utm.northing, utm.easting, utm.zone);
+    return utm;
 }
 
 };

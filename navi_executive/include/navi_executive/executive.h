@@ -23,6 +23,8 @@ private:
                              AddWaypoint::Response &response);
     std::list<WaypointGPS>::iterator chooseGoal(std::list<WaypointGPS> &goals);
     void setGoal(WaypointGPS waypoint);
+
+    WaypointUTM convertGPStoUTM(WaypointGPS gps);
 };
 
 };

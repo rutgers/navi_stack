@@ -1,3 +1,3 @@
-int32 zone
+string zone
 float64 northing
-float64 eating
+float64 easting
