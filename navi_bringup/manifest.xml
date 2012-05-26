@@ -1,29 +1,28 @@
 <package>
-  <description brief="launch files for the Rutgers Navigator">
-    Launch files for the Rutgers Navigator.
+  <description brief="Launchfiles for Navi">
+    Launchfiles and configuration parameters for Navi. This package also lists
+    all of the packages used on Navi as dependencies.
   </description>
-  <author>asher</author>
+  <author>Michael Koval</author>
   <license>BSD</license>
   <review status="unreviewed" notes=""/>
 
   <!-- hardware -->
-  <depend package="imu_9drazor"/>
   <depend package="hokuyo_node"/>
-  <depend package="gps_common"/>
-  <depend package="gpsd_client"/>
+  <depend package="novatel_gps"/>
+  <depend package="fieldforce_tcm"/>
+  <depend package="jaguar"/>
+  <depend package="prosilica_camera"/>
 
   <!-- vision -->
   <depend package="camera_calibration"/>
-  <depend package="camera_pose_calibration"/>
-  <depend package="navi_mux"/>
   <depend package="navi_line"/>
   <depend package="navi_white"/>
-  <depend package="stereo_od"/>
-  <depend package="stereo_webcam"/>
 
   <!-- misc -->
+  <depend package="navi_cfg"/>
   <depend package="navi_model"/>
-  <depend package="navi_driver"/>
+  <depend package="navi_simulation"/>
   <depend package="navi_teleop"/>
   <depend package="navi_executive"/>
 </package>
