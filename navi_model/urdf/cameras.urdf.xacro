@@ -24,6 +24,9 @@
                      xyz="${camera_x} ${sign*camera_y} ${camera_z}"
                      rpy="${camera_roll} ${camera_pitch} ${sign*camera_yaw}"/>
 
+        <xacro:frame parent="camera_${side}" child="camera_${side}_optical"
+                     xyz="0 0 0" rpy="${-PI/2} 0 ${-PI/2}"/>
+
         <gazebo reference="camera_${side}">
           <sensor:camera name="camera_${side}_sensor">
             <imageSize>${image_width} ${image_height}</imageSize>
@@ -38,7 +41,7 @@
               <cameraName>camera_${side}</cameraName>
               <imageTopicName>/${side}/image_raw</imageTopicName>
               <cameraInfoTopicName>/${side}/camera_info</cameraInfoTopicName>
-              <frameName>/camera_${side}</frameName>
+              <frameName>/camera_${side}_optical</frameName>
               <hackBaseline>0</hackBaseline>
               <CxPrime>${(image_width+1)/2}</CxPrime>
               <Cx>${(image_width+1)/2}</Cx>
