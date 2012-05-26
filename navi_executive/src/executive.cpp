@@ -10,17 +10,59 @@
 #include <nav_msgs/Odometry.h>
 #include <navi_executive/executive.h>
 #include <navi_executive/AddWaypoint.h>
-#include <navi_executive/Waypoint.h>
+#include <navi_executive/WaypointGPS.h>
+#include <navi_executive/WaypointUTM.h>
 
 using move_base_msgs::MoveBaseAction;
 using move_base_msgs::MoveBaseGoal;
 using navi_executive::AddWaypoint;
-using navi_executive::Waypoint;
+using navi_executive::WaypointGPS;
+using navi_executive::WaypointUTM;
 
-static std::list<std::list<Waypoint> > waypoints_;
+static std::list<std::list<WaypointGPS> > waypoints_;
 static bool idle_ = true;
 
-static void setGoal(Waypoint waypoint)
+namespace navi_executive {
+
+Executive::Executive(std::string add_topic, std::string goal_topic)
+    : idle_(true)
+    , act_goal_(goal_topic, true)
+{
+    // These gymnastics are necessary to get around C++'s poor type inference.
+    typedef boost::function<bool (AddWaypoint::Request &, AddWaypoint::Response &)> AddWaypointCallback;
+    AddWaypointCallback callback = boost::bind(&Executive::addWaypointCallback, this, _1, _2);
+    srv_add_ = nh_.advertiseService(add_topic, callback);
+
+    act_goal_.waitForServer();
+}
+
+bool Executive::addWaypointCallback(AddWaypoint::Request &request,
+                                    AddWaypoint::Response &response)
+{
+    // TODO: Convert the GPS coordinates into UTM.
+
+    // Add a group that contains these waypoints to the end of the queue.
+    std::list<WaypointGPS> const empty;
+    std::list<WaypointGPS> &group = *waypoints_.insert(waypoints_.end(), empty);
+    group.insert(group.begin(), request.waypoints.begin(), request.waypoints.end());
+
+    // Choose a new goal if we were previously idle.
+    if (idle_) {
+        std::list<WaypointGPS>::iterator it = chooseGoal(group);
+        WaypointGPS goal = *it;
+        group.erase(it);
+        setGoal(goal);
+    }
+    return true;
+}
+
+std::list<WaypointGPS>::iterator Executive::chooseGoal(std::list<WaypointGPS> &goals)
+{
+    // TODO: Choose a sane ordering for the goals.
+    return goals.begin();
+}
+
+void Executive::setGoal(WaypointGPS waypoint)
 {
     MoveBaseGoal goal;
     goal.target_pose.header.frame_id = "/map";
@@ -33,40 +75,13 @@ static void setGoal(Waypoint waypoint)
     act_goal_.sendGoal(goal);
 }
 
-static std::list<Waypoint>::iterator chooseGoal(std::list<Waypoint> &goals)
-{
-    // TODO: Choose a sane ordering for the goals.
-    return goals.begin();
-}
-
-static bool addWaypointCallback(AddWaypoint::Request &request,
-                                AddWaypoint::Response &response)
-{
-    // TODO: Convert the GPS coordinates into UTM.
-
-    // Add a group that contains these waypoints to the end of the queue.
-    std::list<Waypoint> const empty;
-    std::list<Waypoint> &group = *waypoints_.insert(waypoints_.end(), empty);
-    group.insert(group.begin(), request.waypoints.begin(), request.waypoints.end());
-
-    // Choose a new goal if we were previously idle.
-    if (idle_) {
-        std::list<Waypoint>::iterator it = chooseGoal(group);
-        Waypoint goal = *it;
-        group.erase(it);
-        setGoal(goal);
-    }
-    return true;
-}
+};
 
 int main(int argc, char **argv)
 {
     ros::init(argc, argv, "executive");
     ros::NodeHandle nh;
 
-    actionlib::SimpleActionClient<MoveBaseAction> act_goal("move_base/goal", true);
-    ros::ServiceServer srv_add = nh.advertiseService("add_waypoint", &addWaypointCallback);
-
-    act_goal.waitForServer();
+    navi_executive::Executive executive("add_waypoint", "move_base/goal");
     return 0;
 }

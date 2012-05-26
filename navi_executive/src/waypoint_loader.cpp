@@ -6,7 +6,8 @@
 #include <XmlRpcValue.h>
 #include <navi_executive/executive.h>
 #include <navi_executive/AddWaypoint.h>
-#include <navi_executive/Waypoint.h>
+#include <navi_executive/WaypointGPS.h>
+#include <navi_executive/WaypointUTM.h>
 
 using namespace navi_executive;
 
@@ -18,7 +19,7 @@ static void checkParamType(XmlRpc::XmlRpcValue value, int type,
     }
 }
 
-static void parseWaypoint(XmlRpc::XmlRpcValue coords, Waypoint &waypoint)
+static void parseWaypoint(XmlRpc::XmlRpcValue coords, WaypointGPS &waypoint)
 {
     checkParamType(coords, XmlRpc::XmlRpcValue::TypeArray,
                    "Waypoint must be a list of two doubles.");
@@ -35,7 +36,7 @@ static void parseWaypoint(XmlRpc::XmlRpcValue coords, Waypoint &waypoint)
 }
 
 static void parseWaypointList(XmlRpc::XmlRpcValue waypoint_list,
-                              std::vector<Waypoint> &waypoints)
+                              std::vector<WaypointGPS> &waypoints)
 {
     checkParamType(waypoint_list, XmlRpc::XmlRpcValue::TypeArray,
                    "Waypoint group must be a list of waypoints.");
@@ -47,7 +48,7 @@ static void parseWaypointList(XmlRpc::XmlRpcValue waypoint_list,
 }
 
 static void parseGroupList(XmlRpc::XmlRpcValue group_list,
-                           std::vector<std::vector<Waypoint> > &groups)
+                           std::vector<std::vector<WaypointGPS> > &groups)
 {
     checkParamType(group_list, XmlRpc::XmlRpcValue::TypeArray,
                    "Expected a list of waypoint groups.");
@@ -65,7 +66,7 @@ int main(int argc, char **argv)
 
     // Load a list of waypoints from the parameter server.
     XmlRpc::XmlRpcValue waypoint_list;
-    std::vector<std::vector<Waypoint> > waypoints;
+    std::vector<std::vector<WaypointGPS> > waypoints;
     nh_priv.getParam("waypoints", waypoint_list);
     parseGroupList(waypoint_list, waypoints);
 
