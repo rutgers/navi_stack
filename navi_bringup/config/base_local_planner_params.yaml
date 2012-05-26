@@ -1,4 +1,4 @@
-TrajectoryPlannerROS:
+DWAPlannerROS:
   # Velocity Constraints
   max_trans_vel: 2.5 # m/s = 5.6 mph
   min_trans_vel: 0.1 # m/s = 0.2 mph
