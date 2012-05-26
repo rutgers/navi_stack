@@ -14,7 +14,9 @@ namespace navi_executive {
 static void checkParamType(XmlRpc::XmlRpcValue value, int type,
                            std::string const &error_msg)
 {
-    ROS_FATAL("Error parsing waypoint list: %s", error_msg.c_str());
+    if (value.getType() != type) {
+        ROS_FATAL("Error parsing waypoint list: %s", error_msg.c_str());
+    }
 }
 
 static void parseWaypoint(XmlRpc::XmlRpcValue coords, Waypoint &waypoint)
@@ -68,5 +70,13 @@ int main(int argc, char **argv)
     std::vector<std::vector<Waypoint> > waypoints;
     parseGroupList(waypoint_list, waypoints);
 
+    for (size_t i = 0; i < waypoints.size(); ++i) {
+        std::cout << "Group #" << i << ":\n";
+
+        for (size_t j = 0; j < waypoints[i].size(); ++j) {
+            std::cout << "- (" << waypoints[i][j].lat
+                      << ", "  << waypoints[i][j].lon << ")\n";
+        }
+    }
     return 0;
 }
