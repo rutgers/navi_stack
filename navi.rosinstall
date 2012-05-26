@@ -1,5 +1,15 @@
-- git: {local-name: navi_stack, uri: 'git@github.com:mkoval/navi_stack.git'}
-- git: {local-name: rdk-bldc, uri: 'git@github.com:mkoval/rdk-bldc.git'}
-- svn: {local-name: simulator_gazebo, uri: 'https://code.ros.org/svn/ros-pkg/stacks/simulator_gazebo/trunk'}
-- svn: {local-name: mrpt_common, uri: 'http://mrpt-ros-pkg.googlecode.com/svn/trunk/mrpt_common'}
-- git: {local-name: erratic_gazebo_plugins, uri: 'git@github.com:mkoval/erratic_gazebo_plugins.git'}
+- git:
+    local-name: navi_stack
+    uri: git@github.com:mkoval/navi_stack.git
+- git:
+    local-name: fieldforce_tcm
+    uri: git@github.com:mkoval/FieldforceTCM.git
+- git:
+    local-name: jaguar
+    uri: git@github.com:mkoval/jaguar.git
+- git:
+    local-name: erratic_gazebo_plugins
+    uri: git@github.com:mkoval/erratic_gazebo_plugins.git
+- git:
+    local-name: robot_kf
+    uri: git@github.com:mkoval/robot_kf.git
