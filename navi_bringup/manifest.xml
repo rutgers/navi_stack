@@ -16,8 +16,10 @@
 
   <!-- vision -->
   <depend package="camera_calibration"/>
+  <!--
   <depend package="navi_line"/>
   <depend package="navi_white"/>
+  -->
 
   <!-- misc -->
   <depend package="navi_cfg"/>
