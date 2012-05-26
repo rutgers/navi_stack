@@ -1,7 +1,8 @@
 //#include <gps_common/conversions.h>
-#include <vector>
+#include <list>
 #include <string>
 #include <stdint.h>
+#include <boost/lambda/lambda.hpp>
 #include <ros/ros.h>
 #include <actionlib/client/simple_action_client.h>
 #include <move_base_msgs/MoveBaseAction.h>
@@ -14,10 +15,35 @@ using move_base_msgs::MoveBaseAction;
 using navi_executive::AddWaypoint;
 using navi_executive::Waypoint;
 
-bool addWaypointCallback(AddWaypoint::Request &request,
-                         AddWaypoint::Response &response)
+static std::list<std::list<Waypoint> > waypoints_;
+static bool idle_;
+
+static void setGoal(Waypoint waypoint)
 {
-    ROS_INFO("Callback with %d waypoints.", static_cast<int>(request.waypoints.size()));
+    // TODO: Set the goal using actionlib.
+}
+
+static std::list<Waypoint>::iterator chooseGoal(std::list<Waypoint> &goals)
+{
+    // TODO: Choose a sane ordering for the goals.
+    return goals.begin();
+}
+
+static bool addWaypointCallback(AddWaypoint::Request &request,
+                                AddWaypoint::Response &response)
+{
+    // Add a group that contains these waypoints to the end of the queue.
+    std::list<Waypoint> const empty;
+    std::list<Waypoint> &group = *waypoints_.insert(waypoints_.end(), empty);
+    group.insert(group.begin(), request.waypoints.begin(), request.waypoints.end());
+
+    // Choose a new goal if we were previously idle.
+    if (idle_) {
+        std::list<Waypoint>::iterator it = chooseGoal(group);
+        Waypoint goal = *it;
+        group.erase(it);
+        setGoal(goal);
+    }
     return true;
 }
 
