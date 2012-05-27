@@ -13,7 +13,9 @@
 #include <navi_executive/WaypointGPS.h>
 #include <navi_executive/WaypointUTM.h>
 
+using actionlib::SimpleClientGoalState;
 using move_base_msgs::MoveBaseAction;
+using move_base_msgs::MoveBaseResultConstPtr;
 using move_base_msgs::MoveBaseGoal;
 using navi_executive::AddWaypoint;
 using navi_executive::WaypointGPS;
@@ -24,6 +26,7 @@ namespace navi_executive {
 Executive::Executive(std::string add_topic, std::string goal_topic)
     : idle_(true)
     , act_goal_(goal_topic, true)
+    , utm_frame_id_("/map")
 {
     // These gymnastics are necessary to get around C++'s poor type inference.
     typedef boost::function<bool (AddWaypoint::Request &, AddWaypoint::Response &)> AddWaypointCallback;
@@ -55,6 +58,12 @@ bool Executive::addWaypointCallback(AddWaypoint::Request &request,
     return true;
 }
 
+void Executive::goalDoneCallback(SimpleClientGoalState const &state,
+                                 MoveBaseResultConstPtr const &result)
+{
+    
+}
+
 std::list<WaypointUTM>::iterator Executive::chooseGoal(std::list<WaypointUTM> &goals)
 {
     // TODO: Choose a sane ordering for the goals.
@@ -64,14 +73,17 @@ std::list<WaypointUTM>::iterator Executive::chooseGoal(std::list<WaypointUTM> &g
 void Executive::setGoal(WaypointUTM waypoint)
 {
     MoveBaseGoal goal;
-    goal.target_pose.header.frame_id = "/map";
+    goal.target_pose.header.frame_id = utm_frame_id_;
     goal.target_pose.header.stamp = ros::Time::now();
-    goal.target_pose.pose.position.x = 0.0; // ???
-    goal.target_pose.pose.position.y = 0.0; // ???
+    goal.target_pose.pose.position.x = waypoint.easting;
+    goal.target_pose.pose.position.y = waypoint.northing;
     goal.target_pose.pose.orientation.w = 1.0;
 
     // TODO: Register a callback 
-    act_goal_.sendGoal(goal);
+    typedef boost::function<void (SimpleClientGoalState const &,
+                                  MoveBaseResultConstPtr const &)> GoalCallback;
+    GoalCallback callback = boost::bind(&Executive::goalDoneCallback, this, _1, _2);
+    act_goal_.sendGoal(goal, callback);
 }
 
 WaypointUTM Executive::convertGPStoUTM(WaypointGPS gps)

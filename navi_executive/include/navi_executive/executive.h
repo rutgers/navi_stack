@@ -3,6 +3,7 @@
 
 #include <actionlib/client/simple_action_client.h>
 #include <move_base_msgs/MoveBaseAction.h>
+#include <move_base_msgs/MoveBaseActionResult.h>
 #include <navi_executive/AddWaypoint.h>
 #include <navi_executive/WaypointGPS.h>
 #include <navi_executive/WaypointUTM.h>
@@ -18,10 +19,15 @@ private:
     ros::NodeHandle nh_;
     actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction> act_goal_;
     ros::ServiceServer srv_add_;
+
     std::list<std::list<WaypointUTM> > waypoints_;
+    std::string utm_frame_id_;
 
     bool addWaypointCallback(AddWaypoint::Request  &request,
                              AddWaypoint::Response &response);
+    void goalDoneCallback(actionlib::SimpleClientGoalState const &state,
+                          move_base_msgs::MoveBaseResultConstPtr const &result);
+
     std::list<WaypointUTM>::iterator chooseGoal(std::list<WaypointUTM> &goals);
     void setGoal(WaypointUTM waypoint);
 
