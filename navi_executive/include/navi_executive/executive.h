@@ -28,8 +28,8 @@ private:
     void goalDoneCallback(actionlib::SimpleClientGoalState const &state,
                           move_base_msgs::MoveBaseResultConstPtr const &result);
 
-    std::list<WaypointUTM>::iterator chooseGoal(std::list<WaypointUTM> &goals);
     void setGoal(WaypointUTM waypoint);
+    void advanceGoal(void);
 
     WaypointUTM convertGPStoUTM(WaypointGPS gps);
 };

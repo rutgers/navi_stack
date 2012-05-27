@@ -1,6 +1,5 @@
 #include <string>
 #include <vector>
-#include <sstream>
 #include <stdint.h>
 #include <ros/ros.h>
 #include <XmlRpcValue.h>
@@ -86,13 +85,6 @@ int main(int argc, char **argv)
         AddWaypoint::Response srv_response;
         srv_request.waypoints = waypoints[i];
         srv.call(srv_request, srv_response);
-
-        std::stringstream ss;
-        for (size_t j = 0; j < waypoints[i].size(); ++j) {
-            ss << " (" << waypoints[i][j].lat << ", " << waypoints[i][j].lon << ")";
-        }
-
-        ROS_INFO("Added Group #%d:%s", static_cast<int>(i + 1), ss.str().c_str());
     }
     return 0;
 }
