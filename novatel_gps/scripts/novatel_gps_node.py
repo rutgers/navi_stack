@@ -5,7 +5,13 @@ from std_msgs.msg import Header
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import Point, Pose, PoseWithCovariance, TwistWithCovariance
 
+prev_sol_status = 'SOL_COMPUTED'
+prev_sol_type = 'OMNISTAR_HP'
+
 def parseBESTUTMA(raw):
+    global prev_sol_status
+    global prev_sol_type
+
     # Split the NMEA header from the actual message.
     try:
         nmea_raw, utm_raw = raw.split(';')
@@ -35,14 +41,21 @@ def parseBESTUTMA(raw):
         rospy.logwarn('BESTUTMA message contains invalid reading')
         return None
 
+    # Warn if we we have a bad fix or are missing OmniSTAR corrections.
     if sol_status != 'SOL_COMPUTED':
-        rospy.logwarn('no solution computed')
-        return None
+        if sol_status != prev_sol_status:
+            rospy.logwarn('No solution computed.')
     elif sol_type != 'OMNISTAR_HP':
-        rospy.logwarn('not receiving OmniSTAR corrections')
-        return None
+        if sol_type != prev_sol_type:
+            rospy.logwarn('Not receiving OmniSTAR HP corrections.')
 
-    return northing, easting, sigma_northing, sigma_easting
+    prev_sol_status = sol_status
+    prev_sol_type = sol_type
+
+    if sol_status == 'SOL_COMPUTED':
+        return northing, easting, sigma_northing, sigma_easting
+    else:
+        return None
 
 def generateOdomMsg(northing, easting, sigma_northing, sigma_easting):
     big = 99999.0

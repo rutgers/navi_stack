@@ -2,7 +2,9 @@
     <include file="$(find navi_bringup)/launch/hardware/drive.launch"/>
     <include file="$(find navi_bringup)/launch/hardware/gps.launch"/>
     <include file="$(find navi_bringup)/launch/hardware/compass.launch"/>
+    <include file="$(find navi_bringup)/launch/hardware/laser.launch"/>
 
     <include file="$(find navi_bringup)/launch/general.launch"/>
     <include file="$(find navi_bringup)/launch/localization.launch"/>
+    <include file="$(find navi_bringup)/launch/navigation.launch"/>
 </launch>
