@@ -9,4 +9,9 @@
         <rosparam file="$(find navi_bringup)/config/global_costmap_params.yaml"/>
         <rosparam file="$(find navi_bringup)/config/base_local_planner_params.yaml"/>
     </node>
+
+    <node pkg="map_server" type="map_server" name="map_server"
+          args="$(find navi_bringup)/config/map.yaml">
+        <param name="frame_id" value="/map_offset"/>
+    </node>
 </launch>

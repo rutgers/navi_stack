@@ -15,5 +15,5 @@ DWAPlannerROS:
   acc_lim_th: 12.566 # rad/s^2
 
   # Goal Tolerance
-  xy_goal_tolerance:  0.25  # m
+  xy_goal_tolerance:  0.50  # m
   yaw_goal_tolerance: 6.283 # rad
