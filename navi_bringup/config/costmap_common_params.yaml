@@ -1,21 +1,35 @@
-obstacle_range: 3
-raytrace_range: 3
-#add in real footprint sizes
-# where should the foot print be centered?  
-# is the use of the inflation radius valid here?
-#footprint: [[x0, y0], [x1, y1], ... [xn, yn]]
-robot_radius: 0.8
-inflation_radius: 0.8
-transform_tolerance: 5.0
+# Coordinate frames used by the costmap. We use /map_offset instead of /map
+# because it is centered on the region of interest.
+global_frame: /map_offset
+robot_base_frame: /base_footprint
+transform_tolerance: 0.5
 
-observation_sources: laser_sensor 
+# Configure the map to use voxels. It would be better to use a 2D costmap, but
+# height is necessary to differentiate between physical obstacles and detected
+# lines. Otherwise, the two clearing operations would interfere.
+static_map: false
+map_type: voxel
+z_voxels: 5
+z_resolution: 0.3
 
-laser_sensor: {
+# It's not possible to use the robot_radius parameter because Navi does not
+# turn about its center.
+footprint:
+- [  0.100,  0.351 ] # front left
+- [ -0.700,  0.351 ] # back left
+- [ -0.700, -0.351 ] # back right
+- [  0.100, -0.351 ] # front right
+
+max_obstacle_height: 1.5
+obstacle_range: 3.0
+raytrace_range: 3.0
+
+observation_sources: laser 
+laser: {
+    topic: /laser,
     sensor_frame: /laser,
     data_type: LaserScan,
-    topic: /laser,
     marking: true,
     clearing: true
+#    expected_update_rate: 0.5
 }
-
-#point_cloud_sensor: {sensor_frame: frame_name, data_type: PointCloud, topic: topic_name, marking: true, clearing: true}
