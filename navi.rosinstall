@@ -13,3 +13,9 @@
 - git:
     local-name: robot_kf
     uri: git@github.com:mkoval/robot_kf.git
+- git:
+    local-name: gps_umd
+    uri: http://ram.umd.edu/git/ros/gps_umd.git
+- git:
+    local-name: dotmatrix
+    uri: git@github.com:mkoval/dotmatrix.git
