@@ -21,7 +21,7 @@
         <param name="gain_i" value="0.02"/>
         <param name="gain_d" value="0.00"/>
         <!-- Odometry -->
-        <param name="alpha" value="10.0"/>
+        <param name="alpha" value="100.0"/>
         <param name="frame_parent" value="/odom"/>
         <param name="frame_child"  value="/base_footprint"/>
         <remap from="/cmd_vel" to="/drive/cmd_vel"/>

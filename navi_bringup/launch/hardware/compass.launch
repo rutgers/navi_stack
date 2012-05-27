@@ -5,6 +5,6 @@
         <param name="mag_slot" value="0"/>
         <param name="accel_slot" value="0"/>
         <param name="frame_id" value="/base_footprint"/>
-	<param name="hack_value" value="-1.83516137283"/>
+        <param name="hack_value" value="-1.83516137283"/>
     </node>
 </launch>

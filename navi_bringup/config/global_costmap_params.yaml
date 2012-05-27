@@ -3,8 +3,14 @@ global_costmap:
   # centered near the region of interest.
   global_frame: /map_offset
   robot_base_frame: /base_footprint
-  rolling_window: false
-  static_map: true
+
+  # THIS IS WRONG
+  rolling_window: true
+  static_map: false
+
+  resolution: 0.10
+  width: 1000.0
+  height: 1000.0
 
   # The global costmap is too big to publish for visualization.
   update_frequency:  5.0
