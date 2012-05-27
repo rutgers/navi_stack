@@ -6,6 +6,7 @@
   <depend stack="ros" />
   <depend stack="ros_comm"/>
   <depend stack="common_msgs"/>
+  <depend stack="gps_umd"/>
   <depend stack="geometry"/>
   <depend stack="navigation"/>
   <depend stack="simulator_gazebo"/>
