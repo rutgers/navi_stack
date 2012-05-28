@@ -6,21 +6,20 @@
        xmlns:joint="http://playerstage.sourceforge.net/gazebo/xmlschema/#slider"
        xmlns:sensor="http://playerstage.sourceforge.net/gazebo/xmlschema/#sensor"
        xmlns:xacro="http://ros.org/wiki/xacro">
-    <xacro:property name="gps_x" value="-0.18941"/>
-    <xacro:property name="gps_z" value="0.76387"/>
-    <xacro:property name="gps_rate" value="2.000"/>
-    <xacro:property name="gps_sigma" value="0.015"/>
-
     <xacro:macro name="gps">
-        <joint name="gps_joint" type="fixed">
-            <parent link="base_link"/>
-            <child link="gps_link"/>
-            <origin xyz="${gps_x} 0 ${gps_z}" rpy="0 0 0"/>
-            <axis xyz="0 0 0"/>
-            <anchor xyz="0 0 0"/>
-        </joint>
-        <link name="gps_link">
-            <xacro:weightless/>
-        </link>
+        <xacro:frame parent="base_link" child="gps" xyz="${gps_offset}" rpy="0 0 0"/>
+
+        <gazebo> 
+            <controller:gazebo_ros_p3d name="gps_controller" plugin="libgazebo_ros_p3d.so">
+                <alwaysOn>true</alwaysOn>
+                <updateRate>60</updateRate>
+                <bodyName>base_footprint</bodyName>
+                <topicName>/ground_truth</topicName>
+                <gaussianNoise>0.0</gaussianNoise>
+                <frameName>/map</frameName>
+                <interface:position name="gps_iface"/>
+            </controller:gazebo_ros_p3d>
+            <canonicalBody>base_footprint</canonicalBody>
+        </gazebo>
     </xacro:macro>
 </robot>

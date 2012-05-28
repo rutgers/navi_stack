@@ -1,6 +1,0 @@
-<launch>
-    <node pkg="fieldforce_tcm" type="compass.py" name="fieldforce_tcm">
-        <param name="path" value="/dev/compass_pni"/>
-        <param name="baud" value="38400"/>
-    </node>
-</launch>

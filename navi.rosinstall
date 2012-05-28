@@ -1,0 +1,21 @@
+- git:
+    local-name: navi_stack
+    uri: git@github.com:rutgers/navi_stack.git
+- git:
+    local-name: fieldforce_tcm
+    uri: git@github.com:mkoval/FieldforceTCM.git
+- git:
+    local-name: jaguar
+    uri: git@github.com:mkoval/jaguar.git
+- git:
+    local-name: erratic_gazebo_plugins
+    uri: git@github.com:mkoval/erratic_gazebo_plugins.git
+- git:
+    local-name: robot_kf
+    uri: git@github.com:mkoval/robot_kf.git
+- git:
+    local-name: gps_umd
+    uri: http://ram.umd.edu/git/ros/gps_umd.git
+- git:
+    local-name: dotmatrix
+    uri: git@github.com:mkoval/dotmatrix.git

@@ -1,0 +1,17 @@
+material Navi/nav_field
+{
+    receive_shadows on
+
+    technique
+    {
+        pass
+        {
+            texture_unit
+            {
+                texture nav_field.jpg
+                filtering anisotropic
+                max_anisotropy 16
+            }
+        }
+    }
+}

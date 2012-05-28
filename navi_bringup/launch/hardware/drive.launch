@@ -1,0 +1,31 @@
+<launch>
+    <node pkg="jaguar" type="diff_drive" name="driver">
+        <remap from="odom" to="drive/odom"/>
+        <remap from="temperature_left" to="temperature/left"/>
+        <remap from="temperature_right" to="temperature/right"/>
+        <remap from="voltage_left" to="voltage/left"/>
+        <remap from="voltage_right" to="voltage/right"/>
+        <!-- CAN bus Configuration -->
+        <param name="port" value="/dev/jaguar"/>
+        <param name="id_left"  value="2"/>
+        <param name="id_right" value="3"/>
+        <!-- Periodic Message Rates -->
+        <param name="heartbeat" value="50"/> <!-- period in ms -->
+        <param name="status"    value="50"/> <!-- period in ms -->
+        <!-- Robot Model Parameters -->
+        <param name="cpr" value="400"/>
+        <param name="wheel_diameter" value="0.254"/> <!-- meters -->
+        <param name="wheel_separation" value="0.712"/> <!-- meters -->
+        <!-- PID Gains -->
+        <param name="gain_p" value="1.00"/>
+        <param name="gain_i" value="0.02"/>
+        <param name="gain_d" value="0.00"/>
+        <!-- Odometry -->
+        <param name="alpha" value="10.0"/>
+        <param name="frame_parent" value="/odom"/>
+        <param name="frame_child"  value="/base_footprint"/>
+        <remap from="/cmd_vel" to="/drive/cmd_vel"/>
+        <!-- Acceleration Limits -->
+        <param name="accel_max" value="10"/>
+    </node>
+</launch>

@@ -1,0 +1,84 @@
+<?xml version="1.0"?>
+<robot xmlns:body="http://playerstage.sourceforge.net/gazebo/xmlschema/#body"
+       xmlns:controller="http://playerstage.sourceforge.net/gazebo/xmlschema/#controller"
+       xmlns:geom="http://playerstage.sourceforge.net/gazebo/xmlschema/#geom"
+       xmlns:interface="http://playerstage.sourceforge.net/gazebo/xmlschema/#interface"
+       xmlns:joint="http://playerstage.sourceforge.net/gazebo/xmlschema/#slider"
+       xmlns:sensor="http://playerstage.sourceforge.net/gazebo/xmlschema/#sensor"
+       xmlns:xacro="http://ros.org/wiki/xacro">
+    <xacro:macro name="chassis">
+        <link name="base_footprint">
+            <xacro:weightless/>
+        </link>
+
+        <joint name="base_link_joint" type="fixed">
+            <parent link="base_footprint"/>
+            <child link="base_link"/>
+            <origin xyz="0 0 ${wheel_radius}"/>
+        </joint>
+        <link name="base_link">
+            <inertial>
+                <mass value="1.0"/>
+                <inertia ixx="1.0" ixy="0.0"   ixz="0.0"
+                                   iyy="100.0" iyz="0.0"
+                                               izz="1.0" />
+            </inertial>
+            <visual>
+                <origin xyz="0 0 ${3*wheel_radius}" rpy="0 0 0"/>
+                <geometry>
+                    <box size="${EPS} ${EPS} ${EPS}"/>
+                </geometry>
+            </visual>
+            <collision>
+                <origin xyz="0 0 ${3*wheel_radius}" rpy="0 0 0"/>
+                <geometry>
+                    <box size="${EPS} ${EPS} ${EPS}"/>
+                </geometry>
+            </collision>
+        </link>
+
+        <joint name="base_visual_joint" type="fixed">
+            <parent link="base_link"/>
+            <child link="base_visual"/>
+            <origin xyz="0 0 0" rpy="${PI/2} 0 0"/>
+        </joint>
+
+        <link name="base_visual">
+            <xacro:weightless/>
+            <visual>
+                <geometry>
+                    <mesh filename="package://navi_model/meshes/frame.stl" scale="0.001 0.001 0.001"/>
+                </geometry>
+                <material name="Blue"/>
+            </visual>
+            <collision>
+                <geometry>
+                    <mesh filename="package://navi_model/meshes/frame.stl" scale="0.001 0.001 0.001"/>
+                </geometry>
+            </collision>
+        </link>
+
+        <gazebo reference="base_visual">
+            <material>Gazebo/Blue</material>
+        </gazebo> 
+
+        <gazebo>
+            <controller:diffdrive_plugin name="differential_drive_controller" plugin="libdiffdrive_plugin.so">
+                <alwaysOn>true</alwaysOn>
+                <updateRate>50.0</updateRate>
+                <torque>${wheel_torque}</torque>
+                <leftJoint>wheel_left_joint</leftJoint>
+                <rightJoint>wheel_right_joint</rightJoint>
+                <wheelSeparation>${wheel_separation}</wheelSeparation>
+                <wheelDiameter>${2*wheel_radius}</wheelDiameter>
+                <robotNamespace>/</robotNamespace>
+                <baseFrame>base_footprint</baseFrame>
+                <odomFrame>odom</odomFrame>
+                <twistTopicName>drive/cmd_vel</twistTopicName>
+                <odomTopicName>drive/odom</odomTopicName>
+                <alpha>0.05</alpha>
+                <interface:position name="drive_iface"/>
+            </controller:diffdrive_plugin>
+        </gazebo>
+    </xacro:macro>
+</robot>

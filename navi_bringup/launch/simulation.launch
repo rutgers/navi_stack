@@ -1,5 +1,5 @@
 <launch>
-    <arg name="world" default="$(find gazebo_worlds)/worlds/empty.world"/>
+    <arg name="world" default="$(find navi_simulation)/worlds/grass.world"/>
     <include file="$(find navi_bringup)/launch/general.launch"/>
     <include file="$(find navi_simulation)/launch/spawn_navi.launch"/>
 
@@ -11,16 +11,15 @@
     <node pkg="gazebo" type="gui" name="gazebo_gui" respawn="false"/>
 
     <!-- Localization Error -->
-    <node pkg="robot_encoders" type="gps_error_node" name="gps_error">
+    <node pkg="navi_simulation" type="gps_error_node" name="gps_error">
         <param name="frame_id" value="/map"/>
-        <param name="child_frame_id" value="/base_link"/>
+        <param name="child_frame_id" value="/base_footprint"/>
         <param name="sigma_x" value="0.01"/>
         <param name="sigma_y" value="0.01"/>
         <param name="rate" value="0.5"/>
     </node>
-
-    <node pkg="robot_encoders" type="compass_error_node" name="compass_error">
-        <param name="frame_id" value="/map"/>
+    <node pkg="navi_simulation" type="compass_error_node" name="compass_error">
+        <param name="frame_id" value="/base_footprint"/>
         <param name="sigma" value="0.01745"/>
         <param name="rate" value="20.0"/>
     </node>

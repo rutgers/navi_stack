@@ -1,0 +1,5 @@
+<launch>
+    <include file="$(find navi_bringup)/launch/simulation.launch"/>
+    <include file="$(find navi_bringup)/launch/localization.launch"/>
+    <include file="$(find navi_bringup)/launch/navigation.launch"/>
+</launch>

@@ -1,7 +1,7 @@
-bin/
-lib/
-build/
-cfg/cpp/
-cfg/*.cfgc
-docs/NaviWhiteConfig*
-src/navi_white/cfg/
+/bin/
+/lib/
+/build/
+/cfg/cpp/
+/src/navi_white/
+/cfg/*.cfgc
+/docs/NaviWhiteConfig*

@@ -1,21 +1,23 @@
 <package>
-  <description brief="navi_simulation">
-
-     navi_simulation
-
+  <description brief="Navi Gazebo Simulation">
+    Gazebo configuration for simulating Navi on the IGVC AutoNav course.
   </description>
   <author>asher</author>
   <license>BSD</license>
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/navi_simulation</url>
+  <rosdep name="eigen"/>
+  <depend package="angles"/>
+  <depend package="roscpp"/>
+  <depend package="geometry_msgs"/>
+  <depend package="nav_msgs"/>
+  <depend package="sensor_msgs"/>
+  <depend package="tf"/>
   <depend package="gazebo"/>
   <depend package="gazebo_tools"/>
   <depend package="gazebo_plugins"/>
   <depend package="navi_model"/>
   <depend package="erratic_gazebo_plugins"/>
-  <depend package="fake_localization"/>
-  <depend package="topic_tools"/>
-  <depend package="image_transport"/>
   <export>
     <gazebo gazebo_media_path="${prefix}/gazebo"/>
   </export>

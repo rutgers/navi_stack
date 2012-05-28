@@ -1,6 +1,11 @@
 global_costmap:
-  global_frame: /map
-  robot_base_frame: /base_link
-  update_frequency: 5.0
-  static_map: false
-  resolution: 0.1
+  # Coordinate frames. We use /map_offset instead of /map because it is
+  # centered near the region of interest.
+  global_frame: /map_offset
+  robot_base_frame: /base_footprint
+  rolling_window: false
+  static_map: true
+
+  # The global costmap is too big to publish for visualization.
+  update_frequency:  5.0
+  publish_frequency: 0.0

@@ -19,5 +19,5 @@ if __name__ == '__main__':
     port.write('UNLOGALL COM3\r\n')
     port.write('ASSIGNLBAND OMNISTAR 1557845 1200\n')
     port.write('UTMZONE SET 10\r\n')
-    port.write('LOG BESTUTMA ONTIME 0.5\r\n')
+    port.write('LOG BESTUTMA ONTIME 1\r\n')
     port.write('SAVECONFIG\r\n')
