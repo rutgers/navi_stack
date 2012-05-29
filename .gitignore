@@ -1,10 +1,11 @@
 /build/
+/*/build/
 *~
-.*.swp
-.DS_Store
+*.swp
+*.swn
 *.pyc
 *.cproject
 *.project
 *.cmake
 *.pydevproject
-*.swp
+.DS_Store
