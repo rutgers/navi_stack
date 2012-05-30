@@ -1,0 +1,3 @@
+<launch>
+    <node pkg="navi_monitor" type="cpu_temp.py" name="cpu_monitor"/>
+</launch>
