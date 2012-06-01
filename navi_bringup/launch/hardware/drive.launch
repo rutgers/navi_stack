@@ -15,18 +15,18 @@
         <!-- Robot Model Parameters -->
         <param name="cpr" value="20595"/>
         <param name="wheel_diameter" value="0.3048"/> <!-- meters -->
-        <param name="wheel_separation" value="0.712"/> <!-- meters -->
+        <param name="wheel_separation" value="0.75"/> <!-- meters -->
         <!-- PID Gains -->
-        <param name="gain_p" value="8.0"/>
-        <param name="gain_i" value="1.0"/>
+        <param name="gain_p" value="7.0"/>
+        <param name="gain_i" value="4.0"/>
         <param name="gain_d" value="0.0"/>
+        <param name="accel_max" value="4"/>
         <!-- Odometry -->
-        <param name="alpha" value="100.0"/>
+        <param name="alpha" value="0.1"/>
         <param name="frame_parent" value="/odom"/>
         <param name="frame_child"  value="/base_footprint"/>
         <remap from="/cmd_vel" to="/drive/cmd_vel"/>
         <!-- Acceleration Limits -->
-        <param name="accel_max" value="2.0"/>
         <!-- Encoder Orientation
         <param name="flip_left" value="true"/>
         <param name="flip_right" value="false"/>
