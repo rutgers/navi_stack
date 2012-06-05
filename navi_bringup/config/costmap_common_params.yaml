@@ -26,8 +26,8 @@ laser: {
     topic: /laser,
     data_type: LaserScan,
     obstacle_range: 4.0,
-    raytrace_range: 4.0,
-    min_obstacle_height: 0.1
+    raytrace_range: 100.0,
+    min_obstacle_height: 0.1,
     marking: true,
     clearing: true
 }
