@@ -7,7 +7,7 @@
         <rosparam file="$(find navi_bringup)/config/costmap_common_params.yaml" ns="local_costmap"/>
         <rosparam file="$(find navi_bringup)/config/local_costmap_params.yaml"/>
         <rosparam file="$(find navi_bringup)/config/global_costmap_params.yaml"/>
-        <rosparam file="$(find navi_bringup)/config/base_local_planner_params.yaml"/>
+        <rosparam file="$(find navi_bringup)/config/dwa_local_planner_params.yaml"/>
     </node>
 
     <node pkg="map_server" type="map_server" name="map_server"
