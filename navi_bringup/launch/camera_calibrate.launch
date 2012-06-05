@@ -1,13 +1,12 @@
 <launch>
-	<arg name="pair"/>   <!-- camera pair (e.g. narrow or wide) -->
+	<arg name="side"/>   <!-- camera pair (e.g. narrow or wide) -->
 	<arg name="rows"   default="8"/>     <!-- number of chessboard rows -->
 	<arg name="cols"   default="6"/>     <!-- number of chessboard columns -->
 	<arg name="square" default="0.062"/> <!-- length of a side of one square on the calibration chessboard -->
 
-	<node pkg="camera_calibration" type="cameracalibrator.py" name="calibrator" args="--size=$(arg cols)x$(arg rows) --square=$(arg square)" ns="vision">
-		<remap from="left"  to="$(arg pair)/left/image"/>
-		<remap from="right" to="$(arg pair)/right/image"/>
-		<remap from="left_camera"  to="$(arg pair)/left"/>
-		<remap from="right_camera" to="$(arg pair)/right"/>
+	<node pkg="camera_calibration" type="cameracalibrator.py" name="calibrator"
+          args="--size=$(arg cols)x$(arg rows) --square=$(arg square)" ns="vision">
+		<remap from="image"  to="$(arg side)/image"/>
+		<remap from="camera" to="$(arg side)"/>
 	</node>
 </launch>
