@@ -1,19 +1,27 @@
 <launch>
     <group ns="vision/left">
-        <node pkg="navi_white" type="hack_node" name="white_left">
+        <node pkg="image_proc" type="image_proc" name="rectify">
+            <remap from="image_raw" to="image"/>
+        </node>
+        <node pkg="navi_white" type="hack_node" name="color_filter">
+            <remap from="image" to="image_rect_color"/>
             <rosparam command="load" file="$(find navi_bringup)/config/color_filter.yaml"/>
         </node>
-        <node pkg="navi_line" type="line_node" name="pulse_left">
+        <node pkg="navi_line" type="line_node" name="width_filter">
             <rosparam command="load" file="$(find navi_bringup)/config/width_filter.yaml"/>
             <param name="frame_camera" value="/camera_left_optical"/>
         </node>
     </group>
 
     <group ns="vision/right">
-        <node pkg="navi_white" type="hack_node" name="white_right">
+        <node pkg="image_proc" type="image_proc" name="rectify">
+            <remap from="image_raw" to="image"/>
+        </node>
+        <node pkg="navi_white" type="hack_node" name="color_filter">
+            <remap from="image" to="image_rect_color"/>
             <rosparam command="load" file="$(find navi_bringup)/config/color_filter.yaml"/>
         </node>
-        <node pkg="navi_line" type="line_node" name="pulse_right">
+        <node pkg="navi_line" type="line_node" name="width_filter">
             <rosparam command="load" file="$(find navi_bringup)/config/width_filter.yaml"/>
             <param name="frame_camera" value="/camera_right_optical"/>
         </node>
