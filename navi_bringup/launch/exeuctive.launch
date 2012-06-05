@@ -1,7 +1,0 @@
-<launch>
-    <node pkg="navi_executive" type="executive" name="executive"/>
-    <node pkg="navi_executive" type="waypoint_loader" name="waypoint_loader">
-        <rosparam param="waypoints" command="load"
-                  file="$(find navi_executive)/config/sample.yaml"/>
-    </node>
-</launch>
