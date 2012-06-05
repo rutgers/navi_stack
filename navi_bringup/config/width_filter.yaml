@@ -8,5 +8,5 @@ blur_size: 3
 cache: true
 frame_ground: '/drive_footprint'
 
-# should be disabled for efficiency in production
+# should be disabled in production for performance
 debug: true

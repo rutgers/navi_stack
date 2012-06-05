@@ -3,4 +3,6 @@ shadow_hue: 90
 shadow_val: 40
 sunlight_hue: 105
 sunlight_val: 155
+
+# should be disabled in production for performance
 debug: true
