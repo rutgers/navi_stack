@@ -108,7 +108,9 @@ void Executive::setGoal(WaypointUTM waypoint)
                                   MoveBaseResultConstPtr const &)> GoalCallback;
     GoalCallback callback = boost::bind(&Executive::goalDoneCallback, this, _1, _2);
 
+    ROS_INFO("Waiting for server.");
     act_goal_.waitForServer();
+    ROS_INFO("Sending goal.");
     act_goal_.sendGoal(goal, callback);
 }
 
@@ -126,7 +128,7 @@ int main(int argc, char **argv)
     ros::init(argc, argv, "executive");
     ros::NodeHandle nh;
 
-    navi_executive::Executive executive("add_waypoint", "move_base/goal");
+    navi_executive::Executive executive("add_waypoint", "move_base");
     ros::spin();
     return 0;
 }

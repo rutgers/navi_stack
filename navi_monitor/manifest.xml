@@ -1,0 +1,16 @@
+<package>
+  <description brief="navi_monitor">
+
+     navi_monitor
+
+  </description>
+  <author>ieee</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/navi_monitor</url>
+  <depend package="rospy"/>
+  <depend package="std_msgs"/>
+
+</package>
+
+

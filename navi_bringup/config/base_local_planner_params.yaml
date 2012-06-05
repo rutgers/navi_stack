@@ -1,19 +1,26 @@
 DWAPlannerROS:
   # Velocity Constraints
-  max_trans_vel: 2.5 # m/s = 5.6 mph
-  min_trans_vel: 0.1 # m/s = 0.2 mph
-  max_rot_vel: 6.283 # rad/s
-  min_rot_vel: 0.623 # rad/s
-  max_vel_x: 2.5 # m/s = 5.6 mph
-  min_vel_x: 0.1 # m/s = 0.2 mph
+  max_trans_vel: 0.5 # m/s
+  min_trans_vel: 0.2 # m/s
+  max_rot_vel: 1.000 # rad/s
+  min_rot_vel: 0.400 # rad/s
+  max_vel_x: 0.5 # m/s
+  min_vel_x: 0.2 # m/s
   max_vel_y: 0.0
   min_vel_y: 0.0
 
   # Acceleration Limits
-  acc_lim_x:  2.5 # m/s^2
-  acc_lim_y:  2.5 # m/s^2
-  acc_lim_th: 12.566 # rad/s^2
+  acc_lim_x:  4.0 # m/s^2
+  acc_lim_y:  0.0 # m/s^2
+  acc_lim_th: 16.0 # rad/s^2
 
   # Goal Tolerance
-  xy_goal_tolerance:  0.50  # m
+  xy_goal_tolerance:  0.25  # m
   yaw_goal_tolerance: 6.283 # rad
+
+  sim_time: 1.0
+  #sim_time: 2.0
+  vx_samples: 3
+  vy_samples: 0
+  vtheta_samples: 20
+  controller_frequency: 20.0

@@ -76,7 +76,7 @@
                 <odomFrame>odom</odomFrame>
                 <twistTopicName>drive/cmd_vel</twistTopicName>
                 <odomTopicName>drive/odom</odomTopicName>
-                <alpha>0.05</alpha>
+                <alpha>0.25</alpha>
                 <interface:position name="drive_iface"/>
             </controller:diffdrive_plugin>
         </gazebo>

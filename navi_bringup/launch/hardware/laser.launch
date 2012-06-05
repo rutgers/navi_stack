@@ -3,7 +3,10 @@
 		<remap from="scan" to="laser"/>
 		<param name="frame_id" value="/laser"/>
         <param name="port" value="/dev/hokuyo"/>
-        <param name="min_ang" value="-2.356194496154785"/>
-        <param name="max_ang" value="2.356194496154785"/>
+        <!-- The laser is capable of +/-2.35 rad, but the front of
+             the triangular frame intersects with the full field
+             of view -->
+        <param name="min_ang" value="-2.1"/>
+        <param name="max_ang" value="2.1"/>
 	</node>
 </launch>

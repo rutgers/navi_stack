@@ -1,22 +1,23 @@
 # It's not possible to use the robot_radius parameter because Navi does not
 # turn about its center.
 footprint:
-- [  0.100,  0.351 ] # front left
-- [ -0.700,  0.351 ] # back left
-- [ -0.700, -0.351 ] # back right
-- [  0.100, -0.351 ] # front right
+- [  0.178,  0.49 ] # front left
+- [ -0.815,  0.49 ] # back left
+- [ -0.815, -0.49 ] # back right
+- [  0.178, -0.49 ] # front right
 
 transform_tolerance: 0.5
 max_obstacle_height: 1.5
-obstacle_range: 10.0
-raytrace_range: 10.0
+obstacle_range: 4.0
+raytrace_range: 4.0
 
 # Configure the map to use voxels. It would be better to use a 2D costmap, but
 # height is necessary to differentiate between physical obstacles and detected
 # lines. Otherwise, the two clearing operations would interfere.
-map_type: voxel
-z_resolution: 0.3
-z_voxels: 5
+map_type: costmap
+#map_type: voxel
+#z_resolution: 0.3
+#z_voxels: 5
 track_unknown_space: true
 
 observation_sources: laser detected_lines
@@ -24,6 +25,8 @@ laser: {
     topic: /laser,
     sensor_frame: /laser,
     data_type: LaserScan,
+    obstacle_range: 4.0,
+    raytrace_range: 4.0,
     marking: true,
     clearing: true
 }
