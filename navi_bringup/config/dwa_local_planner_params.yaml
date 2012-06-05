@@ -18,9 +18,13 @@ DWAPlannerROS:
   xy_goal_tolerance:  0.25  # m
   yaw_goal_tolerance: 6.283 # rad
 
-  sim_time: 1.0
-  #sim_time: 2.0
-  vx_samples: 3
+  # Velocity Sampling
+  sim_time: 4.0
+  vx_samples: 5
   vy_samples: 0
-  vtheta_samples: 20
+  vtheta_samples: 15
+  penalize_negative_x: false
   controller_frequency: 20.0
+
+  # Visualization
+  prune_plan: false
