@@ -1,5 +1,8 @@
 <launch>
     <group ns="vision/left">
+        <node pkg="navi_calibration" type="static_ground.py" name="gplane">
+            <param name="frame_id" value="/base_footprint"/>
+        </node>
         <node pkg="image_proc" type="image_proc" name="rectify">
             <remap from="image_raw" to="image"/>
         </node>
@@ -14,6 +17,9 @@
     </group>
 
     <group ns="vision/right">
+        <node pkg="navi_calibration" type="static_ground.py" name="gplane">
+            <param name="frame_id" value="/base_footprint"/>
+        </node>
         <node pkg="image_proc" type="image_proc" name="rectify">
             <remap from="image_raw" to="image"/>
         </node>

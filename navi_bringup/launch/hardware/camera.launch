@@ -1,16 +1,15 @@
 <launch>
     <group ns="vision">
-        <node pkg="prosilica_camera" type="prosilica_node" name="camera_left">
-            <remap from="camera" to="left"/>
-            <remap from="left/image_raw" to="left/image"/>
+        <node pkg="prosilica_camera" type="prosilica_node" name="camera" ns="left">
+            <remap from="camera/image_raw" to="image"/>
             <param name="ip_address" value="192.168.1.4"/>
             <param name="trigger_mode" value="streaming"/>
             <param name="frame_id" value="/camera_left_optical"/>
             <rosparam command="load" file="$(find navi_bringup)/config/camera.yaml"/>
         </node>
-        <node pkg="prosilica_camera" type="prosilica_node" name="camera_right">
-            <remap from="camera" to="right"/>
-            <remap from="right/image_raw" to="right/image"/>
+        <node pkg="prosilica_camera" type="prosilica_node" name="camera" ns="right">
+            <remap from="camera/image_raw" to="image"/>
+            <remap from="image_raw" to="image"/>
             <param name="ip_address" value="192.168.1.3"/>
             <param name="trigger_mode" value="streaming"/>
             <param name="frame_id" value="/camera_right_optical"/>

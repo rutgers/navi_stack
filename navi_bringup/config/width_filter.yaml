@@ -1,12 +1,12 @@
-thickness: 0.0762
-border:    0.1000
+thickness: 0.1016
+border:    0.2000
 threshold: 75
 cutoff:    4
 blur_size: 3
 
 # need to set frame_camera per-camera in vision.launch
 cache: true
-frame_ground: '/drive_footprint'
+frame_ground: /base_footprint
 
 # should be disabled in production for performance
 debug: true

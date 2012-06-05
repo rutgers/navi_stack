@@ -10,7 +10,7 @@
     <xacro:property name="camera_y" value="0.24582"/>
     <xacro:property name="camera_z" value="0.75734"/>
     <xacro:property name="camera_roll"  value="0"/>
-    <xacro:property name="camera_pitch" value="0.177150919"/>
+    <xacro:property name="camera_pitch" value="0.593411946"/>
     <xacro:property name="camera_yaw"   value="0.174532925"/>
 
     <xacro:property name="image_width"  value="640"/>
