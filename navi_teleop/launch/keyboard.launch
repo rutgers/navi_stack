@@ -1,7 +1,7 @@
 <launch>
 	<node pkg="navi_teleop" type="teleop_keyboard" name="teleop_keyboard" output="screen">
-		<param name="trans_vel" value="0.75"/>
-		<param name="angular_vel" value="1.0"/>
+		<param name="trans_vel" value="0.5"/>
+		<param name="angular_vel" value="0.5"/>
 		<param name="always_command" value="true"/>
         <remap from="cmd_vel" to="drive/cmd_vel"/>
 	</node>
