@@ -1,0 +1,7 @@
+port: /dev/hokuyo
+frame_id: /laser
+
+# The laser is capable of +/-2.35 rad, but the front of the triangular frame
+# intersects with the full field of view
+min_ang: -2.1
+max_ang: +2.1

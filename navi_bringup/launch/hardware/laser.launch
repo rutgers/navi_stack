@@ -1,12 +1,6 @@
 <launch>
 	<node pkg="hokuyo_node" type="hokuyo_node" name="laser">
 		<remap from="scan" to="laser"/>
-		<param name="frame_id" value="/laser"/>
-        <param name="port" value="/dev/hokuyo"/>
-        <!-- The laser is capable of +/-2.35 rad, but the front of
-             the triangular frame intersects with the full field
-             of view -->
-        <param name="min_ang" value="-2.1"/>
-        <param name="max_ang" value="2.1"/>
+        <rosparam command="load" file="$(find navi_bringup)/config/laser.yaml"/>
 	</node>
 </launch>
