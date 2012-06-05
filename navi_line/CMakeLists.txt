@@ -16,3 +16,5 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 
 rosbuild_add_executable(line_node src/LineDetectionNode.cpp)
 rosbuild_add_executable(mux_node  src/line_mux.cpp)
+rosbuild_link_boost(line_node signals)
+rosbuild_link_boost(mux_node signals)

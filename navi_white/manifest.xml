@@ -8,10 +8,10 @@
 		<nodelet plugin="${prefix}/nodelet.xml" />
 	</export>
 	<review status="unreviewed" notes=""/>
+	<rosdep name="opencv2"/>
 	<depend package="cv_bridge"/>
 	<depend package="image_transport"/>
 	<depend package="nodelet"/>
-	<depend package="opencv2"/>
 	<depend package="sensor_msgs"/>
 	<depend package="dynamic_reconfigure"/>
 </package>

@@ -3,13 +3,13 @@
 		Detects painted road lines in an image. Assumes a fully calibrated
 		camera and a priori knowledge of line width.
 	</description>
-	<author>Michael Koval/koval.michael@gmail.com</author>
+	<author>Michael Koval</author>
 	<license>BSD</license>
 	<review status="unreviewed" notes=""/>
+	<rosdep name="opencv2"/>
 	<depend package="cv_bridge"/>
 	<depend package="image_geometry"/>
 	<depend package="image_transport"/>
-	<depend package="opencv2"/>
 	<depend package="message_filters"/>
 	<depend package="pcl"/>
 	<depend package="pcl_ros"/>
