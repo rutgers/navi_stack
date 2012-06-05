@@ -1,0 +1,16 @@
+<package>
+  <description brief="navi_calibration">
+
+     navi_calibration
+
+  </description>
+  <author>mkoval</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/navi_calibration</url>
+  <depend package="sensor_msgs"/>
+  <depend package="tf"/>
+
+</package>
+
+
