@@ -1,6 +1,10 @@
 <launch>
 	<node pkg="hokuyo_node" type="hokuyo_node" name="laser">
-		<remap from="scan" to="laser"/>
+		<remap from="scan" to="laser_raw"/>
         <rosparam command="load" file="$(find navi_bringup)/config/laser.yaml"/>
 	</node>
+    <node pkg="navi_calibration" type="fix_laser.py" name="fix_laser">
+        <remap from="laser_in" to="laser_raw"/>
+        <remap from="laser_out" to="laser"/>
+    </node>
 </launch>

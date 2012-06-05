@@ -13,8 +13,8 @@ def callback(scan):
 def main():
     global pub
     rospy.init_node('repair_laser')
-    sub = rospy.Subscriber('laser', LaserScan, callback)
-    pub = rospy.Publisher('laser_fixed', LaserScan)
+    sub = rospy.Subscriber('laser_in', LaserScan, callback)
+    pub = rospy.Publisher('laser_out', LaserScan)
     rospy.spin()
 
 if __name__ == '__main__':
