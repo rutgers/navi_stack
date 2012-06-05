@@ -1,10 +1,5 @@
 <launch>
     <node pkg="fieldforce_tcm" type="compass.py" name="compass">
-        <param name="path" value="/dev/compass_pni"/>
-        <param name="baud" value="38400"/>
-        <param name="mag_slot" value="0"/>
-        <param name="accel_slot" value="0"/>
-        <param name="frame_id" value="/base_footprint"/>
-        <param name="hack_value" value="-1.285"/>
+        <rosparam command="load" file="$(find navi_bringup)/config/compass.yaml"/>
     </node>
 </launch>

@@ -1,0 +1,6 @@
+path: /dev/compass_pni
+baud: 38400
+frame_id: /base_footprint
+mag_slot: 0
+accel_slot: 0
+hack_value: -1.285
