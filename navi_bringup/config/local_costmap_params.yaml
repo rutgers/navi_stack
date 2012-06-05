@@ -6,6 +6,9 @@ local_costmap:
   rolling_window: true
   static_map: false
 
+  # FIXME: Disable this to improve performance.
+  publish_voxel_map: true
+
   # The local costmap is too big to publish for visualization.
   update_frequency: 20.0
   publish_frequency: 10.0

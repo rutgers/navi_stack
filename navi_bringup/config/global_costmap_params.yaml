@@ -6,11 +6,6 @@ global_costmap:
   rolling_window: false
   static_map: true
 
-  # TODO: Increase the size of this.
-  resolution: 0.10
-  width: 500.0
-  height: 500.0
-
-  # FIXME: The global costmap is too big to publish for visualization.
+  # The global costmap is too big to publish for visualization.
   update_frequency:  5.0
   publish_frequency: 0.0
