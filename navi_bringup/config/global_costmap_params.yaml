@@ -3,10 +3,8 @@ global_costmap:
   # centered near the region of interest.
   global_frame: /map_offset
   robot_base_frame: /base_footprint
-
-  # THIS IS WRONG
-  rolling_window: true
-  static_map: false
+  rolling_window: false
+  static_map: true
 
   # TODO: Increase the size of this.
   resolution: 0.10
@@ -15,4 +13,4 @@ global_costmap:
 
   # FIXME: The global costmap is too big to publish for visualization.
   update_frequency:  5.0
-  publish_frequency: 1.0
+  publish_frequency: 0.0
