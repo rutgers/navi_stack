@@ -1,0 +1,21 @@
+<launch>
+    <group ns="vision/left">
+        <node pkg="navi_white" type="hack_node" name="white_left">
+            <rosparam command="load" file="$(find navi_bringup)/config/color_filter.yaml"/>
+        </node>
+        <node pkg="navi_line" type="line_node" name="pulse_left">
+            <rosparam command="load" file="$(find navi_bringup)/config/width_filter.yaml"/>
+            <param name="frame_camera" value="/camera_left_optical"/>
+        </node>
+    </group>
+
+    <group ns="vision/right">
+        <node pkg="navi_white" type="hack_node" name="white_right">
+            <rosparam command="load" file="$(find navi_bringup)/config/color_filter.yaml"/>
+        </node>
+        <node pkg="navi_line" type="line_node" name="pulse_right">
+            <rosparam command="load" file="$(find navi_bringup)/config/width_filter.yaml"/>
+            <param name="frame_camera" value="/camera_right_optical"/>
+        </node>
+    </group>
+</launch>
