@@ -1,0 +1,19 @@
+port: /dev/jaguar
+id_left: 2
+id_right: 3
+heartbeat: 50 # ms
+status: 50 # ms
+
+# Odometry Model
+cpr: 20595
+alpha: 0.1
+wheel_diameter: 0.3048 # m
+wheel_separation: 0.75 # m
+frame_parent: /odom
+frame_child: /base_footprint
+
+# PID Gains
+gain_p: 7.0
+gain_i: 4.0
+gain_d: 0.0
+accel_max: 4.0
