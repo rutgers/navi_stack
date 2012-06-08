@@ -4,14 +4,14 @@
      jaus_pp
 
   </description>
-  <author>nyx</author>
+  <author>UCF</author>
   <license>BSD</license>
   <review status="unreviewed" notes=""/>
-  <url>http://ros.org/wiki/jaus_pp</url>
+  <url>http://active-ist.sourceforge.net/jaus++.php</url>
 
   <export>
     <cpp cflags="-I${prefix}/include"
-         lflags="-L${prefix}/lib -Wl,-rpath,${prefix}/lib" />
+         lflags="-L${prefix}/lib -Wl,-rpath,${prefix}/lib -lcxutils -ljauscore -ljausextras -ljausmobility -ltinyxml" />
   </export>
 </package>
 
