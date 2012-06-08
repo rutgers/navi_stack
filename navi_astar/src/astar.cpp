@@ -1,3 +1,4 @@
+#include <pluginlib/class_list_macros.h>
 #include <navi_astar/astar.h>
 
 namespace navi_astar {
@@ -26,6 +27,8 @@ bool Node::operator!=(Node const &other)
 /*
  * A* Planner
  */
+PLUGINLIB_DECLARE_CLASS(navi_astar, AStarROS, navi_astar::AStarPlanner, nav_core::BaseGlobalPlanner)
+
 AStarPlanner::AStarPlanner(void)
     : initialized_(false)
 {
