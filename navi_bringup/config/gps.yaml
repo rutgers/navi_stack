@@ -2,3 +2,4 @@ port: /dev/gps_novatel
 baud: 115200
 global_frame_id: /map
 frame_id: /gps
+inv_rate_per_sec: 1
