@@ -27,14 +27,22 @@ bool Node::operator!=(Node const &other) const
     return !(*this == other);
 }
 
-Predecessor::Predecessor(Node node, double cost)
-    : node(node), cost(cost)
+Predecessor::Predecessor(void)
+    : node(0, 0), initialized(false)
+{
+}
+
+Predecessor::Predecessor(Node node, double cost_path, double cost_heuristic)
+    : node(node)
+    , cost_path(cost_path)
+    , cost_heuristic(cost_heuristic)
+    , initialized(true)
 {
 }
 
 bool Predecessor::operator<(Predecessor const &other) const
 {
-    return cost < other.cost;
+    return cost_path + cost_heuristic < other.cost_path + other.cost_heuristic;
 }
 
 /*
@@ -146,23 +154,21 @@ void AStarPlanner::visualizeDistance(costmap_2d::Costmap2D const &costmap,
 /*
  * Plan
  */
-bool AStarPlanner::search(double start_x, double start_y,
-                          double goal_x, double goal_y)
+bool AStarPlanner::search(Node const &node_start, Node const &node_goal)
 {
-    //PredecessorArray predecessor(boost::extents[height_][width_]);
-    //Array2 visited(boost::extents[height_][width_]);
+    BinaryArray visited(boost::extents[height_][width_]);
+    std::fill(visited.origin(), visited.origin() + visited.size(), false);
+
+    PredecessorArray predecessor(boost::extents[height_][width_]);
     std::priority_queue<Predecessor> fringe;
-    fringe.push(Predecessor(Node(start_x, start_y), 0.0));
 
-#if 0
+    double start_heuristic = getHeuristicValue(node_start, node_goal);
+    Predecessor predecessor_start(node_start, 0.0, start_heuristic);
+    fringe.push(predecessor_start);
 
-    std::fill(visited.origin(), visited.origin() + visited.size(), 0)
-
-    Node const node_start(start_x, start_y, 0);
-    Node const node_goal(goal_x, goal_y, 0);
-
-    while (!fringe.empty) {
-        Node const node = fringe.top();
+    while (!fringe.empty()) {
+        Predecessor const current = fringe.top();
+        Node const node = current.node;
         fringe.pop();
 
         if (node == node_goal) {
@@ -170,23 +176,37 @@ bool AStarPlanner::search(double start_x, double start_y,
             break;
         } else if (visited[node.y][node.x]) {
             continue;
+        } else {
+            visited[node.y][node.x] = true;
         }
 
-        visited[node.y][node.x] = true;
-
-        double next_cost = node.path_cost + 1;
-        Node const nl(node.x - 1, node.y);
-        Node const nr(node.x + 1, node.y);
-        Node const nt(node.x, node.y - 1);
-        Node const nb(node.x, node.y + 1);
-
-        if (isInBounds(nl) && nl < ) fringe.push(nl);
-        if (isInBounds(nr)) fringe.push(nr);
-        if (isInBounds(nt)) fringe.push(nt);
-        if (isInBounds(nb)) fringe.push(nb);
+        if (node.x > 0)
+            fringe.push(getPredecessor(current, node_goal, -1,  0));
+        if (node.x < width_ - 1)
+            fringe.push(getPredecessor(current, node_goal, +1,  0));
+        if (node.y > 0)
+            fringe.push(getPredecessor(current, node_goal,  0, -1));
+        if (node.y < height_ - 1)
+            fringe.push(getPredecessor(current, node_goal, -1, +1));
     }
-#endif
     return false;
+}
+
+Predecessor AStarPlanner::getPredecessor(Predecessor const &curr, Node const &goal,
+                                         int dx, int dy)
+{
+    Node const node(curr.node.x + dx, curr.node.y + dy);
+
+    // TODO: Use the weighted costs in this calculation.
+    double const new_cost_path = curr.cost_path + 1.0;
+    double const new_cost_heuristic = getHeuristicValue(curr.node, goal);
+
+    return Predecessor(node, new_cost_path, new_cost_heuristic);
+}
+
+double AStarPlanner::getHeuristicValue(Node const &node, Node const &goal)
+{
+    return resolution_ * sqrt(pow(node.x - goal.x, 2) + pow(node.y - goal.y, 2));
 }
 
 /*

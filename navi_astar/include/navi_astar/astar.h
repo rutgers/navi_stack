@@ -27,15 +27,18 @@ struct Node {
 
 struct Predecessor {
     Node node;
-    double cost;
+    double cost_path, cost_heuristic;
+    bool initialized;
 
-    Predecessor(Node node, double cost);
+    Predecessor(void);
+    Predecessor(Node node, double cost_path, double cost_heuristic);
     bool operator<(Predecessor const &other) const;
 };
 
 class AStarPlanner : public nav_core::BaseGlobalPlanner {
 public:
     typedef boost::multi_array<uint8_t, 2> Array2;
+    typedef boost::multi_array<bool, 2> BinaryArray;
     typedef boost::multi_array<Predecessor, 2> PredecessorArray;
     typedef boost::shared_ptr<Array2> Array2Ptr;
 
@@ -47,8 +50,11 @@ public:
     virtual ~AStarPlanner(void);
 
     // Search Algorithm
-    bool search(double start_x, double start_y,
-                double goal_x, double goal_y);
+    bool search(Node const &node_start, Node const &node_goal);
+
+    Predecessor getPredecessor(Predecessor const &node, Node const &goal,
+                               int dx, int dy);
+    double getHeuristicValue(Node const &node, Node const &goal);
 
     inline bool isInBounds(Node const &node)
     {
@@ -63,7 +69,6 @@ public:
     // Visualization
     void visualizeDistance(costmap_2d::Costmap2D const &costmap,
                            Array2 const &distances);
-
 
     // BaseGlobalPlanner interface
     void initialize(std::string name, costmap_2d::Costmap2DROS* costmap_ros);
