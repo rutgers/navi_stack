@@ -18,23 +18,25 @@
 
 namespace navi_astar {
 struct Node {
-    unsigned int const x, y;
-    double const path_cost;
+    unsigned int x, y;
 
-    Node(unsigned int x, unsigned int y, double path_cost);
-    bool operator==(Node const &other);
-    bool operator!=(Node const &other);
+    Node(unsigned int x, unsigned int y);
+    bool operator==(Node const &other) const;
+    bool operator!=(Node const &other) const;
 };
 
 struct Predecessor {
     Node node;
     double cost;
+
+    Predecessor(Node node, double cost);
+    bool operator<(Predecessor const &other) const;
 };
 
 class AStarPlanner : public nav_core::BaseGlobalPlanner {
 public:
     typedef boost::multi_array<uint8_t, 2> Array2;
-    typedef boost::multi_array<Node, 2> PredecessorArray;
+    typedef boost::multi_array<Predecessor, 2> PredecessorArray;
     typedef boost::shared_ptr<Array2> Array2Ptr;
 
     static uint8_t const kCostObstacle;
@@ -50,11 +52,8 @@ public:
 
     inline bool isInBounds(Node const &node)
     {
-        unsigned int const width = costmap_ros_->getSizeInCellsX();
-        unsigned int const height = costmap_ros_->getSizeInCellsX();
-
-        return (0 <= node.x && node.x < width)
-            && (0 <= node.y && node.y < height);
+        // TODO: Implement this.
+        return true;
     }
 
     // Distance Transform
@@ -63,9 +62,7 @@ public:
 
     // Visualization
     void visualizeDistance(costmap_2d::Costmap2D const &costmap,
-                           Array2 const &distances,
-                           unsigned int min_x, unsigned int max_x,
-                           unsigned int min_y, unsigned int max_y);
+                           Array2 const &distances);
 
 
     // BaseGlobalPlanner interface
@@ -81,6 +78,10 @@ private:
     costmap_2d::Costmap2DROS *costmap_ros_;
     bool initialized_;
     double distance_max_;
+    unsigned int width_, height_;
+    unsigned int min_x_, max_x_;
+    unsigned int min_y_, max_y_;
+    double resolution_;
 
     pcl_ros::Publisher<pcl::PointXYZI> pub_distances_;
     ros::Publisher pub_plan_;
