@@ -62,7 +62,11 @@ public:
     void distanceTransform(costmap_2d::Costmap2D const &costmap, Array2 &binary);
 
     // Visualization
-    void visualizeDistance(costmap_2d::Costmap2D const &costmap, Array2 const &distances);
+    void visualizeDistance(costmap_2d::Costmap2D const &costmap,
+                           Array2 const &distances,
+                           unsigned int min_x, unsigned int max_x,
+                           unsigned int min_y, unsigned int max_y);
+
 
     // BaseGlobalPlanner interface
     void initialize(std::string name, costmap_2d::Costmap2DROS* costmap_ros);

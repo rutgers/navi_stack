@@ -85,32 +85,39 @@ void AStarPlanner::distanceTransform(costmap_2d::Costmap2D const &costmap, Array
     unsigned int const width  = costmap.getSizeInCellsX();
     unsigned int const height = costmap.getSizeInCellsY();
     bool changed;
+    int iteration = 0;
 
     do {
         changed = false;
 
+        ROS_INFO("Iteration #%d", iteration + 1);
+
         for (unsigned int y = 1; y < height - 1; ++y)
         for (unsigned int x = 1; x < width - 1; ++x) {
             uint8_t &value = binary[y][x];
-            uint8_t const value_old = value;
+            unsigned int const value_old = value;
 
-            value = std::min(value, binary[y - 1][x]);
-            value = std::min(value, binary[y + 1][x]);
-            value = std::min(value, binary[y][x - 1]);
-            value = std::min(value, binary[y][x + 1]);
+            value = (uint8_t)std::min((unsigned int)value, binary[y - 1][x] + 1u);
+            value = (uint8_t)std::min((unsigned int)value, binary[y + 1][x] + 1u);
+            value = (uint8_t)std::min((unsigned int)value, binary[y][x - 1] + 1u);
+            value = (uint8_t)std::min((unsigned int)value, binary[y][x + 1] + 1u);
 
             // This is a fixed point algorithm that terminates when the costs
             // stop changing.
             changed = changed || (value < value_old);
         }
-    } while (changed);
+        iteration++;
+    } while (changed && iteration < 10);
 }
 
 void AStarPlanner::visualizeDistance(costmap_2d::Costmap2D const &costmap,
-                                     Array2 const &distances)
+                                     Array2 const &distances,
+                                     unsigned int min_x, unsigned int max_x,
+                                     unsigned int min_y, unsigned int max_y)
 {
     unsigned int const width  = costmap.getSizeInCellsX();
     unsigned int const height = costmap.getSizeInCellsY();
+
     double const origin_x = costmap.getOriginX();
     double const origin_y = costmap.getOriginY();
     double const resolution = costmap.getResolution();
@@ -118,19 +125,20 @@ void AStarPlanner::visualizeDistance(costmap_2d::Costmap2D const &costmap,
     pcl::PointCloud<pcl::PointXYZI> cloud;
     cloud.header.stamp = ros::Time::now();
     cloud.header.frame_id = costmap_ros_->getGlobalFrameID();
-    cloud.reserve(width * height);
 
-    for (unsigned int y = 0; y < height; ++y)
-    for (unsigned int x = 0; x < width; ++x) {
+    for (unsigned int y = min_y; y < max_y; ++y)
+    for (unsigned int x = min_x; x < max_x; ++x) {
         double const distance = distances[y][x] * resolution;
 
-        pcl::PointXYZI &pt = cloud[y * width + x];
+        pcl::PointXYZI pt;
         pt.x = resolution * x + origin_x;
         pt.y = resolution * y + origin_y;
         pt.z = 0.0;
-        pt.intensity = std::min(distance / distance_max_, 1.0);
+        pt.intensity = distance;
+        cloud.push_back(pt);
     }
 
+    ROS_INFO("A* Published %d points.", (int)cloud.size());
     pub_distances_.publish(cloud);
 }
 
@@ -188,11 +196,28 @@ bool AStarPlanner::makePlan(geometry_msgs::PoseStamped const &start,
                             geometry_msgs::PoseStamped const &goal,
                             std::vector<geometry_msgs::PoseStamped> &plan)
 {
+    ROS_INFO("A* Make Plan");
     costmap_2d::Costmap2D costmap;
     costmap_ros_->getCostmapCopy(costmap);
+    
+    geometry_msgs::Point position = start.pose.position;
+
+    unsigned int start_x, start_y;
+    bool in_bounds = costmap.worldToMap(position.x, position.y,
+                                        start_x, start_y);
+
+    unsigned int const width = costmap.getSizeInCellsX();
+    unsigned int const height = costmap.getSizeInCellsY();
+    unsigned int const min_x = std::max(start_x - 10, 0u);
+    unsigned int const max_x = std::min(start_x + 10, width);
+    unsigned int const min_y = std::max(start_y - 10, 0u);
+    unsigned int const max_y = std::min(start_y + 10, height);
+
+    ROS_INFO("%d %d %d %d", min_x, max_x, min_y, max_y);
 
     Array2Ptr distances = getBinaryCostmap(costmap);
-    visualizeDistance(costmap, *distances);
+    distanceTransform(costmap, *distances);
+    visualizeDistance(costmap, *distances, min_x, max_x, min_y, max_y);
     return true;
 }
 
