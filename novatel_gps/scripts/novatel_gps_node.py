@@ -108,6 +108,11 @@ if __name__ == '__main__':
     )
     frame_id = rospy.get_param('~frame_id', '/base_link')
     global_frame_id = rospy.get_param('~global_frame_id', '/map')
+    rate = rospy.get_param('~inv_rate_per_sec')
+
+    fp.write('unlogall com1\r\nlog bestutma ontime {0}\r\n'.format(rate))
+    fp.flushOutput()
+    fp.flushInput()
 
     while not rospy.is_shutdown():
         line = fp.readline()
