@@ -25,15 +25,6 @@ void AStarPlanner::initialize(std::string name, costmap_2d::Costmap2DROS* costma
     initialized_ = true;
 }
 
-void AStarPlanner::plan(void)
-{
-    costmap_2d::Costmap2D costmap;
-    costmap_ros_->getCostmapCopy(costmap);
-
-    Array2Ptr distances = getBinaryCostmap(costmap);
-    visualizeDistance(costmap, *distances);
-}
-
 AStarPlanner::Array2Ptr AStarPlanner::getBinaryCostmap(costmap_2d::Costmap2D const &costmap)
 {
     unsigned int const width  = costmap.getSizeInCellsX();
@@ -109,6 +100,32 @@ void AStarPlanner::visualizeDistance(costmap_2d::Costmap2D const &costmap,
     }
 
     pub_distances_.publish(cloud);
+}
+
+/*
+ * BaseGlobalPlanner interface
+ */
+bool AStarPlanner::makePlan(geometry_msgs::PoseStamped const &start,
+                            geometry_msgs::PoseStamped const &goal,
+                            std::vector<geometry_msgs::PoseStamped> &plan)
+{
+    costmap_2d::Costmap2D costmap;
+    costmap_ros_->getCostmapCopy(costmap);
+
+    Array2Ptr distances = getBinaryCostmap(costmap);
+    visualizeDistance(costmap, *distances);
+    return true;
+}
+
+void AStarPlanner::publishPlan(std::vector<geometry_msgs::PoseStamped> const& path,
+                               double r, double g, double b, double a)
+{
+    
+}
+
+bool AStarPlanner::makePlanService(nav_msgs::GetPlan::Request &req, nav_msgs::GetPlan::Response &resp)
+{
+    return true;
 }
 
 };

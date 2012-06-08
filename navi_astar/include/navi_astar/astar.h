@@ -29,9 +29,6 @@ public:
     AStarPlanner(std::string name, costmap_2d::Costmap2DROS *costmap_ros);
     virtual ~AStarPlanner(void);
 
-    // Search
-    void plan(void);
-
     // Distance Transform
     Array2Ptr getBinaryCostmap(costmap_2d::Costmap2D const &costmap);
     void distanceTransform(costmap_2d::Costmap2D const &costmap, Array2 &binary);
