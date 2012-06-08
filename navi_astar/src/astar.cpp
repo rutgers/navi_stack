@@ -1,0 +1,109 @@
+#include <navi_astar/astar.h>
+
+namespace navi_astar {
+
+uint8_t const AStarPlanner::kCostObstacle = 253;
+uint8_t const AStarPlanner::kCostUnknown  = 255;
+
+AStarPlanner::AStarPlanner(void)
+    : costmap_ros_(NULL)
+    , distance_max_(2.0)
+{
+}
+
+AStarPlanner::AStarPlanner(std::string name, costmap_2d::Costmap2DROS *costmap_ros)
+    : costmap_ros_(costmap_ros)
+    , distance_max_(2.0)
+{
+}
+
+void AStarPlanner::initialize(std::string name, costmap_2d::Costmap2DROS* costmap_ros)
+{
+    costmap_ros_ = costmap_ros;
+}
+
+void AStarPlanner::plan(void)
+{
+    costmap_2d::Costmap2D costmap;
+    costmap_ros_->getCostmapCopy(costmap);
+
+    Array2Ptr distances = getBinaryCostmap(costmap);
+    visualizeDistance(costmap, *distances);
+}
+
+AStarPlanner::Array2Ptr AStarPlanner::getBinaryCostmap(costmap_2d::Costmap2D const &costmap)
+{
+    unsigned int const width  = costmap.getSizeInCellsX();
+    unsigned int const height = costmap.getSizeInCellsY();
+    uint8_t const *raw = costmap.getCharMap();
+
+    Array2Ptr binary = boost::make_shared<Array2>(boost::extents[height][width]);
+
+    for (unsigned int y = 0; y < height; ++y)
+    for (unsigned int x = 0; x < width; ++x) {
+        uint8_t const cost = raw[y * height + x];
+
+        // Initialize the cell to be proportional to the distance from the
+        // obstacle.
+        if (cost == kCostUnknown || cost < kCostObstacle) {
+            (*binary)[y][x] = std::numeric_limits<uint8_t>::max();
+        } else {
+            (*binary)[y][x] = std::numeric_limits<uint8_t>::min();
+        }
+    }
+    return binary;
+}
+
+void AStarPlanner::distanceTransform(costmap_2d::Costmap2D const &costmap, Array2 &binary)
+{
+    unsigned int const width  = costmap.getSizeInCellsX();
+    unsigned int const height = costmap.getSizeInCellsY();
+    bool changed;
+
+    do {
+        changed = false;
+
+        for (unsigned int y = 1; y < height - 1; ++y)
+        for (unsigned int x = 1; x < width - 1; ++x) {
+            uint8_t &value = binary[y][x];
+            uint8_t const value_old = value;
+
+            value = std::min(value, binary[y - 1][x]);
+            value = std::min(value, binary[y + 1][x]);
+            value = std::min(value, binary[y][x - 1]);
+            value = std::min(value, binary[y][x + 1]);
+
+            // This is a fixed point algorithm that terminates when the costs
+            // stop changing.
+            changed = changed || (value < value_old);
+        }
+    } while (changed);
+}
+
+void AStarPlanner::visualizeDistance(costmap_2d::Costmap2D const &costmap,
+                                     Array2 const &distances)
+{
+    unsigned int const width  = costmap.getSizeInCellsX();
+    unsigned int const height = costmap.getSizeInCellsY();
+    double const origin_x = costmap.getOriginX();
+    double const origin_y = costmap.getOriginY();
+    double const resolution = costmap.getResolution();
+
+    pcl::PointCloud<pcl::PointXYZI> cloud;
+    cloud.reserve(width * height);
+
+    for (unsigned int y = 0; y < height; ++y)
+    for (unsigned int x = 0; x < width; ++x) {
+        double const distance = distances[y][x] * resolution;
+
+        pcl::PointXYZI &pt = cloud[y * width + x];
+        pt.x = resolution * x + origin_x;
+        pt.y = resolution * y + origin_y;
+        pt.z = 0.0;
+        pt.intensity = std::min(distance / distance_max_, 1.0);
+    }
+
+    pub_distances_.publish(cloud);
+}
+
+};
