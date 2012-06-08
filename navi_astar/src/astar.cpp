@@ -5,14 +5,37 @@ namespace navi_astar {
 uint8_t const AStarPlanner::kCostObstacle = 253;
 uint8_t const AStarPlanner::kCostUnknown  = 255;
 
+/*
+ * Node Datastructure
+ */
+Node::Node(unsigned int x, unsigned int y, double path_cost)
+    : x(x), y(y), path_cost(path_cost)
+{
+}
+
+bool Node::operator==(Node const &other)
+{
+    return x == other.x && y == other.y;
+}
+
+bool Node::operator!=(Node const &other)
+{
+    return !(*this == other);
+}
+
+/*
+ * A* Planner
+ */
 AStarPlanner::AStarPlanner(void)
     : initialized_(false)
 {
+    ROS_INFO("Constructed A* Planner");
 }
 
 AStarPlanner::AStarPlanner(std::string name, costmap_2d::Costmap2DROS *costmap_ros)
     : initialized_(false)
 {
+    ROS_INFO("Constructed A* Planner");
     initialize(name, costmap_ros);
 }
 
@@ -23,6 +46,8 @@ void AStarPlanner::initialize(std::string name, costmap_2d::Costmap2DROS* costma
     nh_priv.param("max_distance", distance_max_, 2.0);
     costmap_ros_ = costmap_ros;
     initialized_ = true;
+
+    ROS_INFO("Initialized A* Planner");
 }
 
 AStarPlanner::Array2Ptr AStarPlanner::getBinaryCostmap(costmap_2d::Costmap2D const &costmap)
@@ -100,6 +125,53 @@ void AStarPlanner::visualizeDistance(costmap_2d::Costmap2D const &costmap,
     }
 
     pub_distances_.publish(cloud);
+}
+
+/*
+ * Plan
+ */
+bool AStarPlanner::search(double start_x, double start_y,
+                          double goal_x, double goal_y)
+{
+#if 0
+    unsigned int const width  = /* foo */;
+    unsigned int const height = /* foo */;
+
+    boost::priority_queue<Node> fringe;
+    PredecessorArray predecessor(boost::extents[HEIGHT][WIDTH]);
+    Array2 visited(boost::extents[HEIGHT][WIDTH]);
+
+    std::fill(visited.origin(), visited.origin() + visited.size(), 0)
+
+    Node const node_start(start_x, start_y, 0);
+    Node const node_goal(goal_x, goal_y, 0);
+
+    while (!fringe.empty) {
+        Node const node = fringe.top();
+        fringe.pop();
+
+        if (node == node_goal) {
+            ROS_INFO("Search Done");
+            break;
+        } else if (visited[node.y][node.x]) {
+            continue;
+        }
+
+        visited[node.y][node.x] = true;
+
+        double next_cost = node.path_cost + 1;
+        Node const nl(node.x - 1, node.y);
+        Node const nr(node.x + 1, node.y);
+        Node const nt(node.x, node.y - 1);
+        Node const nb(node.x, node.y + 1);
+
+        if (isInBounds(nl) && nl < ) fringe.push(nl);
+        if (isInBounds(nr)) fringe.push(nr);
+        if (isInBounds(nt)) fringe.push(nt);
+        if (isInBounds(nb)) fringe.push(nb);
+    }
+#endif
+    return false;
 }
 
 /*

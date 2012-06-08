@@ -1,5 +1,5 @@
 <library path="lib/libastar">
-    <class name="navfn/NavfnROS" type="navfn::NavfnROS" base_class_type="nav_core::BaseGlobalPlanner">
+    <class name="navi_astar/AStarROS" type="navi_astar::AStarPlanner" base_class_type="nav_core::BaseGlobalPlanner">
         <description>
         A* Search that attempts to maximize obstacle clearance.
         </description>

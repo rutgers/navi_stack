@@ -17,9 +17,24 @@
 #include <nav_msgs/GetPlan.h>
 
 namespace navi_astar {
+struct Node {
+    unsigned int const x, y;
+    double const path_cost;
+
+    Node(unsigned int x, unsigned int y, double path_cost);
+    bool operator==(Node const &other);
+    bool operator!=(Node const &other);
+};
+
+struct Predecessor {
+    Node node;
+    double cost;
+};
+
 class AStarPlanner : public nav_core::BaseGlobalPlanner {
 public:
     typedef boost::multi_array<uint8_t, 2> Array2;
+    typedef boost::multi_array<Node, 2> PredecessorArray;
     typedef boost::shared_ptr<Array2> Array2Ptr;
 
     static uint8_t const kCostObstacle;
@@ -28,6 +43,19 @@ public:
     AStarPlanner(void);
     AStarPlanner(std::string name, costmap_2d::Costmap2DROS *costmap_ros);
     virtual ~AStarPlanner(void);
+
+    // Search Algorithm
+    bool search(double start_x, double start_y,
+                double goal_x, double goal_y);
+
+    inline bool isInBounds(Node const &node)
+    {
+        unsigned int const width = costmap_ros_->getSizeInCellsX();
+        unsigned int const height = costmap_ros_->getSizeInCellsX();
+
+        return (0 <= node.x && node.x < width)
+            && (0 <= node.y && node.y < height);
+    }
 
     // Distance Transform
     Array2Ptr getBinaryCostmap(costmap_2d::Costmap2D const &costmap);
