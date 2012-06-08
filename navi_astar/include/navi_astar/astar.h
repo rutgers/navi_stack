@@ -52,8 +52,8 @@ public:
     // Search Algorithm
     bool search(Node const &node_start, Node const &node_goal);
 
-    Predecessor getPredecessor(Predecessor const &node, Node const &goal,
-                               int dx, int dy);
+    Predecessor getPredecessor(Predecessor const &node, Node const &goal, int dx, int dy);
+    Node getNode(double world_x, double world_y);
     double getHeuristicValue(Node const &node, Node const &goal);
 
     inline bool isInBounds(Node const &node)
@@ -81,6 +81,7 @@ public:
 
 private:
     costmap_2d::Costmap2DROS *costmap_ros_;
+    costmap_2d::Costmap2D costmap_;
     bool initialized_;
     double distance_max_;
     unsigned int width_, height_;

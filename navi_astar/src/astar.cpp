@@ -171,6 +171,8 @@ bool AStarPlanner::search(Node const &node_start, Node const &node_goal)
         Node const node = current.node;
         fringe.pop();
 
+        ROS_INFO("Cost = %f", current.cost_path);
+
         if (node == node_goal) {
             ROS_INFO("Search Done");
             break;
@@ -204,6 +206,14 @@ Predecessor AStarPlanner::getPredecessor(Predecessor const &curr, Node const &go
     return Predecessor(node, new_cost_path, new_cost_heuristic);
 }
 
+Node AStarPlanner::getNode(double world_x, double world_y)
+{
+    Node node(0, 0);
+    // TODO: Check if it's in bounds.
+    costmap_.worldToMap(world_x, world_y, node.x, node.y);
+    return node;
+}
+
 double AStarPlanner::getHeuristicValue(Node const &node, Node const &goal)
 {
     return resolution_ * sqrt(pow(node.x - goal.x, 2) + pow(node.y - goal.y, 2));
@@ -217,15 +227,14 @@ bool AStarPlanner::makePlan(geometry_msgs::PoseStamped const &start,
                             std::vector<geometry_msgs::PoseStamped> &plan)
 {
     ROS_INFO("A* Make Plan");
-    costmap_2d::Costmap2D costmap;
-    costmap_ros_->getCostmapCopy(costmap);
-    width_  = costmap.getSizeInCellsX();
-    height_ = costmap.getSizeInCellsY();
-    resolution_ = costmap.getResolution();
+    costmap_ros_->getCostmapCopy(costmap_);
+    width_  = costmap_.getSizeInCellsX();
+    height_ = costmap_.getSizeInCellsY();
+    resolution_ = costmap_.getResolution();
     
     geometry_msgs::Point position = start.pose.position;
     unsigned int start_x, start_y;
-    bool in_bounds = costmap.worldToMap(position.x, position.y,start_x, start_y);
+    bool in_bounds = costmap_.worldToMap(position.x, position.y,start_x, start_y);
     if (!in_bounds) {
         ROS_ERROR_THROTTLE(10, "Robot is outside the global costmap.");
         return false;
@@ -238,9 +247,16 @@ bool AStarPlanner::makePlan(geometry_msgs::PoseStamped const &start,
 
     ROS_INFO("%d %d %d %d", min_x_, max_x_, min_y_, max_y_);
 
-    Array2Ptr distances = getBinaryCostmap(costmap);
-    distanceTransform(costmap, *distances);
-    visualizeDistance(costmap, *distances);
+    Array2Ptr distances = getBinaryCostmap(costmap_);
+    distanceTransform(costmap_, *distances);
+
+    geometry_msgs::Point position_start = start.pose.position;
+    geometry_msgs::Point position_goal = goal.pose.position;
+    Node const node_start = getNode(position_start.x, position_start.y);
+    Node const node_goal = getNode(position_goal.x, position_goal.y);
+    search(node_start, node_goal);
+
+    visualizeDistance(costmap_, *distances);
     return true;
 }
 
