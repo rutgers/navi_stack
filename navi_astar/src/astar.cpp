@@ -1,3 +1,4 @@
+#include <cmath>
 #include <pluginlib/class_list_macros.h>
 #include <navi_astar/astar.h>
 
@@ -11,19 +12,29 @@ uint8_t const AStarPlanner::kCostUnknown  = 255;
 /*
  * Node Datastructure
  */
-Node::Node(unsigned int x, unsigned int y, double path_cost)
-    : x(x), y(y), path_cost(path_cost)
+Node::Node(unsigned int x, unsigned int y)
+    : x(x), y(y)
 {
 }
 
-bool Node::operator==(Node const &other)
+bool Node::operator==(Node const &other) const
 {
     return x == other.x && y == other.y;
 }
 
-bool Node::operator!=(Node const &other)
+bool Node::operator!=(Node const &other) const
 {
     return !(*this == other);
+}
+
+Predecessor::Predecessor(Node node, double cost)
+    : node(node), cost(cost)
+{
+}
+
+bool Predecessor::operator<(Predecessor const &other) const
+{
+    return cost < other.cost;
 }
 
 /*
@@ -59,15 +70,13 @@ void AStarPlanner::initialize(std::string name, costmap_2d::Costmap2DROS* costma
 
 AStarPlanner::Array2Ptr AStarPlanner::getBinaryCostmap(costmap_2d::Costmap2D const &costmap)
 {
-    unsigned int const width  = costmap.getSizeInCellsX();
-    unsigned int const height = costmap.getSizeInCellsY();
     uint8_t const *raw = costmap.getCharMap();
 
-    Array2Ptr binary = boost::make_shared<Array2>(boost::extents[height][width]);
+    Array2Ptr binary = boost::make_shared<Array2>(boost::extents[height_][width_]);
 
-    for (unsigned int y = 0; y < height; ++y)
-    for (unsigned int x = 0; x < width; ++x) {
-        uint8_t const cost = raw[y * height + x];
+    for (unsigned int y = 0; y < height_; ++y)
+    for (unsigned int x = 0; x < width_; ++x) {
+        uint8_t const cost = raw[y * height_ + x];
 
         // Initialize the cell to be proportional to the distance from the
         // obstacle.
@@ -82,18 +91,16 @@ AStarPlanner::Array2Ptr AStarPlanner::getBinaryCostmap(costmap_2d::Costmap2D con
 
 void AStarPlanner::distanceTransform(costmap_2d::Costmap2D const &costmap, Array2 &binary)
 {
-    unsigned int const width  = costmap.getSizeInCellsX();
-    unsigned int const height = costmap.getSizeInCellsY();
     bool changed;
     int iteration = 0;
+
+    int const max_iterations = static_cast<int>(ceil(distance_max_ / resolution_));
 
     do {
         changed = false;
 
-        ROS_INFO("Iteration #%d", iteration + 1);
-
-        for (unsigned int y = 1; y < height - 1; ++y)
-        for (unsigned int x = 1; x < width - 1; ++x) {
+        for (unsigned int y = min_y_; y < max_y_; ++y)
+        for (unsigned int x = min_x_; x < max_x_; ++x) {
             uint8_t &value = binary[y][x];
             unsigned int const value_old = value;
 
@@ -107,32 +114,26 @@ void AStarPlanner::distanceTransform(costmap_2d::Costmap2D const &costmap, Array
             changed = changed || (value < value_old);
         }
         iteration++;
-    } while (changed && iteration < 10);
+    } while (changed && iteration < max_iterations);
 }
 
 void AStarPlanner::visualizeDistance(costmap_2d::Costmap2D const &costmap,
-                                     Array2 const &distances,
-                                     unsigned int min_x, unsigned int max_x,
-                                     unsigned int min_y, unsigned int max_y)
+                                     Array2 const &distances)
 {
-    unsigned int const width  = costmap.getSizeInCellsX();
-    unsigned int const height = costmap.getSizeInCellsY();
-
     double const origin_x = costmap.getOriginX();
     double const origin_y = costmap.getOriginY();
-    double const resolution = costmap.getResolution();
 
     pcl::PointCloud<pcl::PointXYZI> cloud;
     cloud.header.stamp = ros::Time::now();
     cloud.header.frame_id = costmap_ros_->getGlobalFrameID();
 
-    for (unsigned int y = min_y; y < max_y; ++y)
-    for (unsigned int x = min_x; x < max_x; ++x) {
-        double const distance = distances[y][x] * resolution;
+    for (unsigned int y = min_y_; y < max_y_; ++y)
+    for (unsigned int x = min_x_; x < max_x_; ++x) {
+        double const distance = distances[y][x] * resolution_;
 
         pcl::PointXYZI pt;
-        pt.x = resolution * x + origin_x;
-        pt.y = resolution * y + origin_y;
+        pt.x = resolution_ * x + origin_x;
+        pt.y = resolution_ * y + origin_y;
         pt.z = 0.0;
         pt.intensity = distance;
         cloud.push_back(pt);
@@ -148,13 +149,12 @@ void AStarPlanner::visualizeDistance(costmap_2d::Costmap2D const &costmap,
 bool AStarPlanner::search(double start_x, double start_y,
                           double goal_x, double goal_y)
 {
-#if 0
-    unsigned int const width  = /* foo */;
-    unsigned int const height = /* foo */;
+    //PredecessorArray predecessor(boost::extents[height_][width_]);
+    //Array2 visited(boost::extents[height_][width_]);
+    std::priority_queue<Predecessor> fringe;
+    fringe.push(Predecessor(Node(start_x, start_y), 0.0));
 
-    boost::priority_queue<Node> fringe;
-    PredecessorArray predecessor(boost::extents[HEIGHT][WIDTH]);
-    Array2 visited(boost::extents[HEIGHT][WIDTH]);
+#if 0
 
     std::fill(visited.origin(), visited.origin() + visited.size(), 0)
 
@@ -199,25 +199,28 @@ bool AStarPlanner::makePlan(geometry_msgs::PoseStamped const &start,
     ROS_INFO("A* Make Plan");
     costmap_2d::Costmap2D costmap;
     costmap_ros_->getCostmapCopy(costmap);
+    width_  = costmap.getSizeInCellsX();
+    height_ = costmap.getSizeInCellsY();
+    resolution_ = costmap.getResolution();
     
     geometry_msgs::Point position = start.pose.position;
-
     unsigned int start_x, start_y;
-    bool in_bounds = costmap.worldToMap(position.x, position.y,
-                                        start_x, start_y);
+    bool in_bounds = costmap.worldToMap(position.x, position.y,start_x, start_y);
+    if (!in_bounds) {
+        ROS_ERROR_THROTTLE(10, "Robot is outside the global costmap.");
+        return false;
+    }
 
-    unsigned int const width = costmap.getSizeInCellsX();
-    unsigned int const height = costmap.getSizeInCellsY();
-    unsigned int const min_x = std::max(start_x - 20, 0u);
-    unsigned int const max_x = std::min(start_x + 20, width);
-    unsigned int const min_y = std::max(start_y - 20, 0u);
-    unsigned int const max_y = std::min(start_y + 20, height);
+    min_x_ = std::max(start_x - 20, 0u);
+    max_x_ = std::min(start_x + 20, width_);
+    min_y_ = std::max(start_y - 20, 0u);
+    max_y_ = std::min(start_y + 20, height_);
 
-    ROS_INFO("%d %d %d %d", min_x, max_x, min_y, max_y);
+    ROS_INFO("%d %d %d %d", min_x_, max_x_, min_y_, max_y_);
 
     Array2Ptr distances = getBinaryCostmap(costmap);
     distanceTransform(costmap, *distances);
-    visualizeDistance(costmap, *distances, min_x, max_x, min_y, max_y);
+    visualizeDistance(costmap, *distances);
     return true;
 }
 
