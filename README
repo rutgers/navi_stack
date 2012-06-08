@@ -1,10 +1,5 @@
-# Submodules (watch out)
+Stack for running navi
+----------------------
 
-cloning:
-
-    git clone git@github.com:jmesmon/navi_stack.git --recursive
-
-pulling:
-
-    git pull --recurse-submodules
-
+See `navi_bringup/launch` for robot startup and configuration files.
+`navi_executive` manages waypoints.
