@@ -50,6 +50,7 @@ public:
 
 private:
     costmap_2d::Costmap2DROS *costmap_ros_;
+    bool initialized_;
     double distance_max_;
 
     pcl_ros::Publisher<pcl::PointXYZI> pub_distances_;

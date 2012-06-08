@@ -6,20 +6,23 @@ uint8_t const AStarPlanner::kCostObstacle = 253;
 uint8_t const AStarPlanner::kCostUnknown  = 255;
 
 AStarPlanner::AStarPlanner(void)
-    : costmap_ros_(NULL)
-    , distance_max_(2.0)
+    : initialized_(false)
 {
 }
 
 AStarPlanner::AStarPlanner(std::string name, costmap_2d::Costmap2DROS *costmap_ros)
-    : costmap_ros_(costmap_ros)
-    , distance_max_(2.0)
+    : initialized_(false)
 {
+    initialize(name, costmap_ros);
 }
 
 void AStarPlanner::initialize(std::string name, costmap_2d::Costmap2DROS* costmap_ros)
 {
+    ros::NodeHandle nh_priv("~/" + name);
+    pub_distances_.advertise(nh_priv, "distances", 1);
+    nh_priv.param("max_distance", distance_max_, 2.0);
     costmap_ros_ = costmap_ros;
+    initialized_ = true;
 }
 
 void AStarPlanner::plan(void)
@@ -90,6 +93,8 @@ void AStarPlanner::visualizeDistance(costmap_2d::Costmap2D const &costmap,
     double const resolution = costmap.getResolution();
 
     pcl::PointCloud<pcl::PointXYZI> cloud;
+    cloud.header.stamp = ros::Time::now();
+    cloud.header.frame_id = costmap_ros_->getGlobalFrameID();
     cloud.reserve(width * height);
 
     for (unsigned int y = 0; y < height; ++y)
