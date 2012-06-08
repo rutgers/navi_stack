@@ -1,0 +1,19 @@
+<package>
+    <description brief="navi_astar">navi_astar</description>
+    <author>Michael Koval</author>
+    <license>BSD</license>
+    <review status="unreviewed" notes=""/>
+    <url>http://ros.org/wiki/navi_astar</url>
+    <depend package="roscpp"/>
+    <depend package="costmap_2d"/>
+    <depend package="geometry_msgs"/>
+    <depend package="nav_core"/>
+    <depend package="nav_msgs"/>
+    <depend package="pcl"/>
+    <depend package="pcl_ros"/>
+    <export>
+        <cpp cflags="-I${prefix}/include -I${prefix}/cfg/cpp"
+             lflags="-Wl,-rpath,${prefix}/lib -L${prefix}/lib -lastar"/>
+        <nav_core plugin="${prefix}/bgp_plugin.xml" />
+    </export>
+</package>
