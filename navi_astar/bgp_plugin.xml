@@ -1,0 +1,8 @@
+<library path="lib/libastar">
+    <class name="navi_astar/AStarPlanner" type="navi_astar::AStarPlanner"
+           base_class_type="nav_core::BaseGlobalPlanner">
+        <description>
+        A* Search that attempts to maximize obstacle clearance.
+        </description>
+    </class>
+</library>
