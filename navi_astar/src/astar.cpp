@@ -208,10 +208,10 @@ bool AStarPlanner::makePlan(geometry_msgs::PoseStamped const &start,
 
     unsigned int const width = costmap.getSizeInCellsX();
     unsigned int const height = costmap.getSizeInCellsY();
-    unsigned int const min_x = std::max(start_x - 10, 0u);
-    unsigned int const max_x = std::min(start_x + 10, width);
-    unsigned int const min_y = std::max(start_y - 10, 0u);
-    unsigned int const max_y = std::min(start_y + 10, height);
+    unsigned int const min_x = std::max(start_x - 20, 0u);
+    unsigned int const max_x = std::min(start_x + 20, width);
+    unsigned int const min_y = std::max(start_y - 20, 0u);
+    unsigned int const max_y = std::min(start_y + 20, height);
 
     ROS_INFO("%d %d %d %d", min_x, max_x, min_y, max_y);
 
