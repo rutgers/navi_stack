@@ -50,8 +50,7 @@ public:
     virtual ~AStarPlanner(void);
 
     // Search Algorithm
-    bool search(unsigned int start_x, unsigned int start_y,
-                unsigned int goal_x,  unsigned int goal_y);
+    bool search(Node const &node_start, Node const &node_goal);
 
     Predecessor getPredecessor(Predecessor const &node, Node const &goal,
                                int dx, int dy);

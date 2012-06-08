@@ -52,6 +52,8 @@ def parseBESTUTMA(raw):
     prev_sol_status = sol_status
     prev_sol_type = sol_type
 
+    rospy.logwarn('diff_age {0}, sol_age {1}'.format(utm_list[13], utm_list[14]))
+
     if sol_status == 'SOL_COMPUTED':
         return northing, easting, sigma_northing, sigma_easting
     else:

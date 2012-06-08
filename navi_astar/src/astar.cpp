@@ -154,14 +154,8 @@ void AStarPlanner::visualizeDistance(costmap_2d::Costmap2D const &costmap,
 /*
  * Plan
  */
-bool AStarPlanner::search(unsigned int start_x, unsigned int start_y,
-                          unsigned int goal_x,  unsigned int goal_y)
+bool AStarPlanner::search(Node const &node_start, Node const &node_goal)
 {
-    // TODO: Use the conversion methods.
-    Node node_start(start_x / resolution_, start_y / resolution_);
-    Node node_goal(goal_x / resolution_, goal_y / resolution_);
-
-
     BinaryArray visited(boost::extents[height_][width_]);
     std::fill(visited.origin(), visited.origin() + visited.size(), false);
 
