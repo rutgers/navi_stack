@@ -3,7 +3,7 @@
         <remap from="cmd_vel" to="drive/cmd_vel"/>
         <remap from="odom" to="odom_fused"/>
 
-        <param name="base_global_planner" value="navi_astar/AStarROS"/>
+        <param name="base_global_planner" value="navi_astar/AStarPlanner"/>
         <param name="base_local_planner" value="dwa_local_planner/DWAPlannerROS"/>
         <rosparam file="$(find navi_bringup)/config/costmap_common_params.yaml" ns="global_costmap"/>
         <rosparam file="$(find navi_bringup)/config/costmap_common_params.yaml" ns="local_costmap"/>

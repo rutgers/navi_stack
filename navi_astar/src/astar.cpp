@@ -1,6 +1,8 @@
 #include <pluginlib/class_list_macros.h>
 #include <navi_astar/astar.h>
 
+PLUGINLIB_DECLARE_CLASS(navi_astar, AStarPlanner, navi_astar::AStarPlanner, nav_core::BaseGlobalPlanner)
+
 namespace navi_astar {
 
 uint8_t const AStarPlanner::kCostObstacle = 253;
@@ -27,7 +29,6 @@ bool Node::operator!=(Node const &other)
 /*
  * A* Planner
  */
-PLUGINLIB_DECLARE_CLASS(navi_astar, AStarROS, navi_astar::AStarPlanner, nav_core::BaseGlobalPlanner)
 
 AStarPlanner::AStarPlanner(void)
     : initialized_(false)
@@ -41,6 +42,9 @@ AStarPlanner::AStarPlanner(std::string name, costmap_2d::Costmap2DROS *costmap_r
     ROS_INFO("Constructed A* Planner");
     initialize(name, costmap_ros);
 }
+
+AStarPlanner::~AStarPlanner(void)
+{}
 
 void AStarPlanner::initialize(std::string name, costmap_2d::Costmap2DROS* costmap_ros)
 {
