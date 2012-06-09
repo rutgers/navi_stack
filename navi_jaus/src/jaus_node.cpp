@@ -15,8 +15,6 @@
 #include <ros/ros.h>
 #include <nav_msgs/Odometery.h>
 
-#include <navi_executive/AddWaypoint.h>
-
 static JAUS::LocalPoseSensor *local_pose_sensor;
 static JAUS::VelocityStateSensor *velocity_state_sensor;
 
@@ -103,14 +101,6 @@ int main(int argc, char **argv)
     }
 
     JAUS::Time::Stamp printTimeMs = 0;
-
-    {
-        navi_executive::AddWaypointUTM add_waypoint;
-        navi_executive::WaypointUTM waypoint;
-        waypoint.northing = 0;
-        waypoint.easting  = 0;
-        add_waypoint.waypoints.push(waypoint);
-    }
 
     JAUS::Management *management = component.ManagementService();
 
