@@ -55,6 +55,16 @@ void position_cb(nav_msgs::Odometery::Ptr odom)
     velocity_state_sensor->SetVelocityState(velocity_state);
 }
 
+class ShutdownCB : public JAUS::::Callback {
+    public:
+        ControlCallback(JAUS_Controller* c): parent(c) {}
+        ~ControlCallback() {}
+        virtual void ProcessMessage(const JAUS::Message* message);
+    private:
+        JAUS_Controller* parent;
+};
+
+
 int main(int argc, char **argv)
 {
     ros::init(argc, argv, "jaus");
@@ -98,6 +108,7 @@ int main(int argc, char **argv)
     {
         JAUS::JUDP *transport = static_cast<JAUS::JUDP *>(component.TransportService());
         transport->AddConnection(COP_IP_ADDR, JAUS::Address(COP_SUBSYSTEM_ID, COP_NODE_ID, COP_COMPONENT_ID));
+        transport->RegisterCallback(JAUS::SHUTDOWN, jaus_shutdown);
     }
 
     JAUS::Time::Stamp printTimeMs = 0;
