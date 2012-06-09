@@ -57,6 +57,20 @@ void position_cb(nav_msgs::Odometery::Ptr odom)
     velocity_state_sensor->SetVelocityState(velocity_state);
 }
 
+class LocalWaypointListDriverCB : public LocalWaypointListDriver
+{
+    public:
+        LocalWaypointListDriverCB() : LocalWaypointListDriver()
+        {}
+
+        ExecuteList(const double meters_per_second)
+        {
+            LocalWaypointListDriver::ExecuteList(meters_per_second);
+
+
+        }
+};
+
 int main(int argc, char **argv)
 {
     ros::init(argc, argv, "jaus");
@@ -97,19 +111,22 @@ int main(int argc, char **argv)
 
     component.ManagementService()->SetStatus(JAUS::Management::Status::Standby);
 
-    JAUS::JUDP *transportService = static_cast<JAUS:JUDP *>(component.TransportService());
-    transportService->AddConnection(COP_IP_ADDR, JAUS::Address(COP_SUBSYSTEM_ID, COP_NODE_ID, COP_COMPONENT_ID));
+    {
+        JAUS::JUDP *transport = static_cast<JAUS:JUDP *>(component.TransportService());
+        transport->AddConnection(COP_IP_ADDR, JAUS::Address(COP_SUBSYSTEM_ID, COP_NODE_ID, COP_COMPONENT_ID));
+    }
 
     JAUS::Time::Stamp printTimeMs = 0;
 
-    navi_executive::AddWaypoint add_waypoint;
-    navi_executive::WaypointGPS waypoint;
-    waypoint.lat = 0;
-    waypoint.lon = 0;
-    add_waypoint.waypoints.push(
+    {
+        navi_executive::AddWaypointUTM add_waypoint;
+        navi_executive::WaypointUTM waypoint;
+        waypoint.northing = 0;
+        waypoint.easting  = 0;
+        add_waypoint.waypoints.push(waypoint);
+    }
 
-
-    JAUS::Management management = component.ManagementService();
+    JAUS::Management *management = component.ManagementService();
 
     while(ros::ok())
     {
@@ -127,29 +144,6 @@ int main(int argc, char **argv)
             ROS_INFO("JAUS Standby");
         }
 
-#if 0
-        // Get local waypoint list
-        JAUS::Element::Map elementList = localWaypointListDriver->GetElementList();
-        // Convert to SetLocalWaypointCommands
-        JAUS::Element::Map::iterator listElement;
-        std::vector<JAUS::SetLocalWaypoint> commandList;
-        for(listElement = elementList.begin(); listElement != elementList.end(); listElement++)
-        {
-            if(listElement->second.mpElement->GetMessageCode() == JAUS::SET_LOCAL_WAYPOINT)
-            {
-                commandList.push_back(*((JAUS::SetLocalWaypoint *)(listElement->second.mpElement)) );
-            }
-        }
-#endif
-
-        //Execute 
-        if(localWaypointListDriver->IsExecuting())
-        {
-            // TODO: Go through this, should be replace by executive
-        }
-
-        //XXX:Everything below is correct except TODO                                                                                           
-
         //Update Status
         if(JAUS::Time::GetUtcTimeMs() - printTimeMs > 5000)                                         
         {                                                                                          
@@ -164,18 +158,10 @@ int main(int argc, char **argv)
             printTimeMs = JAUS::Time::GetUtcTimeMs();                                              
         }                                                                                          
 
-        // Exit if escape key pressed.                                                             
-        if(CxUtils::GetChar() == 27)                                                               
-        {                                                                                          
-            break;                                                                                 
-        }                                                                                          
-
-
         CxUtils::SleepMs(250);
         ros::spinOnce();
-    }                                                                                              
+    }
     //END MAIN JAUS LOOP---------------------------------------------------------------------------//
-                                                                                                   
     // Shutdown any components associated with our subsystem.                                  
     component.Shutdown();                                                   
 
