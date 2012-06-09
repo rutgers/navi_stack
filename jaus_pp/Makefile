@@ -15,34 +15,16 @@ include $(shell rospack find mk)/download_unpack_build.mk
 MKDIR = mkdir
 MV = mv
 RM = rm -rf
+CMAKE = cmake
 
 configure : $(SOURCE_DIR)/unpacked
-	$(MKDIR) -p $(SOURCE_DIR)/build && cd $(SOURCE_DIR)/build && cmake ../libraries/jaus++/2.0/build/cmake
+	$(MKDIR) -p $(SOURCE_DIR)/build && cd $(SOURCE_DIR)/build && $(CMAKE) ../libraries/jaus++/2.0/build/cmake -DCMAKE_INSTALL_PREFIX="$(PWD)"
 
 build-it : configure
 	$(MAKE) -C $(SOURCE_DIR)/build
 
-bin :
-	$(MKDIR) bin
-
-lib :
-	$(MKDIR) lib
-
-include:
-	$(MKDIR) include
-
-install-lib   : build-it lib
-	$(MV) $(SOURCE_DIR)/libraries/jaus++/2.0/lib/* lib/ && touch install-lib
-
-install-bin   : build-it bin
-	$(MV) $(SOURCE_DIR)/libraries/jaus++/2.0/bin/* bin/ && touch install-bin
-
-install-inc   : build-it include
-	$(MV) $(SOURCE_DIR)/libraries/jaus++/2.0/include/jaus include/ && \
-	$(MV) $(SOURCE_DIR)/libraries/cxutils/2.0/include/cxutils include/ && \
-	touch install-inc
-
-install-real: install-bin install-lib install-inc
+install-real:
+	$(MAKE) -C $(SOURCE_DIR)/build install
 	touch install
 
 install : wipe
