@@ -25,27 +25,24 @@ int main(int argc, char **argv)
 
     //SETUP JAUS-----------------------------------------------------------------------------------//
 
-    //Create JAUS component 
-    JAUS::Component component;                   
-                                    
-    //Disable timeout                                    
-    component.AccessControlService()->SetTimeoutPeriod(0);      
+    //Create JAUS component
+    JAUS::Component component;
 
-    //Add Global Position Sensor, Local Position Sensor, Velocity Sensor to JAUS component 
+    //Disable timeout
+    component.AccessControlService()->SetTimeoutPeriod(0);
+
+    //Add Global Position Sensor, Local Position Sensor, Velocity Sensor to JAUS component
     JAUS::GlobalPoseSensor* globalPoseSensor = new JAUS::GlobalPoseSensor();
-    globalPoseSensor->SetSensorUpdateRate(25); //update @ 25Hz   
-    component.AddService(globalPoseSensor);      
-                                                      
-    JAUS::LocalPoseSensor* localPoseSensor = new JAUS::LocalPoseSensor(); 
-    localPoseSensor->SetSensorUpdateRate(25);  //update @ 25Hz  
-    component.AddService(localPoseSensor);  
-                                                
+    component.AddService(globalPoseSensor);
+
+    JAUS::LocalPoseSensor* localPoseSensor = new JAUS::LocalPoseSensor();
+    component.AddService(localPoseSensor);
+
     JAUS::VelocityStateSensor* velocityStateSensor = new JAUS::VelocityStateSensor();
-    velocityStateSensor->SetSensorUpdateRate(25);  //update @ 25Hz   
-    component.AddService(velocityStateSensor); 
-                                        
-    //List for waypoints                               
-    component.AddService(new JAUS::ListManager());           
+    component.AddService(velocityStateSensor);
+
+    //List for waypoints
+    component.AddService(new JAUS::ListManager());
     JAUS::LocalWaypointListDriver* localWaypointListDriver = new JAUS::LocalWaypointListDriver();  
     component.AddService(localWaypointListDriver);     
                                        
@@ -61,11 +58,9 @@ int main(int argc, char **argv)
     }
 
     //Standby
-    component.ManagementService()->SetStatus(JAUS::Management::Status::Standby);    
-    
-    //add JDUP as service ............. JTCPClient ......JTCP
-    JAUS::JUDP *transportService = (JAUS::JUDP*)component.TransportService();
+    component.ManagementService()->SetStatus(JAUS::Management::Status::Standby);
 
+    JAUS::JUDP *transportService = static_cast<JAUS:JUDP *>(component.TransportService());
     transportService->AddConnection(COP_IP_ADDR, JAUS::Address(COP_SUBSYSTEM_ID, COP_NODE_ID, COP_COMPONENT_ID));
       
             
