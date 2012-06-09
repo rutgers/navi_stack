@@ -45,9 +45,9 @@ void position_cb(nav_msgs::Odometry::Ptr odom)
     velocity_state.SetVelocityY(odom->twist.twist.linear.y);
     velocity_state.SetVelocityZ(odom->twist.twist.linear.z);
 
-    velocity_state.SetVelocityRoll (odom->twist.twist.angular.x);
-    velocity_state.SetVelocityPitch(odom->twist.twist.angular.y);
-    velocity_state.SetVelocityYaw  (odom->twist.twist.angular.z);
+    velocity_state.SetRollRate (odom->twist.twist.angular.x);
+    velocity_state.SetPitchRate(odom->twist.twist.angular.y);
+    velocity_state.SetYawRate  (odom->twist.twist.angular.z);
 
     velocity_state.SetTimeStamp(cx_time);
 
