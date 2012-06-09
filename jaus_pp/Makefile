@@ -28,7 +28,7 @@ bin :
 lib :
 	$(MKDIR) lib
 
-include :
+include:
 	$(MKDIR) include
 
 install-lib   : build-it lib
@@ -40,7 +40,7 @@ install-bin   : build-it bin
 install-inc   : build-it include
 	$(MV) $(SOURCE_DIR)/libraries/jaus++/2.0/include/jaus include/ && touch install-inc
 
-install-real: install-bin install-lib include-inc
+install-real: install-bin install-lib install-inc
 	touch install
 
 install : wipe
