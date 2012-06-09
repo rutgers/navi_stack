@@ -60,6 +60,9 @@ int main(int argc, char **argv)
     ros::init(argc, argv, "jaus");
     ros::NodeHandle nh;
 
+    std::string odom_path;
+    nh.getParam("~odom", odom_path, "/odom_fuse");
+
     JAUS::Component component;
     // Disable timeout. Normally, service would shutdown in 2 seconds.
     component.AccessControlService()->SetTimeoutPeriod(0);
@@ -88,7 +91,7 @@ int main(int argc, char **argv)
     }
 
     // NOTE: muse run after local_pose_sensor and velocity_state_sensor created.
-    ros::Subscriber position = nh.subscribe("/odom_fuse", 2, position_cb);
+    ros::Subscriber position = nh.subscribe(odom_path, 1, position_cb);
 
     component.ManagementService()->SetStatus(JAUS::Management::Status::Standby);
 
