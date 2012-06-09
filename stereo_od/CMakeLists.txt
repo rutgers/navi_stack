@@ -16,4 +16,4 @@ set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 
 rosbuild_add_executable(od_node src/od_node.cpp)
-rosbuild_link_boost(od_node graph)
+rosbuild_link_boost(od_node graph signals)
