@@ -18,19 +18,19 @@ RM = rm -rf
 CMAKE = cmake
 
 configure : $(SOURCE_DIR)/unpacked
-	$(MKDIR) -p $(SOURCE_DIR)/build && cd $(SOURCE_DIR)/build && $(CMAKE) ../libraries/jaus++/2.0/build/cmake -DCMAKE_INSTALL_PREFIX="$(PWD)"
+	$(MKDIR) -p build/build && cd build/build && $(CMAKE) ../$(SOURCE_DIR)/libraries/jaus++/2.0/build/cmake -DCMAKE_INSTALL_PREFIX="$(PWD)"
 
 build-it : configure
-	$(MAKE) -C $(SOURCE_DIR)/build
+	$(MAKE) -C build/build
 
 install-real:
-	$(MAKE) -C $(SOURCE_DIR)/build install
+	$(MAKE) -C build/build install
 	touch install
 
-install : wipe
+install :
 	$(MAKE) install-real
 
 clean :
-	$(RM) $(SOURCE_DIR) install lib bin
+	$(RM) build install lib bin
 
 wipe : clean
