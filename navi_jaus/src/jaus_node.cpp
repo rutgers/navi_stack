@@ -21,36 +21,36 @@ static JAUS::VelocityStateSensor *velocity_state_sensor;
 void position_cb(nav_msgs::Odometry::Ptr odom)
 {
     JAUS::LocalPose local_pose;
-    local_pose->SetX(odom->pose.position.x);
-    local_pose->SetY(odom->pose.position.y);
-    local_pose->SetZ(odom->pose.position.z);
+    local_pose.SetX(odom->pose.position.x);
+    local_pose.SetY(odom->pose.position.y);
+    local_pose.SetZ(odom->pose.position.z);
 
     CxUtils::Time cx_time(odom->header.stamp.toSec());
-    local_pose->SetTimeStamp(cx_time);
+    local_pose.SetTimeStamp(cx_time);
 
     btQuaternion q;
     double r, p, y;
     tf::quaternionMsgToTF(msg->orientation, q);
     btMatrix3x3(q).getRPY(r, p, y);
 
-    local_pose->SetRoll(r);
-    local_pose->SetPitch(p);
-    local_pose->SetYaw(y);
+    local_pose.SetRoll(r);
+    local_pose.SetPitch(p);
+    local_pose.SetYaw(y);
 
     local_pose_sensor->SetLocalPose(local_pose);
 
 
     JAUS::VelocityState velocity_state;
 
-    velocity_state->SetVelocityX(odom->twist.linear.x);
-    velocity_state->SetVelocityY(odom->twist.linear.y);
-    velocity_state->SetVelocityZ(odom->twist.linear.z);
+    velocity_state.SetVelocityX(odom->twist.linear.x);
+    velocity_state.SetVelocityY(odom->twist.linear.y);
+    velocity_state.SetVelocityZ(odom->twist.linear.z);
 
-    velocity_state->SetVelocityRoll(odom->twist.angular.x);
-    velocity_state->SetVelocityPitch(odom->twist.angular.y);
-    velocity_state->SetVelocityYaw(odom->twist.angular.z);
+    velocity_state.SetVelocityRoll(odom->twist.angular.x);
+    velocity_state.SetVelocityPitch(odom->twist.angular.y);
+    velocity_state.SetVelocityYaw(odom->twist.angular.z);
 
-    velocity_state->SetTimeStamp(cx_time);
+    velocity_state.SetTimeStamp(cx_time);
 
     velocity_state_sensor->SetVelocityState(velocity_state);
 }
