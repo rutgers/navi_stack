@@ -30,7 +30,7 @@ void position_cb(nav_msgs::Odometry::Ptr odom)
 
     btQuaternion q;
     double r, p, y;
-    tf::quaternionMsgToTF(msg->pose.pose.orientation, q);
+    tf::quaternionMsgToTF(odom->pose.pose.orientation, q);
     btMatrix3x3(q).getEulerRPY(r, p, y);
 
     local_pose.SetRoll(r);
