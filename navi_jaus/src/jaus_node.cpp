@@ -96,7 +96,7 @@ int main(int argc, char **argv)
     component.ManagementService()->SetStatus(JAUS::Management::Status::Standby);
 
     {
-        JAUS::JUDP *transport = static_cast<JAUS:JUDP *>(component.TransportService());
+        JAUS::JUDP *transport = static_cast<JAUS::JUDP *>(component.TransportService());
         transport->AddConnection(COP_IP_ADDR, JAUS::Address(COP_SUBSYSTEM_ID, COP_NODE_ID, COP_COMPONENT_ID));
     }
 
