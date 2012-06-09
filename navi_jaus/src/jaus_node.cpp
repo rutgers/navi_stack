@@ -4,7 +4,7 @@
 #include <jaus/core/transport/judp.h>
 #include <jaus/core/component.h>
 
-#include <tf/tf.h>
+#include <tf/transform_datatypes.h>
 
 /* TODO: replace with tf or eigen */
 #include <LinearMath/btQuaternion.h>
