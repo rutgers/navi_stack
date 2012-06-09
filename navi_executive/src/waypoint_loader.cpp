@@ -77,7 +77,7 @@ int main(int argc, char **argv)
              static_cast<int>(waypoint_list.size()));
 
     // Iteratively add the waypoints to the executive.
-    ros::ServiceClient srv = nh.serviceClient<AddWaypoint>("add_waypoint");
+    ros::ServiceClient srv = nh.serviceClient<AddWaypoint>("add_waypoint_gps");
     srv.waitForExistence();
 
     for (size_t i = 0; i < waypoints.size(); ++i) {
