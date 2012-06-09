@@ -18,7 +18,6 @@
 
 int main(int argc, char **argv)
 {
-    
     //TODO: update with appropriate calls
     ros::init(argc, argv, "jaus");                     ///////////////
     ros::NodeHandle nh;
@@ -43,9 +42,9 @@ int main(int argc, char **argv)
 
     //List for waypoints
     component.AddService(new JAUS::ListManager());
-    JAUS::LocalWaypointListDriver* localWaypointListDriver = new JAUS::LocalWaypointListDriver();  
-    component.AddService(localWaypointListDriver);     
-                                       
+    JAUS::LocalWaypointListDriver* localWaypointListDriver = new JAUS::LocalWaypointListDriver();
+    component.AddService(localWaypointListDriver);
+
     //make discoverable
     //TASK 1 -------------------------XXX
     component.DiscoveryService()->SetSubsystemIdentification(JAUS::Subsystem::Vehicle, "navi");
@@ -62,15 +61,11 @@ int main(int argc, char **argv)
 
     JAUS::JUDP *transportService = static_cast<JAUS:JUDP *>(component.TransportService());
     transportService->AddConnection(COP_IP_ADDR, JAUS::Address(COP_SUBSYSTEM_ID, COP_NODE_ID, COP_COMPONENT_ID));
-      
-            
-                                                                                     
-    // Set an initial global pose.                                              
-    // TODO: pull values from GPS    
-    // TODO: pull values from kalman filter, change to global and pass to JAUS
-    JAUS::GlobalPose globalPose;                                          
-    globalPose.SetLatitude(/*Latitudecall*/);                            
-    globalPose.SetLongitude(/*longcall*/);                               
+
+    // Set an initial global pose.
+    JAUS::GlobalPose globalPose;
+    globalPose.SetLatitude(MICH_LAT);
+    globalPose.SetLongitude(MICH_LONG);
     //globalPose.SetAltitude(0);                                       
     globalPose.SetPositionRMS(0.0);                                         
     //globalPose.SetRoll(0.0);                                             
