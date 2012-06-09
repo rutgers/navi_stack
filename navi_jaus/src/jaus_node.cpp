@@ -64,11 +64,9 @@ int main(int argc, char **argv)
     component.ManagementService()->SetStatus(JAUS::Management::Status::Standby);    
     
     //add JDUP as service ............. JTCPClient ......JTCP
-    JAUS::JUDP* transportService = NULL;                                               
-    transportService = (JAUS::JUDP*)component.TransportService();                 
-                                                                                         
-    //       
-    transportService->AddConnection("192.168.1.42", JAUS::Address(42, 1, 1), 3794);
+    JAUS::JUDP *transportService = (JAUS::JUDP*)component.TransportService();
+
+    transportService->AddConnection(COP_IP_ADDR, JAUS::Address(COP_SUBSYSTEM_ID, COP_NODE_ID, COP_COMPONENT_ID));
       
             
                                                                                      
