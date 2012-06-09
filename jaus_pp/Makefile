@@ -18,7 +18,7 @@ RM = rm -rf
 CMAKE = cmake
 
 configure : $(SOURCE_DIR)/unpacked
-	$(MKDIR) -p build/build && cd build/build && $(CMAKE) ../$(SOURCE_DIR)/libraries/jaus++/2.0/build/cmake -DCMAKE_INSTALL_PREFIX="$(PWD)"
+	$(MKDIR) -p build/build && cd build/build && $(CMAKE) ../../$(SOURCE_DIR)/libraries/jaus++/2.0/build/cmake -DCMAKE_INSTALL_PREFIX="$(PWD)"
 
 build-it : configure
 	$(MAKE) -C build/build
