@@ -19,7 +19,7 @@ private:
     bool idle_;
     ros::NodeHandle nh_;
     actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction> act_goal_;
-    ros::ServiceServer srv_add_;
+    ros::ServiceServer srv_gps_, srv_utm_;
 
     std::list<std::list<WaypointUTM> > waypoints_;
     std::string utm_frame_id_;
