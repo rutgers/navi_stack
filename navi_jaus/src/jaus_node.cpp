@@ -57,20 +57,6 @@ void position_cb(nav_msgs::Odometery::Ptr odom)
     velocity_state_sensor->SetVelocityState(velocity_state);
 }
 
-class LocalWaypointListDriverCB : public LocalWaypointListDriver
-{
-    public:
-        LocalWaypointListDriverCB() : LocalWaypointListDriver()
-        {}
-
-        ExecuteList(const double meters_per_second)
-        {
-            LocalWaypointListDriver::ExecuteList(meters_per_second);
-
-
-        }
-};
-
 int main(int argc, char **argv)
 {
     ros::init(argc, argv, "jaus");
