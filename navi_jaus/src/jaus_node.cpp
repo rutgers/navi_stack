@@ -1,37 +1,76 @@
-//JAUS Headers-------------------------------------------------//
-#include <jaus/mobility/sensors/globalposesensor.h>            
-#include <jaus/mobility/sensors/localposesensor.h>             
-#include <jaus/mobility/sensors/velocitystatesensor.h>         
-#include <jaus/mobility/drivers/localwaypointlistdriver.h>     
-#include <jaus/core/transport/judp.h>                          
-#include <jaus/core/transport/jtcpclient.h>                    
-#include <jaus/core/component.h>                               
-#include <cxutils/keyboard.h>                                  
-#include <cxutils/math/cxmath.h>                               
-#include <iostream>                                            
-#include <cstring>                                             
-#include <cstdio>                                              
-#include <cmath>                                               
-/////////////////////////////////////////////////////////////////
+#include <jaus/mobility/sensors/localposesensor.h>
+#include <jaus/mobility/sensors/velocitystatesensor.h>
+#include <jaus/mobility/drivers/localwaypointlistdriver.h>
+#include <jaus/core/transport/judp.h>
+#include <jaus/core/component.h>
+
+#include <tf/tf.h>
+
+/* TODO: replace with tf or eigen */
+#include <LinearMath/btQuaternion.h>
+#include <LinearMath/btMatrix3x3.h>
+
+#include <cxutils/time.h>
+
+#include <ros/ros.h>
+#include <nav_msgs/Odometery.h>
+
+static JAUS::LocalPoseSensor *local_pose_sensor;
+static JAUS::VelocityStateSensor *velocity_state_sensor;
+
+void position_cb(nav_msgs::Odometery::Ptr odom)
+{
+    JAUS::LocalPose local_pose;
+    local_pose->SetX(odom->pose.position.x);
+    local_pose->SetY(odom->pose.position.y);
+    local_pose->SetZ(odom->pose.position.z);
+
+    CxUtils::Time cx_time(odom->header.stamp.toSec());
+    local_pose->SetTimeStamp(cx_time);
+
+    btQuaternion q;
+    double r, p, y;
+    tf::quaternionMsgToTF(msg->orientation, q);
+    btMatrix3x3(q).getRPY(r, p, y);
+
+    local_pose->SetRoll(r);
+    local_pose->SetPitch(p);
+    local_pose->SetYaw(y);
+
+    local_pose_sensor->SetLocalPose(local_pose);
+
+
+    JAUS::VelocityState velocity_state;
+
+    velocity_state->SetVelocityX(odom->twist.linear.x);
+    velocity_state->SetVelocityY(odom->twist.linear.y);
+    velocity_state->SetVelocityZ(odom->twist.linear.z);
+
+    velocity_state->SetVelocityRoll(odom->twist.angular.x);
+    velocity_state->SetVelocityPitch(odom->twist.angular.y);
+    velocity_state->SetVelocityYaw(odom->twist.angular.z);
+
+    velocity_state->SetTimeStamp(cx_time);
+
+    velocity_state_sensor->SetVelocityState(velocity_state);
+}
 
 int main(int argc, char **argv)
 {
     ros::init(argc, argv, "jaus");
     ros::NodeHandle nh;
 
-    //Create JAUS component
     JAUS::Component component;
-
-    // Disable timeout. Normally, this would shutdown the service within 2 seconds.
+    // Disable timeout. Normally, service would shutdown in 2 seconds.
     component.AccessControlService()->SetTimeoutPeriod(0);
 
     // WARNING: must be allocated via 'new'. JAUS::Component::Shutdown calls delete on this.
-    JAUS::LocalPoseSensor* localPoseSensor = new JAUS::LocalPoseSensor();
-    component.AddService(localPoseSensor);
+    local_pose_sensor = new JAUS::LocalPoseSensor();
+    component.AddService(local_pose_sensor);
 
     // WARNING: must be allocated via 'new'. JAUS::Component::Shutdown calls delete on this.
-    JAUS::VelocityStateSensor* velocityStateSensor = new JAUS::VelocityStateSensor();
-    component.AddService(velocityStateSensor);
+    velocity_state_sensor = new JAUS::VelocityStateSensor();
+    component.AddService(velocity_state_sensor);
 
     // WARNING: must be allocated via 'new'. JAUS::Component::Shutdown calls delete on this.
     component.AddService(new JAUS::ListManager());
@@ -48,17 +87,14 @@ int main(int argc, char **argv)
         return 0;
     }
 
-    //Standby
+    // NOTE: muse run after local_pose_sensor and velocity_state_sensor created.
+    ros::Subscriber position = nh.subscribe("/odom_fuse", 2, position_cb);
+
     component.ManagementService()->SetStatus(JAUS::Management::Status::Standby);
 
     JAUS::JUDP *transportService = static_cast<JAUS:JUDP *>(component.TransportService());
     transportService->AddConnection(COP_IP_ADDR, JAUS::Address(COP_SUBSYSTEM_ID, COP_NODE_ID, COP_COMPONENT_ID));
 
-    JAUS::LocalPose local_pos;
-    JAUS::VelocityState velocityState;
-
-    localPoseSensor->SetLocalPose(local_post);
-    velocityStateSensor->SetVelocityState(velocityState);
 
     JAUS::Time::Stamp printTimeMs = 0;
 
@@ -83,6 +119,7 @@ int main(int argc, char **argv)
             ROS_INFO("JAUS Standby");
         }
 
+#if 0
         // Get local waypoint list
         JAUS::Element::Map elementList = localWaypointListDriver->GetElementList();
         // Convert to SetLocalWaypointCommands
@@ -95,32 +132,15 @@ int main(int argc, char **argv)
                 commandList.push_back(*((JAUS::SetLocalWaypoint *)(listElement->second.mpElement)) );
             }
         }
-
-        //commandList is a vector of Waypoints
+#endif
 
         //Execute 
         if(localWaypointListDriver->IsExecuting())
         {
             // TODO: Go through this, should be replace by executive
-
         }
 
         //XXX:Everything below is correct except TODO                                                                                           
-
-
-        velocityState.SetVelocityX(/**/);                             
-        velocityState.SetYawRate(/**/);                           
-        velocityState.SetTimeStamp(JAUS::Time(true));                      
-         
-        //TODO:set local_pose stuff here
-
-        // Save the data to the service
-        localPoseSensor->SetLocalPose(local_pose);                         
-        velocityStateSensor->SetVelocityState(velocityState);         
-
-
-
-
 
         //Update Status
         if(JAUS::Time::GetUtcTimeMs() - printTimeMs > 5000)                                         
@@ -130,8 +150,8 @@ int main(int argc, char **argv)
             component.AccessControlService()->PrintStatus(); std::cout << std::endl;               
             component.ManagementService()->PrintStatus(); std::cout << std::endl;                  
             //globalPoseSensor->PrintStatus(); std::cout << std::endl;                               
-            localPoseSensor->PrintStatus(); std::cout << std::endl;                                
-            velocityStateSensor->PrintStatus(); std::cout << std::endl;                            
+            local_pose_sensor->PrintStatus(); std::cout << std::endl;                                
+            velocity_state_sensor->PrintStatus(); std::cout << std::endl;                            
             localWaypointListDriver->PrintStatus();                                                
             printTimeMs = JAUS::Time::GetUtcTimeMs();                                              
         }                                                                                          
