@@ -107,21 +107,15 @@ int main(int argc, char **argv)
 
         //XXX:Everything below is correct except TODO                                                                                           
 
-        // Save newly calculated position and orientation.     
-        //TODO: Update collection of data with calls
-        //globalPose.SetYaw(/**/);                                                                 
-        globalPose.SetLatitude(/**/);                                      
-        globalPose.SetLongitude(/**/);                                 
-        globalPose.SetAltitude(/**/);                          
-        globalPose.SetTimeStamp(JAUS::Time(true));                                      
 
         velocityState.SetVelocityX(/**/);                             
         velocityState.SetYawRate(/**/);                           
         velocityState.SetTimeStamp(JAUS::Time(true));                      
+         
+        //TODO:set local_pose stuff here
 
-        // Save the data to the service                                 
-        globalPoseSensor->SetGlobalPose(globalPose);        
-        localPoseSensor->SetLocalPose(globalPose);                         
+        // Save the data to the service
+        localPoseSensor->SetLocalPose(local_pose);                         
         velocityStateSensor->SetVelocityState(velocityState);         
 
 
