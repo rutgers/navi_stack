@@ -29,11 +29,11 @@ Executive::Executive(std::string gps_topic, std::string utm_topic, std::string g
 {
     // These gymnastics are necessary to get around C++'s poor type inference.
     typedef boost::function<bool (AddWaypointGPS::Request &, AddWaypointGPS::Response &)> AddWaypointGPSCallback;
-    AddWaypointGPSCallback callback = boost::bind(&Executive::addWaypointGPSCallback, this, _1, _2);
-    srv_gps_ = nh_.advertiseService(gps_topic, callback);
+    AddWaypointGPSCallback gps_callback = boost::bind(&Executive::addWaypointGPSCallback, this, _1, _2);
+    srv_gps_ = nh_.advertiseService(gps_topic, gps_callback);
 
     typedef boost::function<bool (AddWaypointUTM::Request &, AddWaypointUTM::Response &)> AddWaypointUTMCallback;
-    AddWaypointUTMCallback callback = boost::bind(&Executive::addWaypointUTMCallback, this, _1, _2);
+    AddWaypointUTMCallback utm_callback = boost::bind(&Executive::addWaypointUTMCallback, this, _1, _2);
     srv_utm_ = nh_.advertiseService(utm_topic, utm_callback);
 }
 
