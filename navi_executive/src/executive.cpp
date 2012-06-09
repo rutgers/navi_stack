@@ -154,7 +154,7 @@ int main(int argc, char **argv)
     ros::init(argc, argv, "executive");
     ros::NodeHandle nh;
 
-    navi_executive::Executive executive("add_waypoint", "move_base");
+    navi_executive::Executive executive("add_waypoint_gps", "add_waypoint_utm", "move_base");
     ros::spin();
     return 0;
 }
