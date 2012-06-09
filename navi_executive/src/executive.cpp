@@ -10,7 +10,8 @@
 #include <move_base_msgs/MoveBaseGoal.h>
 #include <nav_msgs/Odometry.h>
 #include <navi_executive/executive.h>
-#include <navi_executive/AddWaypoint.h>
+#include <navi_executive/AddWaypointGPS.h>
+#include <navi_executive/AddWaypointUTM.h>
 #include <navi_executive/WaypointGPS.h>
 #include <navi_executive/WaypointUTM.h>
 
@@ -18,25 +19,22 @@ using actionlib::SimpleClientGoalState;
 using move_base_msgs::MoveBaseAction;
 using move_base_msgs::MoveBaseResultConstPtr;
 using move_base_msgs::MoveBaseGoal;
-using navi_executive::AddWaypoint;
-using navi_executive::WaypointGPS;
-using navi_executive::WaypointUTM;
 
 namespace navi_executive {
 
-Executive::Executive(std::string add_topic, std::string add_utm_topic, std::string goal_topic)
+Executive::Executive(std::string gps_topic, std::string utm_topic, std::string goal_topic)
     : idle_(true)
     , act_goal_(goal_topic, true)
     , utm_frame_id_("/map")
 {
     // These gymnastics are necessary to get around C++'s poor type inference.
-    typedef boost::function<bool (AddWaypoint::Request &, AddWaypoint::Response &)> AddWaypointCallback;
-    AddWaypointCallback callback = boost::bind(&Executive::addWaypointCallback, this, _1, _2);
-    srv_add_ = nh_.advertiseService(add_topic, callback);
+    typedef boost::function<bool (AddWaypointGPS::Request &, AddWaypointGPS::Response &)> AddWaypointGPSCallback;
+    AddWaypointCallback callback = boost::bind(&Executive::addWaypointGPSCallback, this, _1, _2);
+    srv_gps_ = nh_.advertiseService(gps_topic, callback);
 
-    typedef boost::function<bool (AddWaypoint::Request &, AddWaypoint::Response &)> AddWaypointUTMCallback;
+    typedef boost::function<bool (AddWaypointUTM::Request &, AddWaypointUTM::Response &)> AddWaypointUTMCallback;
     AddWaypointUTMCallback callback = boost::bind(&Executive::addWaypointUTMCallback, this, _1, _2);
-    srv_utm_add_ = nh_.advertiseService(add_utm_topic, utm_callback);
+    srv_utm_ = nh_.advertiseService(utm_topic, utm_callback);
 }
 
 bool Executive::addWaypointUTMCallback(AddWaypointUTM::Request &request,
@@ -63,8 +61,8 @@ bool Executive::addWaypointUTMCallback(AddWaypointUTM::Request &request,
     return true;
 }
 
-bool Executive::addWaypointCallback(AddWaypoint::Request &request,
-                                    AddWaypoint::Response &response)
+bool Executive::addWaypointGPSCallback(AddWaypointGPS::Request &request,
+                                       AddWaypointGPS::Response &response)
 {
     std::list<WaypointUTM> const empty;
     std::list<WaypointUTM> &group = *waypoints_.insert(waypoints_.end(), empty);

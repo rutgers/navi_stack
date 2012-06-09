@@ -4,7 +4,8 @@
 #include <actionlib/client/simple_action_client.h>
 #include <move_base_msgs/MoveBaseAction.h>
 #include <move_base_msgs/MoveBaseActionResult.h>
-#include <navi_executive/AddWaypoint.h>
+#include <navi_executive/AddWaypointGPS.h>
+#include <navi_executive/AddWaypointUTM.h>
 #include <navi_executive/WaypointGPS.h>
 #include <navi_executive/WaypointUTM.h>
 
@@ -23,8 +24,8 @@ private:
     std::list<std::list<WaypointUTM> > waypoints_;
     std::string utm_frame_id_;
 
-    bool addWaypointCallback(AddWaypoint::Request  &request,
-                             AddWaypoint::Response &response);
+    bool addWaypointGPSCallback(AddWaypointGPS::Request  &request,
+                                AddWaypointGPS::Response &response);
     bool addWaypointUTMCallback(AddWaypointUTM::Request  &request,
                                 AddWaypointUTM::Response &response);
     void goalDoneCallback(actionlib::SimpleClientGoalState const &state,
