@@ -24,7 +24,7 @@ using navi_executive::WaypointUTM;
 
 namespace navi_executive {
 
-Executive::Executive(std::string add_topic, std::string goal_topic)
+Executive::Executive(std::string add_topic, std::string add_utm_topic, std::string goal_topic)
     : idle_(true)
     , act_goal_(goal_topic, true)
     , utm_frame_id_("/map")
@@ -33,6 +33,34 @@ Executive::Executive(std::string add_topic, std::string goal_topic)
     typedef boost::function<bool (AddWaypoint::Request &, AddWaypoint::Response &)> AddWaypointCallback;
     AddWaypointCallback callback = boost::bind(&Executive::addWaypointCallback, this, _1, _2);
     srv_add_ = nh_.advertiseService(add_topic, callback);
+
+    typedef boost::function<bool (AddWaypoint::Request &, AddWaypoint::Response &)> AddWaypointUTMCallback;
+    AddWaypointUTMCallback callback = boost::bind(&Executive::addWaypointUTMCallback, this, _1, _2);
+    srv_utm_add_ = nh_.advertiseService(add_utm_topic, utm_callback);
+}
+
+bool Executive::addWaypointUTMCallback(AddWaypointUTM::Request &request,
+                                       AddWaypointUTM::Response &response)
+{
+    std::list<WaypointUTM> const empty;
+    std::list<WaypointUTM> &group = *waypoints_.insert(waypoints_.end(), empty);
+
+    // Convert the GPS coordinates into UTM.
+    std::stringstream ss;
+    for (size_t i = 0; i < request.waypoints.size(); ++i) {
+        WaypointUTM waypoint_utm = request.waypoints[i];
+        group.push_back(waypoint_utm);
+
+        ss << " (" << waypoint_utm.lat << ", " << waypoint_utm.lon << ")";
+    }
+
+    ROS_INFO("Queued Group:%s", ss.str().c_str());
+
+    // Choose a new goal if we were previously idle.
+    if (idle_) {
+        advanceGoal();
+    }
+    return true;
 }
 
 bool Executive::addWaypointCallback(AddWaypoint::Request &request,

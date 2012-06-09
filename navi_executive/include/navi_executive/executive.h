@@ -12,7 +12,7 @@ namespace navi_executive {
 
 class Executive {
 public:
-    Executive(std::string add_topic, std::string goal_topic);
+    Executive(std::string add_topic, std::string add_utm_topic, std::string goal_topic);
 
 private:
     bool idle_;
@@ -25,6 +25,8 @@ private:
 
     bool addWaypointCallback(AddWaypoint::Request  &request,
                              AddWaypoint::Response &response);
+    bool addWaypointUTMCallback(AddWaypointUTM::Request  &request,
+                                AddWaypointUTM::Response &response);
     void goalDoneCallback(actionlib::SimpleClientGoalState const &state,
                           move_base_msgs::MoveBaseResultConstPtr const &result);
 

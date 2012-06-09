@@ -15,6 +15,8 @@
 #include <ros/ros.h>
 #include <nav_msgs/Odometery.h>
 
+#include <navi_executive/AddWaypoint.h>
+
 static JAUS::LocalPoseSensor *local_pose_sensor;
 static JAUS::VelocityStateSensor *velocity_state_sensor;
 
@@ -98,11 +100,14 @@ int main(int argc, char **argv)
     JAUS::JUDP *transportService = static_cast<JAUS:JUDP *>(component.TransportService());
     transportService->AddConnection(COP_IP_ADDR, JAUS::Address(COP_SUBSYSTEM_ID, COP_NODE_ID, COP_COMPONENT_ID));
 
-
     JAUS::Time::Stamp printTimeMs = 0;
 
-    //END SETUP JAUS--------------------------------------------------------------------------------//
-    //Main JAUS loop-------------------------------------------------------------------------------//
+    navi_executive::AddWaypoint add_waypoint;
+    navi_executive::WaypointGPS waypoint;
+    waypoint.lat = 0;
+    waypoint.lon = 0;
+    add_waypoint.waypoints.push(
+
 
     JAUS::Management management = component.ManagementService();
 
