@@ -10,6 +10,8 @@
   <url>http://ros.org/wiki/navi_jaus</url>
 
   <depend package="jaus_pp" />
+  <depend package="tf" />
+  <depend package="nav_msgs" />
 </package>
 
 
