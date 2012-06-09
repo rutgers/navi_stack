@@ -23,7 +23,7 @@ configure : $(SOURCE_DIR)/unpacked
 build-it : configure
 	$(MAKE) -C build/build
 
-install-real: build-it
+install-real : build-it
 	$(MAKE) -C build/build install
 	touch install
 

@@ -13,12 +13,12 @@
 #include <cxutils/time.h>
 
 #include <ros/ros.h>
-#include <nav_msgs/Odometery.h>
+#include <nav_msgs/Odometry.h>
 
 static JAUS::LocalPoseSensor *local_pose_sensor;
 static JAUS::VelocityStateSensor *velocity_state_sensor;
 
-void position_cb(nav_msgs::Odometery::Ptr odom)
+void position_cb(nav_msgs::Odometry::Ptr odom)
 {
     JAUS::LocalPose local_pose;
     local_pose->SetX(odom->pose.position.x);
