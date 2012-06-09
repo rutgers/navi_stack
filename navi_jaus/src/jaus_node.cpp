@@ -14,12 +14,9 @@
 #include <cmath>                                               
 /////////////////////////////////////////////////////////////////
 
-
-
 int main(int argc, char **argv)
 {
-    //TODO: update with appropriate calls
-    ros::init(argc, argv, "jaus");                     ///////////////
+    ros::init(argc, argv, "jaus");
     ros::NodeHandle nh;
 
     //SETUP JAUS-----------------------------------------------------------------------------------//
@@ -45,8 +42,6 @@ int main(int argc, char **argv)
     JAUS::LocalWaypointListDriver* localWaypointListDriver = new JAUS::LocalWaypointListDriver();
     component.AddService(localWaypointListDriver);
 
-    //make discoverable
-    //TASK 1 -------------------------XXX
     component.DiscoveryService()->SetSubsystemIdentification(JAUS::Subsystem::Vehicle, "navi");
 
     //Initialize JAUS, all components should be added at this time
@@ -70,84 +65,51 @@ int main(int argc, char **argv)
 
     JAUS::Time::Stamp printTimeMs = 0;
 
-
     //END SETUP JAUS--------------------------------------------------------------------------------//
-
-                                                                                                                                
-    /////////////////////////////////////////////////////////////////////////////////////////////////
-
-    
-    
-    
-    
-    
     //Main JAUS loop-------------------------------------------------------------------------------//
-                                                                                                   //      
-                                                                                                   //
+
+    JAUS::Management management = component.ManagementService();
+
     while(ros::ok())
     {
-        
-       //handle shutdown, standby, waypoint collection
-        //shutdown
-        if(component.ManagementService()->GetStatus() == JAUS::Management::Status::Shutdown)
+        JAUS::Management::Status status = management->GetStatus();
+
+        if (status == JAUS::Management::Status::Shutdown)
         {
-		    std::cout << "\nTerminating the Program. Shutdown command receviced!\n";
+            ROS_INFO("Shutdown receviced");
+            break;
+        }
 
-		    break;
-		  }
-		  //If standby
-		  if(component.ManagementService()->GetStatus() == JAUS::Management::Status::Standby)
+        if (status == JAUS::Management::Status::Standby)
         {
-		    std::cout << "\nStandby!\n";
-		  }
-
-
+            /* FIXME: what do we do durring standby? Do we need to look at the waypoint list at all? */
+            ROS_INFO("JAUS Standby");
+        }
 
         // Get local waypoint list
-		  JAUS::Element::Map elementList = localWaypointListDriver->GetElementList();
-		  // Convert to SetLocalWaypointCommands
-		  JAUS::Element::Map::iterator listElement;
-		  std::vector<JAUS::SetLocalWaypoint> commandList;
-		  for(listElement = elementList.begin(); listElement != elementList.end(); listElement++)
-	 	  {
-			 if(listElement->second.mpElement->GetMessageCode() == JAUS::SET_LOCAL_WAYPOINT)
-			 {
-				 commandList.push_back(*( (JAUS::SetLocalWaypoint *)(listElement->second.mpElement)) );
-		 	 }
-		  } 
+        JAUS::Element::Map elementList = localWaypointListDriver->GetElementList();
+        // Convert to SetLocalWaypointCommands
+        JAUS::Element::Map::iterator listElement;
+        std::vector<JAUS::SetLocalWaypoint> commandList;
+        for(listElement = elementList.begin(); listElement != elementList.end(); listElement++)
+        {
+            if(listElement->second.mpElement->GetMessageCode() == JAUS::SET_LOCAL_WAYPOINT)
+            {
+                commandList.push_back(*((JAUS::SetLocalWaypoint *)(listElement->second.mpElement)) );
+            }
+        }
 
         //commandList is a vector of Waypoints
 
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
         //Execute 
         if(localWaypointListDriver->IsExecuting())
         {
-         // TODO: Go through this, should be replace by executive
-                                                                                
+            // TODO: Go through this, should be replace by executive
+
         }
-                                                                                                   
-                                                                                                   
-                                                                                                   
-                  
 
-
-
-
-
-
-
-                                                                                                   
         //XXX:Everything below is correct except TODO                                                                                           
-                                                                                                   
+
         // Save newly calculated position and orientation.     
         //TODO: Update collection of data with calls
         //globalPose.SetYaw(/**/);                                                                 
@@ -155,20 +117,20 @@ int main(int argc, char **argv)
         globalPose.SetLongitude(/**/);                                 
         globalPose.SetAltitude(/**/);                          
         globalPose.SetTimeStamp(JAUS::Time(true));                                      
-                                                                                     
+
         velocityState.SetVelocityX(/**/);                             
         velocityState.SetYawRate(/**/);                           
         velocityState.SetTimeStamp(JAUS::Time(true));                      
-                                                                            
+
         // Save the data to the service                                 
         globalPoseSensor->SetGlobalPose(globalPose);        
         localPoseSensor->SetLocalPose(globalPose);                         
         velocityStateSensor->SetVelocityState(velocityState);         
-                                                                                                   
-        
-        
-        
-        
+
+
+
+
+
         //Update Status
         if(JAUS::Time::GetUtcTimeMs() - printTimeMs > 5000)                                         
         {                                                                                          
@@ -182,16 +144,16 @@ int main(int argc, char **argv)
             localWaypointListDriver->PrintStatus();                                                
             printTimeMs = JAUS::Time::GetUtcTimeMs();                                              
         }                                                                                          
-                                                                                                   
+
         // Exit if escape key pressed.                                                             
         if(CxUtils::GetChar() == 27)                                                               
         {                                                                                          
             break;                                                                                 
         }                                                                                          
-                                                                                                   
-        
+
+
         CxUtils::SleepMs(250);
-	     ros::spinOnce();
+        ros::spinOnce();
     }                                                                                              
     //END MAIN JAUS LOOP---------------------------------------------------------------------------//
                                                                                                    
