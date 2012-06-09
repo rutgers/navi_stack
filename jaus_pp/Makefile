@@ -30,7 +30,5 @@ install-real: build-it
 install :
 	$(MAKE) install-real
 
-clean :
-	$(RM) build install lib bin
-
 wipe : clean
+	$(RM) build install lib bin
