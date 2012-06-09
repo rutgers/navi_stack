@@ -38,7 +38,9 @@ install-bin   : build-it bin
 	$(MV) $(SOURCE_DIR)/libraries/jaus++/2.0/bin/* bin/ && touch install-bin
 
 install-inc   : build-it include
-	$(MV) $(SOURCE_DIR)/libraries/jaus++/2.0/include/jaus include/ && touch install-inc
+	$(MV) $(SOURCE_DIR)/libraries/jaus++/2.0/include/jaus include/ && \
+	$(MV) $(SOURCE_DIR)/libraries/cxutils/2.0/include/cxutils include/ && \
+	touch install-inc
 
 install-real: install-bin install-lib install-inc
 	touch install
