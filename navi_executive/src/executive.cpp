@@ -49,7 +49,7 @@ bool Executive::addWaypointUTMCallback(AddWaypointUTM::Request &request,
         WaypointUTM waypoint_utm = request.waypoints[i];
         group.push_back(waypoint_utm);
 
-        ss << " (" << waypoint_utm.lat << ", " << waypoint_utm.lon << ")";
+        ss << " (" << waypoint_utm.northing << ", " << waypoint_utm.easting << ", " << waypoint_utm.zone << ")";
     }
 
     ROS_INFO("Queued Group:%s", ss.str().c_str());
