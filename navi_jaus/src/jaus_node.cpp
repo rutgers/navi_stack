@@ -16,7 +16,13 @@
 
 int main(int argc, char **argv)
 {
+<<<<<<< HEAD
     ros::init(argc, argv, "jaus");
+=======
+    
+    //TODO: update with appropriate calls
+    ros::init(argc, argv, "jaus");                     
+>>>>>>> Made code clearer
     ros::NodeHandle nh;
 
     //Create JAUS component
