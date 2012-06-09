@@ -23,23 +23,22 @@ build-it : configure
 	$(MAKE) -C $(SOURCE_DIR)/build
 
 bin :
-	$(MKDIR) $@
+	$(MKDIR) bin
 
 lib :
-	$(MKDIR) $@
+	$(MKDIR) lib
 
 include:
-	$(MKDIR) $@
+	$(MKDIR) include
 
 install-lib   : build-it lib
-	$(MV) $(SOURCE_DIR)/libraries/jaus++/2.0/lib/* lib/
+	$(MV) $(SOURCE_DIR)/libraries/jaus++/2.0/lib/* lib/ && touch install-lib
 
 install-bin   : build-it bin
-	$(MV) $(SOURCE_DIR)/libraries/jaus++/2.0/bin/* bin/
+	$(MV) $(SOURCE_DIR)/libraries/jaus++/2.0/bin/* bin/ && touch install-bin
 
 install-inc   : build-it include
-	$(MV) $(SOURCE_DIR)/libraries/jaus++/2.0/include/jaus include/
-
+	$(MV) $(SOURCE_DIR)/libraries/jaus++/2.0/include/jaus include/ && touch install-inc
 
 install: install-bin install-lib include-inc
 	touch install
