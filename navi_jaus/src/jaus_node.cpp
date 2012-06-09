@@ -19,26 +19,23 @@ int main(int argc, char **argv)
     ros::init(argc, argv, "jaus");
     ros::NodeHandle nh;
 
-    //SETUP JAUS-----------------------------------------------------------------------------------//
-
     //Create JAUS component
     JAUS::Component component;
 
-    //Disable timeout
+    // Disable timeout. Normally, this would shutdown the service within 2 seconds.
     component.AccessControlService()->SetTimeoutPeriod(0);
 
-    //Add Global Position Sensor, Local Position Sensor, Velocity Sensor to JAUS component
-    JAUS::GlobalPoseSensor* globalPoseSensor = new JAUS::GlobalPoseSensor();
-    component.AddService(globalPoseSensor);
-
+    // WARNING: must be allocated via 'new'. JAUS::Component::Shutdown calls delete on this.
     JAUS::LocalPoseSensor* localPoseSensor = new JAUS::LocalPoseSensor();
     component.AddService(localPoseSensor);
 
+    // WARNING: must be allocated via 'new'. JAUS::Component::Shutdown calls delete on this.
     JAUS::VelocityStateSensor* velocityStateSensor = new JAUS::VelocityStateSensor();
     component.AddService(velocityStateSensor);
 
-    //List for waypoints
+    // WARNING: must be allocated via 'new'. JAUS::Component::Shutdown calls delete on this.
     component.AddService(new JAUS::ListManager());
+    // WARNING: must be allocated via 'new'. JAUS::Component::Shutdown calls delete on this.
     JAUS::LocalWaypointListDriver* localWaypointListDriver = new JAUS::LocalWaypointListDriver();
     component.AddService(localWaypointListDriver);
 
