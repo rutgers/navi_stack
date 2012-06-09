@@ -7,7 +7,7 @@
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/navi_telop</url>
   <depend package="roscpp"/>
-  <depend package="wiimote"/>
+<!--  <depend package="wiimote"/> -->
   <depend package="joy"/>
   <depend package="nav_msgs"/>
   <depend package="std_msgs"/>
