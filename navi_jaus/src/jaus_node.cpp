@@ -54,7 +54,7 @@ void position_cb(nav_msgs::Odometry::Ptr odom)
     velocity_state_sensor->SetVelocityState(velocity_state);
 }
 
-class ShutdownCB : public JAUS::::Callback {
+class ShutdownCB : public JAUS::Callback {
     public:
         ControlCallback(JAUS_Controller* c): parent(c) {}
         ~ControlCallback() {}
