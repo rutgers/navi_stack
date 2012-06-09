@@ -62,32 +62,13 @@ int main(int argc, char **argv)
     JAUS::JUDP *transportService = static_cast<JAUS:JUDP *>(component.TransportService());
     transportService->AddConnection(COP_IP_ADDR, JAUS::Address(COP_SUBSYSTEM_ID, COP_NODE_ID, COP_COMPONENT_ID));
 
-    // Set an initial global pose.
-    JAUS::GlobalPose globalPose;
-    globalPose.SetLatitude(MICH_LAT);
-    globalPose.SetLongitude(MICH_LONG);
-    //globalPose.SetAltitude(0);                                       
-    globalPose.SetPositionRMS(0.0);                                         
-    //globalPose.SetRoll(0.0);                                             
-    //globalPose.SetPitch(0.0);                                           
-    //globalPose.SetYaw(/**/);     
-    globalPose.SetAttitudeRMS(0.0);                                  
-    globalPose.SetTimeStamp(JAUS::Time::GetUtcTime());          
-                                                                                                   
-    // Set an initial velocity state.                                                              
-    JAUS::VelocityState velocityState;                                                             
-    velocityState.SetVelocityX(0.0);                                                               
-    velocityState.SetYawRate(0.0);                                                                 
-    velocityState.SetVelocityRMS(0.0);                                                             
-    velocityState.SetTimeStamp(JAUS::Time::GetUtcTime());               
-        
-    //Save the data to the service. 
-    //send globalPose to localPose, conversion automatic
-    globalPoseSensor->SetGlobalPose(globalPose);                                  
-    localPoseSensor->SetLocalPose(globalPose);                                                     
-    velocityStateSensor->SetVelocityState(velocityState);                                          
-                                                                                                  
-    JAUS::Time::Stamp printTimeMs = 0;  
+    JAUS::LocalPose local_pos;
+    JAUS::VelocityState velocityState;
+
+    localPoseSensor->SetLocalPose(local_post);
+    velocityStateSensor->SetVelocityState(velocityState);
+
+    JAUS::Time::Stamp printTimeMs = 0;
 
 
     //END SETUP JAUS--------------------------------------------------------------------------------//

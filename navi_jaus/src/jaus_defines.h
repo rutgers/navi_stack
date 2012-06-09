@@ -11,8 +11,4 @@
 #define COP_NODE_ID 1
 #define COP_COMPONENT_ID 1
 
-
-#define MICH_LAT  (42. + (40. / 60) + (41. / 60 / 60))
-#define MICH_LONG (83. + (11. / 60) + (43. / 60 / 60))
-
 #endif
